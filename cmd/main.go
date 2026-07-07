@@ -1,0 +1,30 @@
+package main
+
+import (
+	"fmt"
+	"gobaos/pkg/ft12"
+	"os"
+)
+
+func main() {
+	conn, err := ft12.NewConn("/dev/ttyAM0")
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "%w\n", err)
+		os.Exit(1)
+	}
+	defer func() { _ = conn.Close() }()
+
+	for {
+		if _, err := conn.Read(nil); err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "%w\n", err)
+			os.Exit(1)
+		}
+		l := conn.Available()
+		buffer := make([]byte, l)
+		_, err := conn.Read(buffer)
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "%w\n", err)
+		}
+		_, _ = fmt.Fprintf(os.Stdout, "%x\n", buffer)
+	}
+}
