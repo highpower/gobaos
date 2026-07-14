@@ -27,11 +27,11 @@ func (d DPTFloat) MarshalBinary() ([]byte, error) {
 		negative = true
 	}
 	exp := 0
-	for val > 204700 && exp < 7 {
+	for val > 2047 && exp < 7 {
 		val >>= 1
 		exp++
 	}
-	compressed := uint16((exp&0x0F)<<11) | uint16((val/100)&0x7FF)
+	compressed := uint16((exp&0x0F)<<11) | uint16(val&0x7FF)
 	if negative {
 		compressed |= 0x800
 	}
@@ -46,12 +46,12 @@ func (d *DPTFloat) UnmarshalBinary(data []byte) error {
 	if len(data) != 2 {
 		return fmt.Errorf("%w: expected 2 bytes, got %d", ErrUnmarshal, len(data))
 	}
-	raw := binary.BigEndian.Uint16(data)
-	sign := raw & 0x8000
-	exp := int((raw & 0x7800) >> 11)
-	mantissa := int(raw & 0x07FF)
+	compressed := binary.BigEndian.Uint16(data)
+	sign := compressed & 0x8000
+	exp := int((compressed & 0x7800) >> 11)
+	mantissa := int(compressed & 0x07FF)
 
-	d.Value = float64(mantissa) * math.Pow(2, float64(exp))
+	d.Value = 0.01 * float64(mantissa) * math.Pow(2, float64(exp))
 	if sign == 0x8000 {
 		d.Value = -d.Value
 	}

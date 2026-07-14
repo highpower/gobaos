@@ -14,8 +14,8 @@ func TestDPTFloatMarshal(t *testing.T) {
 
 	testCases := []testCase{
 		{name: "Zero", value: 0.0, errorExpected: false},
-		{name: "Nonzero", value: 250.0, errorExpected: false},
-		{name: "TooLarge", value: 2.5e18, errorExpected: false},
+		{name: "Nonzero", value: 22.0, errorExpected: false},
+		{name: "TooLarge", value: 2.5e45, errorExpected: true},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -31,7 +31,8 @@ func TestDPTFloatMarshal(t *testing.T) {
 			if err = other.UnmarshalBinary(data); err != nil {
 				t.Fatalf("%s", err.Error())
 			}
-			if other.Value-dpt.Value > math.SmallestNonzeroFloat64 {
+
+			if math.Abs(other.Value-dpt.Value) > math.SmallestNonzeroFloat64 {
 				t.Errorf("%04f != %04f", dpt.Value, other.Value)
 			}
 		})
