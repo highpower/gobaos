@@ -129,7 +129,7 @@ func unmarshalDatapointsFrom[G any, W datapointWrapper[G]](data []byte, n int) (
 		length := int(data[3])
 		if len(data) <= datapointHeaderSize+length {
 			return nil, fmt.Errorf("%w buffer has only %d bytes while %d needed", ErrInvalid,
-				len(data), datapointHeaderSize)
+				len(data), datapointHeaderSize+length)
 		}
 		var item G
 		W(&item).attachData(id, state, data[datapointHeaderSize:datapointHeaderSize+length])
