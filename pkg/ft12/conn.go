@@ -41,6 +41,22 @@ func (c *Conn) Available() int {
 	return c.data.Len()
 }
 
+func (c *Conn) resetIfNeeded() error {
+	if c.needReset {
+		err := c.writeResetRequest()
+		c.needReset = false
+		return err
+	}
+	return nil
+}
+
+func (c *Conn) writeResetRequest() error {
+	if _, err := c.file.Write([]byte{0x10, 0x40, 0x40, 0x16}); err != nil {
+		return err
+	}
+	return c.readAck()
+}
+
 func (c *Conn) readToBuffer() error {
 	if err := c.resetIfNeeded(); err != nil {
 		return err
@@ -86,6 +102,27 @@ func (c *Conn) readFrameToBuffer(buffer []byte) (int, error) {
 	return 0, nil
 }
 
+func (c *Conn) unmarshalFrame(data []byte) ([]byte, error) {
+	if len(data) < 3 {
+		return nil, fmt.Errorf("%w frame length", ErrInvalid)
+	}
+	if !validControl(c.serverEven, data[0]) {
+		return nil, fmt.Errorf("%w control byte: %d", ErrInvalid, data[0])
+	}
+	c.serverEven = !c.serverEven
+	if data[len(data)-1] != 0x16 {
+		return nil, fmt.Errorf("%w last byte: %d", ErrInvalid, data[len(data)-1])
+	}
+	checksum := 0
+	for i := 0; i < len(data)-3; i++ {
+		checksum += int(data[i])
+	}
+	if cs := int(data[len(data)-2]); cs != checksum%256 {
+		return nil, fmt.Errorf("%w checksum: %d, expected %d", ErrInvalid, checksum, cs)
+	}
+	return data[1 : len(data)-2], nil
+}
+
 func (c *Conn) readAck() error {
 	buffer := [1]byte{}
 	if _, err := io.ReadFull(c.file, buffer[:]); err != nil {
@@ -103,36 +140,6 @@ func (c *Conn) writeAck() error {
 		return err
 	}
 	return nil
-}
-
-func (c *Conn) resetIfNeeded() error {
-	if c.needReset {
-		err := c.writeResetRequest()
-		c.needReset = false
-		return err
-	}
-	return nil
-}
-
-func (c *Conn) writeResetRequest() error {
-	if _, err := c.file.Write([]byte{0x10, 0x40, 0x40, 0x16}); err != nil {
-		return err
-	}
-	return c.readAck()
-}
-
-func (c *Conn) unmarshalFrame(data []byte) ([]byte, error) {
-	if len(data) < 3 {
-		return nil, fmt.Errorf("%w frame length", ErrInvalid)
-	}
-	if !validControl(c.serverEven, data[0]) {
-		return nil, fmt.Errorf("%w control byte: %d", ErrInvalid, data[0])
-	}
-	c.serverEven = !c.serverEven
-	if data[len(data)-1] != 0x16 {
-		return nil, fmt.Errorf("%w last byte: %d", ErrInvalid, data[len(data)-1])
-	}
-	return data[1 : len(data)-3], nil
 }
 
 func NewConn(ttyName string) (*Conn, error) {
