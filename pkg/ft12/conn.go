@@ -78,6 +78,7 @@ func (c *Conn) readFrame(buffer []byte) (int, error) {
 	if err := c.writeAck(); err != nil {
 		return 0, err
 	}
+
 	data, err := c.unmarshalFrame(buffer[:hd.len()+2])
 	if err != nil {
 		return 0, err
@@ -144,7 +145,7 @@ func NewConn(ttyName string) (*Conn, error) {
 		_ = f.Close()
 		return nil, err
 	}
-	return &Conn{needReset: true, serverEven: false, hostEven: false, data: bytes.Buffer{}}, nil
+	return &Conn{needReset: true, serverEven: false, hostEven: false, file: f, data: bytes.Buffer{}}, nil
 }
 
 func validControl(even bool, seen byte) bool {
