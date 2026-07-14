@@ -59,7 +59,7 @@ func main() {
 	flag.Usage = func() { usage(os.Stdout) }
 	flag.Parse()
 
-	if !flag.Parsed() {
+	if !flag.Parsed() || device == "" {
 		usage(os.Stderr)
 		os.Exit(2)
 	}
