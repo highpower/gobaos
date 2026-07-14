@@ -17,7 +17,7 @@ type Conn struct {
 }
 
 func (c *Conn) Read(p []byte) (int, error) {
-	if p != nil && c.data.Len() != 0 {
+	if len(p) != 0 && c.data.Len() != 0 {
 		return c.data.Read(p)
 	}
 	if err := c.readToBuffer(); err != nil {
@@ -70,7 +70,7 @@ func (c *Conn) readFrame(buffer []byte) (int, error) {
 		c.needReset = true
 		return 0, nil
 	case hd.valid() != nil:
-		return 0, fmt.Errorf("invalid header: %x", hd)
+		return 0, fmt.Errorf("%w header: %x", ErrInvalid, hd)
 	}
 	if _, err = io.ReadFull(c.file, buffer[:hd.len()+2]); err != nil {
 		return 0, err
@@ -92,7 +92,7 @@ func (c *Conn) readAck() error {
 		return err
 	}
 	if buffer[0] != 0xE5 {
-		return fmt.Errorf("invalid ft12 ack")
+		return fmt.Errorf("%w ack", ErrInvalid)
 	}
 	return nil
 }
@@ -122,14 +122,17 @@ func (c *Conn) writeResetRequest() error {
 }
 
 func (c *Conn) unmarshalFrame(data []byte) ([]byte, error) {
+	if len(data) < 3 {
+		return nil, fmt.Errorf("%w frame length", ErrInvalid)
+	}
 	if !validControl(c.serverEven, data[0]) {
-		return nil, fmt.Errorf("invalid ft12 control byte")
+		return nil, fmt.Errorf("%w control byte: %d", ErrInvalid, data[0])
 	}
 	c.serverEven = !c.serverEven
 	if data[len(data)-1] != 0x16 {
-		return nil, fmt.Errorf("invalid ft12 last byte")
+		return nil, fmt.Errorf("%w last byte: %d", ErrInvalid, data[len(data)-1])
 	}
-	return nil, nil
+	return data[1 : len(data)-3], nil
 }
 
 func NewConn(ttyName string) (*Conn, error) {
