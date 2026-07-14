@@ -27,7 +27,3 @@ func (h *header) isResetIndication() bool {
 func marshal(data []byte) ([]frame, error) {
 	return nil, nil
 }
-
-func unmarshal(data []byte) ([]byte, error) {
-	return nil, nil
-}

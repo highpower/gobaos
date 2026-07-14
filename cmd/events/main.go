@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	conn, err := ft12.NewConn("/dev/ttyAM0")
+	conn, err := ft12.NewConn("/dev/ttyAMA0")
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		os.Exit(1)

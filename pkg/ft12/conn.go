@@ -9,13 +9,15 @@ import (
 )
 
 type Conn struct {
-	needReset bool
-	file      *os.File
-	data      bytes.Buffer
+	needReset  bool
+	serverEven bool
+	hostEven   bool
+	file       *os.File
+	data       bytes.Buffer
 }
 
 func (c *Conn) Read(p []byte) (int, error) {
-	if p == nil && c.data.Len() != 0 {
+	if p != nil && c.data.Len() != 0 {
 		return c.data.Read(p)
 	}
 	if err := c.readToBuffer(); err != nil {
@@ -25,7 +27,7 @@ func (c *Conn) Read(p []byte) (int, error) {
 }
 
 func (c *Conn) Write(p []byte) (int, error) {
-	if err := c.writeResetIfNeeded(); err != nil {
+	if err := c.resetIfNeeded(); err != nil {
 		return 0, err
 	}
 	return 0, nil
@@ -40,10 +42,10 @@ func (c *Conn) Available() int {
 }
 
 func (c *Conn) readToBuffer() error {
-	if err := c.writeResetIfNeeded(); err != nil {
+	if err := c.resetIfNeeded(); err != nil {
 		return err
 	}
-	buffer := [256]byte{}
+	buffer := [260]byte{}
 	reading := true
 	for reading {
 		n, err := c.readFrame(buffer[:])
@@ -70,13 +72,13 @@ func (c *Conn) readFrame(buffer []byte) (int, error) {
 	case hd.valid() != nil:
 		return 0, fmt.Errorf("invalid header: %x", hd)
 	}
-	if _, err = io.ReadFull(c.file, buffer[:hd.len()]); err != nil {
+	if _, err = io.ReadFull(c.file, buffer[:hd.len()+2]); err != nil {
 		return 0, err
 	}
 	if err := c.writeAck(); err != nil {
 		return 0, err
 	}
-	data, err := unmarshal(buffer[:hd.len()])
+	data, err := c.unmarshal(buffer[:hd.len()+2])
 	if err != nil {
 		return 0, err
 	}
@@ -103,7 +105,7 @@ func (c *Conn) writeAck() error {
 	return nil
 }
 
-func (c *Conn) writeResetIfNeeded() error {
+func (c *Conn) resetIfNeeded() error {
 	if c.needReset {
 		err := c.writeResetRequest()
 		c.needReset = false
@@ -119,6 +121,17 @@ func (c *Conn) writeResetRequest() error {
 	return c.readAck()
 }
 
+func (c *Conn) unmarshal(data []byte) ([]byte, error) {
+	if !validControl(c.serverEven, data[0]) {
+		return nil, fmt.Errorf("invalid ft12 control byte")
+	}
+	c.serverEven = !c.serverEven
+	if data[len(data)-1] != 0x16 {
+		return nil, fmt.Errorf("invalid ft12 last byte")
+	}
+	return nil, nil
+}
+
 func NewConn(ttyName string) (*Conn, error) {
 	f, err := os.OpenFile(ttyName, os.O_RDWR, 0)
 	if err != nil {
@@ -128,5 +141,12 @@ func NewConn(ttyName string) (*Conn, error) {
 		_ = f.Close()
 		return nil, err
 	}
-	return &Conn{needReset: true, file: f, data: bytes.Buffer{}}, nil
+	return &Conn{needReset: true, serverEven: false, hostEven: false, data: bytes.Buffer{}}, nil
+}
+
+func validControl(even bool, seen byte) bool {
+	if even {
+		return seen == 0xD3
+	}
+	return seen == 0xF3
 }
