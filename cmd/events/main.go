@@ -14,7 +14,15 @@ func handleDatapointValueInd(buffer []byte) error {
 	if err := indication.UnmarshalBinary(buffer); err != nil {
 		return err
 	}
-	_, _ = fmt.Fprintf(os.Stdout, "happen value indication of %d datapoint\n", indication.StartDatapoint)
+	if indication.StartDatapoint == 38 {
+		dpt, err := indication.Values[0].DPTBool()
+		if err != nil {
+			return err
+		}
+		_, _ = fmt.Fprintf(os.Stdout, "datapoint %d: %s\n", indication.Values[0].ID, dpt.String())
+	} else {
+		_, _ = fmt.Fprintf(os.Stdout, "happen value indication of %d datapoint\n", indication.StartDatapoint)
+	}
 	return nil
 }
 
@@ -45,7 +53,7 @@ func run(device string) error {
 
 func usage(writer io.Writer) {
 	flag.CommandLine.SetOutput(writer)
-	flag.CommandLine.Usage()
+	flag.CommandLine.PrintDefaults()
 }
 
 func main() {

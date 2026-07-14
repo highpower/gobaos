@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"gobaos/pkg/knxtypes"
 )
 
 type DatapointID uint16
@@ -44,22 +45,12 @@ func (d *Datapoint) String() string {
 	return fmt.Sprintf("datapointValue[id=%d,state=%d,data=%x]", d.ID, d.State, d.Data)
 }
 
-func (d *Datapoint) DPTBoolean() (bool, error) {
-	if len(d.Data) != 1 {
-		return false, fmt.Errorf(" %w datapoint requested, data size = %d", ErrInvalid, len(d.Data))
+func (d *Datapoint) DPTBool() (knxtypes.DPTBool, error) {
+	result := knxtypes.NewDPTBool()
+	if err := result.UnmarshalBinary(d.Data); err != nil {
+		return knxtypes.NewDPTBool(), err
 	}
-	return d.Data[0]&1 == 1, nil
-}
-
-func (d *Datapoint) DPTControl() (Control, error) {
-	if len(d.Data) != 1 {
-		return NewControl(false, false), fmt.Errorf(" %w datapoint requested, data size = %d", ErrInvalid, len(d.Data))
-	}
-	return NewControl(false, false), nil
-}
-
-func (d *Datapoint) DPTDimming() float64 {
-	return 1
+	return result, nil
 }
 
 func (d *Datapoint) data() (id DatapointID, extra byte, data []byte) {

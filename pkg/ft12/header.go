@@ -24,6 +24,3 @@ func (h *header) isResetIndication() bool {
 	return bytes.Equal((*h)[:], []byte{0x10, 0xC0, 0xC0, 0x16})
 }
 
-func marshal(data []byte) ([]frame, error) {
-	return nil, nil
-}

@@ -30,6 +30,7 @@ func (c *Conn) Write(p []byte) (int, error) {
 	if err := c.resetIfNeeded(); err != nil {
 		return 0, err
 	}
+
 	return 0, nil
 }
 
