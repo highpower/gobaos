@@ -48,7 +48,7 @@ func (c *Conn) readToBuffer() error {
 	buffer := [260]byte{}
 	reading := true
 	for reading {
-		n, err := c.readFrame(buffer[:])
+		n, err := c.readFrameToBuffer(buffer[:])
 		switch {
 		case err != nil:
 			return err
@@ -59,7 +59,7 @@ func (c *Conn) readToBuffer() error {
 	return nil
 }
 
-func (c *Conn) readFrame(buffer []byte) (int, error) {
+func (c *Conn) readFrameToBuffer(buffer []byte) (int, error) {
 	hd := header{}
 	n, err := io.ReadFull(c.file, hd[:])
 	switch {
@@ -78,7 +78,6 @@ func (c *Conn) readFrame(buffer []byte) (int, error) {
 	if err := c.writeAck(); err != nil {
 		return 0, err
 	}
-
 	data, err := c.unmarshalFrame(buffer[:hd.len()+2])
 	if err != nil {
 		return 0, err
@@ -93,7 +92,7 @@ func (c *Conn) readAck() error {
 		return err
 	}
 	if buffer[0] != 0xE5 {
-		return fmt.Errorf("%w ack", ErrInvalid)
+		return fmt.Errorf("%w ack: %02x", ErrInvalid, buffer[0])
 	}
 	return nil
 }

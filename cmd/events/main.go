@@ -2,9 +2,19 @@ package main
 
 import (
 	"fmt"
+	"gobaos/pkg/baos"
 	"gobaos/pkg/ft12"
 	"os"
 )
+
+func handleDatapointValueInd(buffer []byte) error {
+	indication := baos.DatapointValueInd{}
+	if err := indication.UnmarshalBinary(buffer); err != nil {
+		return err
+	}
+	_, _ = fmt.Fprintf(os.Stdout, "%d\n", indication.StartDatapoint)
+	return nil
+}
 
 func main() {
 	conn, err := ft12.NewConn("/dev/ttyAMA0")
@@ -24,6 +34,12 @@ func main() {
 		_, err := conn.Read(buffer)
 		if err != nil {
 			_, _ = fmt.Fprintf(os.Stderr, "buffer read error: %s\n", err.Error())
+		}
+		if baos.IsDatapointValueInd(buffer) {
+			if err := handleDatapointValueInd(buffer); err != nil {
+				_, _ = fmt.Fprintf(os.Stderr, "handle datapoint value error: %s\n", err.Error())
+				os.Exit(1)
+			}
 		}
 	}
 }

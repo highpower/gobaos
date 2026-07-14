@@ -76,3 +76,7 @@ func (r *DatapointValueInd) UnmarshalBinary(data []byte) error {
 	*r = DatapointValueInd{startDatapoint, values}
 	return nil
 }
+
+func IsDatapointValueInd(data []byte) bool {
+	return len(data) > 6 && data[0] == MainService && data[1] == SubServiceDatapointValueInd
+}
