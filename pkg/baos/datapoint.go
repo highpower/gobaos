@@ -53,6 +53,14 @@ func (d *Datapoint) DPTBool() (knxtypes.DPTBool, error) {
 	return result, nil
 }
 
+func (d *Datapoint) DPTFloat() (knxtypes.DPTFloat, error) {
+	result := knxtypes.NewDPTFloat()
+	if err := result.UnmarshalBinary(d.Data); err != nil {
+		return knxtypes.NewDPTFloat(), err
+	}
+	return result, nil
+}
+
 func (d *Datapoint) data() (id DatapointID, extra byte, data []byte) {
 	return d.ID, byte(d.State), d.Data
 }

@@ -14,13 +14,20 @@ func handleDatapointValueInd(buffer []byte) error {
 	if err := indication.UnmarshalBinary(buffer); err != nil {
 		return err
 	}
-	if indication.StartDatapoint == 38 {
+	switch indication.StartDatapoint {
+	case 2:
+		dpt, err := indication.Values[0].DPTFloat()
+		if err != nil {
+			return err
+		}
+		_, _ = fmt.Fprintf(os.Stdout, "datapoint %d: %s\n", indication.Values[0].ID, dpt.String())
+	case 38 | 39 | 40:
 		dpt, err := indication.Values[0].DPTBool()
 		if err != nil {
 			return err
 		}
 		_, _ = fmt.Fprintf(os.Stdout, "datapoint %d: %s\n", indication.Values[0].ID, dpt.String())
-	} else {
+	default:
 		_, _ = fmt.Fprintf(os.Stdout, "happen value indication of %d datapoint\n", indication.StartDatapoint)
 	}
 	return nil

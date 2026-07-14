@@ -134,71 +134,7 @@ func (d *DPT8) Unmarshal(data []byte) error {
 	return nil
 }
 
-// DPT9 represents KNX DPT 9.xxx (2-byte float, E5 mantissa).
-type DPT9 struct {
-	Value float64
-}
-
-// Marshal encodes DPT9 into a 2-byte float payload.
-func (d *DPT9) Marshal() ([]byte, error) {
-	if math.IsNaN(d.Value) || math.IsInf(d.Value, 0) {
-		return nil, fmt.Errorf("DPT9 %w: cannot encode NaN or Inf", ErrUnmarshal)
-	}
-
-	v := d.Value
-	exp := 0
-
-	// Scale value into 11-bit signed mantissa range (-2048..2047).
-	for v < -2048.0 || v > 2047.0 {
-		if exp >= 15 {
-			return nil, fmt.Errorf("DPT9 %w: value %v out of range", ErrUnmarshal, d.Value)
-		}
-		v /= 2.0
-		exp++
-	}
-	for v != 0 && v > -1.0 && v < 1.0 {
-		if exp <= -15 {
-			return []byte{0, 0}, nil
-		}
-		v *= 2.0
-		exp--
-	}
-
-	mant := int16(math.Round(v))
-	if mant < -2048 || mant > 2047 {
-		return nil, fmt.Errorf("DPT9 %w: mantissa %d out of range", ErrUnmarshal, mant)
-	}
-
-	var raw uint16
-	if mant < 0 {
-		raw = uint16(mant + 2048)
-		raw |= 0x8000
-	} else {
-		raw = uint16(mant)
-	}
-	raw |= (uint16(exp) & 0x0F) << 11
-
-	return []byte{byte(raw >> 8), byte(raw)}, nil
-}
-
-// Unmarshal decodes a 2-byte float payload into DPT9.
-func (d *DPT9) Unmarshal(data []byte) error {
-	if len(data) != 2 {
-		return fmt.Errorf("DPT9 %w: expected 2 bytes, got %d", ErrUnmarshal, len(data))
-	}
-
-	raw := uint16(data[0])<<8 | uint16(data[1])
-	sign := raw & 0x8000
-	exp := int((raw & 0x7800) >> 11)
-	mant := int(raw & 0x07FF)
-
-	if sign != 0 {
-		mant = mant - 2048
-	}
-
-	d.Value = float64(mant) * math.Pow(2, float64(exp))
-	return nil
-}
+// DPTFloat represents KNX DPT 9.xxx (2-byte float, E5 mantissa).
 
 // DPT10 represents KNX DPT 10.xxx (Time of day).
 type DPT10 struct {
