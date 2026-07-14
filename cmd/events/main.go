@@ -1,9 +1,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"gobaos/pkg/baos"
 	"gobaos/pkg/ft12"
+	"io"
 	"os"
 )
 
@@ -12,12 +14,12 @@ func handleDatapointValueInd(buffer []byte) error {
 	if err := indication.UnmarshalBinary(buffer); err != nil {
 		return err
 	}
-	_, _ = fmt.Fprintf(os.Stdout, "%d\n", indication.StartDatapoint)
+	_, _ = fmt.Fprintf(os.Stdout, "happen value indication of %d datapoint\n", indication.StartDatapoint)
 	return nil
 }
 
-func main() {
-	conn, err := ft12.NewConn("/dev/ttyAMA0")
+func run(device string) {
+	conn, err := ft12.NewConn(device)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "connect error: %s\n", err.Error())
 		os.Exit(1)
@@ -42,4 +44,25 @@ func main() {
 			}
 		}
 	}
+}
+
+func usage(writer io.Writer) {
+	flag.CommandLine.SetOutput(writer)
+	flag.CommandLine.Usage()
+}
+
+func main() {
+
+	var device string
+	flag.StringVar(&device, "device", "", "device to read uart")
+
+	flag.Usage = func() { usage(os.Stdout) }
+	flag.Parse()
+
+	if !flag.Parsed() {
+		usage(os.Stderr)
+		os.Exit(2)
+	}
+
+	run(device)
 }
