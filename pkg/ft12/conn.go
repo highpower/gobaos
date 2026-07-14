@@ -18,7 +18,7 @@ type Conn struct {
 
 func (c *Conn) Read(p []byte) (int, error) {
 	if len(p) != 0 && c.data.Len() != 0 {
-		return c.data.Read(p)
+		return c.copyFromBuffer(p)
 	}
 	if err := c.readToBuffer(); err != nil {
 		return 0, err
@@ -114,13 +114,25 @@ func (c *Conn) unmarshalFrame(data []byte) ([]byte, error) {
 		return nil, fmt.Errorf("%w last byte: %d", ErrInvalid, data[len(data)-1])
 	}
 	checksum := 0
-	for i := 0; i < len(data)-3; i++ {
+	for i := 0; i < len(data)-2; i++ {
 		checksum += int(data[i])
 	}
 	if cs := int(data[len(data)-2]); cs != checksum%256 {
-		return nil, fmt.Errorf("%w checksum: %d, expected %d", ErrInvalid, checksum, cs)
+		return nil, fmt.Errorf("%w checksum: %d, expected %d", ErrInvalid, checksum%256, cs)
 	}
 	return data[1 : len(data)-2], nil
+}
+
+func (c *Conn) copyFromBuffer(p []byte) (int, error) {
+	if len(p) < c.data.Len() {
+		return 0, fmt.Errorf("%w data: %d, expected %d", ErrNoSpace, len(p), c.data.Len())
+	}
+	result, err := c.data.Read(p)
+	if err != nil {
+		return 0, err
+	}
+	c.data.Reset()
+	return result, err
 }
 
 func (c *Conn) readAck() error {
