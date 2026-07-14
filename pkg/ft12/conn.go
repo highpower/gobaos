@@ -78,7 +78,7 @@ func (c *Conn) readFrame(buffer []byte) (int, error) {
 	if err := c.writeAck(); err != nil {
 		return 0, err
 	}
-	data, err := c.unmarshal(buffer[:hd.len()+2])
+	data, err := c.unmarshalFrame(buffer[:hd.len()+2])
 	if err != nil {
 		return 0, err
 	}
@@ -121,7 +121,7 @@ func (c *Conn) writeResetRequest() error {
 	return c.readAck()
 }
 
-func (c *Conn) unmarshal(data []byte) ([]byte, error) {
+func (c *Conn) unmarshalFrame(data []byte) ([]byte, error) {
 	if !validControl(c.serverEven, data[0]) {
 		return nil, fmt.Errorf("invalid ft12 control byte")
 	}
