@@ -127,7 +127,7 @@ func unmarshalDatapointsFrom[G any, W datapointWrapper[G]](data []byte, n int) (
 		id := DatapointID(binary.BigEndian.Uint16(data[0:2]))
 		state := data[2]
 		length := int(data[3])
-		if len(data) <= datapointHeaderSize+length {
+		if len(data) < datapointHeaderSize+length {
 			return nil, fmt.Errorf("%w buffer has only %d bytes while %d needed", ErrInvalid,
 				len(data), datapointHeaderSize+length)
 		}
