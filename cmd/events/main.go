@@ -15,13 +15,13 @@ func handleDatapointValueInd(buffer []byte) error {
 		return err
 	}
 	switch indication.StartDatapoint {
-	case 2:
+	case 2, 3, 4, 5, 6, 7:
 		dpt, err := indication.Values[0].DPTFloat()
 		if err != nil {
 			return err
 		}
 		_, _ = fmt.Fprintf(os.Stdout, "datapoint %d: %s\n", indication.Values[0].ID, dpt.String())
-	case 38 | 39 | 40:
+	case 38, 39, 40:
 		dpt, err := indication.Values[0].DPTBool()
 		if err != nil {
 			return err
