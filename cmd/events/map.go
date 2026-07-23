@@ -9,7 +9,7 @@ import (
 
 type dataFunc func(id baos.DatapointID, data []byte) error
 
-type wrapper[G any] interface {
+type dptWrapper[G any] interface {
 	*G
 	knxtypes.DPT
 }
@@ -19,7 +19,7 @@ type stringerWrapper[G any] interface {
 	fmt.Stringer
 }
 
-func handle[G any, W wrapper[G]](id baos.DatapointID, data []byte, f func(id baos.DatapointID, dpt G) error) error {
+func handle[G any, W dptWrapper[G]](id baos.DatapointID, data []byte, f func(id baos.DatapointID, dpt G) error) error {
 	var dpt G
 	if err := W(&dpt).UnmarshalBinary(data); err != nil {
 		return err
@@ -27,7 +27,7 @@ func handle[G any, W wrapper[G]](id baos.DatapointID, data []byte, f func(id bao
 	return f(id, dpt)
 }
 
-func makeHandler[G any, W wrapper[G]](f func(id baos.DatapointID, dpt G) error) dataFunc {
+func makeHandler[G any, W dptWrapper[G]](f func(id baos.DatapointID, dpt G) error) dataFunc {
 	return func(id baos.DatapointID, data []byte) error {
 		return handle[G, W](id, data, f)
 	}
@@ -63,6 +63,8 @@ func (m datapointMap) add(id baos.DatapointID, t string) error {
 		m[id] = makeHandler(printDPT[knxtypes.DPTBool])
 	case knxtypes.Control:
 		m[id] = makeHandler(printDPT[knxtypes.DPTControl])
+	case knxtypes.StepControl:
+		m[id] = makeHandler(printDPT[knxtypes.DPTStepControl])
 	case knxtypes.Float:
 		m[id] = makeHandler(printDPT[knxtypes.DPTFloat])
 	}
