@@ -180,7 +180,7 @@ func NewConn(ttyName string) (*Conn, error) {
 		_ = f.Close()
 		return nil, err
 	}
-	if err := unix.IoctlSetInt(int(f.Fd()), unix.TCIFLUSH, fd); err != nil {
+	if err := unix.IoctlSetInt(int(f.Fd()), unix.TCFLSH, unix.TCIFLUSH); err != nil {
 		_ = f.Close()
 		return nil, err
 	}
