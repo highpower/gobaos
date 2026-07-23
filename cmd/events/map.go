@@ -65,6 +65,16 @@ func (m datapointMap) add(id baos.DatapointID, t string) error {
 		m[id] = makeHandler(printDPT[knxtypes.DPTControl])
 	case knxtypes.StepControl:
 		m[id] = makeHandler(printDPT[knxtypes.DPTStepControl])
+	case knxtypes.Char:
+		m[id] = makeHandler(printDPT[knxtypes.DPTChar])
+	case knxtypes.Uint8:
+		m[id] = makeHandler(printDPT[knxtypes.DPTUint8])
+	case knxtypes.Int8:
+		m[id] = makeHandler(printDPT[knxtypes.DPTInt8])
+	case knxtypes.Uint16:
+		m[id] = makeHandler(printDPT[knxtypes.DPTUint16])
+	case knxtypes.Int16:
+		m[id] = makeHandler(printDPT[knxtypes.DPTInt16])
 	case knxtypes.Float:
 		m[id] = makeHandler(printDPT[knxtypes.DPTFloat])
 	default:
