@@ -2,6 +2,6 @@
 
 package ft12
 
-func flush(fd int) error {
+func flush(_ int) error {
 	return nil
 }
