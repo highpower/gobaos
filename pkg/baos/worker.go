@@ -13,9 +13,15 @@ type BoolValue struct {
 	Value bool
 }
 
+type ControlValue struct {
+	ID      DatapointID
+	Control bool
+	Value   bool
+}
+
 type Worker struct {
-	// conn *ft12.Conn
-	ihm indicationHandlerMap
+	conn     *ft12.Conn
+	handlers indicationHandlerMap
 }
 
 type dptWrapper[G any] interface {
@@ -23,30 +29,37 @@ type dptWrapper[G any] interface {
 	knxtypes.DPT
 }
 
-func (w *Worker) SetBool(values []BoolValue) {
+func (w *Worker) SetBool(values []BoolValue) error {
+	//TODO: implement
+	return nil
+}
 
+func (w *Worker) SetControl(values []ControlValue) error {
+	//TODO: implement
+	return nil
 }
 
 func (w *Worker) OnBoolIndication(ids []DatapointID, f func(id DatapointID, val knxtypes.DPTBool) error) {
 	for _, id := range ids {
-		w.ihm[id] = makeHandler[knxtypes.DPTBool](f)
+		w.handlers[id] = makeHandler[knxtypes.DPTBool](f)
 	}
 }
 
 func (w *Worker) OnControlIndication(ids []DatapointID, f func(id DatapointID, val knxtypes.DPTControl) error) {
 	for _, id := range ids {
-		w.ihm[id] = makeHandler[knxtypes.DPTControl](f)
+		w.handlers[id] = makeHandler[knxtypes.DPTControl](f)
 	}
 }
 
 func (w *Worker) OnStepControlIndication(ids []DatapointID, f func(id DatapointID, val knxtypes.DPTStepControl) error) {
 	for _, id := range ids {
-		w.ihm[id] = makeHandler[knxtypes.DPTStepControl](f)
+		w.handlers[id] = makeHandler[knxtypes.DPTStepControl](f)
 	}
 }
 
 func NewWorker(conn *ft12.Conn) Worker {
-	return Worker{}
+	result := Worker{conn: conn, handlers: make(map[DatapointID]dataFunc)}
+	return result
 }
 
 func handle[G any, W dptWrapper[G]](id DatapointID, data []byte, f func(id DatapointID, dpt G) error) error {

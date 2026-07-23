@@ -81,6 +81,7 @@ func (c *Conn) readFrameToBuffer(buffer []byte) (int, error) {
 	n, err := io.ReadFull(c.file, hd[:])
 	switch {
 	case err != nil:
+		return 0, err
 	case n == 0:
 		return 0, nil
 	case hd.isResetIndication():

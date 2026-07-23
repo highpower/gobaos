@@ -16,9 +16,9 @@ func TestSetServerItemReqValid(t *testing.T) {
 		{name: "WithItems", value: SetServerItemReq{Items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, errorExpected: false},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			err := tc.value.Valid()
 			switch {
 			case err == nil && tc.errorExpected:
@@ -45,9 +45,9 @@ func TestSetServerItemReqEqual(t *testing.T) {
 		{name: "ItemsLenUnequal", value: SetServerItemReq{Items: []ServerItem{{ID: 1}}}, other: SetServerItemReq{Items: []ServerItem{}}, resultExpected: false},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			if res := tc.value.Equal(&tc.other); res != tc.resultExpected {
 				t.Errorf("incorrect result: expected %t, got %t", tc.resultExpected, res)
 			}
@@ -66,9 +66,9 @@ func TestSetServerItemReqMarshal(t *testing.T) {
 		{name: "MultipleItems", value: SetServerItemReq{Items: []ServerItem{{ID: 10, Data: []byte{0x01, 0x02}}, {ID: 11, Data: []byte{0x03}}}}},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			data, err := tc.value.MarshalBinary()
 			if err != nil {
 				t.Fatalf("marshal: %s", err.Error())
@@ -99,9 +99,9 @@ func TestSetServerItemReqUnmarshalErrors(t *testing.T) {
 		{name: "ItemDataTooShort", data: []byte{0xF0, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x02}, errExpected: true},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			r := SetServerItemReq{}
 			err := r.UnmarshalBinary(tc.data)
 			switch {
@@ -128,9 +128,9 @@ func TestSetServerItemResValid(t *testing.T) {
 		{name: "ItemsAndErrorCode", value: SetServerItemRes{StartItem: 1, NumberOfItems: 5, ErrorCode: 5}, errorExpected: true},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			err := tc.value.Valid()
 			switch {
 			case err == nil && tc.errorExpected:
@@ -157,9 +157,9 @@ func TestSetServerItemResEqual(t *testing.T) {
 		{name: "ErrorCodeUnequal", value: SetServerItemRes{ErrorCode: 1}, other: SetServerItemRes{ErrorCode: 2}, resultExpected: false},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			if res := tc.value.Equal(&tc.other); res != tc.resultExpected {
 				t.Errorf("incorrect result: expected %t, got %t", tc.resultExpected, res)
 			}
@@ -178,9 +178,9 @@ func TestSetServerItemResMarshal(t *testing.T) {
 		{name: "Error", value: SetServerItemRes{StartItem: 3, ErrorCode: 5}},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			data, err := tc.value.MarshalBinary()
 			if err != nil {
 				t.Fatalf("marshal: %s", err.Error())
@@ -209,9 +209,9 @@ func TestSetServerItemResUnmarshalErrors(t *testing.T) {
 		{name: "WrongSubService", data: []byte{0xF0, 0x00, 0x00, 0x00, 0x00, 0x00}, errExpected: true},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			r := SetServerItemRes{}
 			err := r.UnmarshalBinary(tc.data)
 			switch {

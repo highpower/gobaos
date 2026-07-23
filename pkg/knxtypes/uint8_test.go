@@ -20,12 +20,12 @@ func TestDPTUInt8Marshal(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			dpt := DPTUInt8{Value: tc.value}
+			dpt := DPTUint8{Value: tc.value}
 			data, err := dpt.MarshalBinary()
 			if err != nil {
 				t.Fatalf("%s", err.Error())
 			}
-			other := DPTUInt8{}
+			other := DPTUint8{}
 			if err = other.UnmarshalBinary(data); err != nil {
 				t.Fatalf("%s", err.Error())
 			}
@@ -37,20 +37,20 @@ func TestDPTUInt8Marshal(t *testing.T) {
 }
 
 func TestDPTUInt8BadUnmarshal(t *testing.T) {
-	testBadUnmarshal[DPTUInt8](t)
+	testBadUnmarshal[DPTUint8](t)
 }
 
 func TestDPTUInt8Set(t *testing.T) {
 	type testCase struct {
 		name          string
 		input         string
-		expected      DPTUInt8
+		expected      DPTUint8
 		errorExpected bool
 	}
 
 	testCases := []testCase{
-		{name: "Zero", input: "0", expected: DPTUInt8{Value: 0}, errorExpected: false},
-		{name: "Max", input: strconv.Itoa(math.MaxUint8), expected: DPTUInt8{Value: 255}, errorExpected: false},
+		{name: "Zero", input: "0", expected: DPTUint8{Value: 0}, errorExpected: false},
+		{name: "Max", input: strconv.Itoa(math.MaxUint8), expected: DPTUint8{Value: 255}, errorExpected: false},
 		{name: "Bad", input: "abc", errorExpected: true},
 		{name: "Negative", input: "-1", errorExpected: true},
 		{name: "Overflow", input: strconv.FormatInt(int64(math.MaxUint8)+1, 10), errorExpected: true},
@@ -59,7 +59,7 @@ func TestDPTUInt8Set(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			dpt := DPTUInt8{}
+			dpt := DPTUint8{}
 			err := dpt.Set(tc.input)
 			switch {
 			case err == nil && tc.errorExpected:
@@ -77,11 +77,11 @@ func TestDPTUInt8Set(t *testing.T) {
 }
 
 func FuzzDPTUInt8(f *testing.F) {
-	dpt := DPTUInt8{Value: 42}
+	dpt := DPTUint8{Value: 42}
 	data, _ := dpt.MarshalBinary()
 	f.Add(data)
 	f.Fuzz(func(t *testing.T, data []byte) {
-		other := DPTUInt8{}
+		other := DPTUint8{}
 		_ = other.UnmarshalBinary(data)
 	})
 }

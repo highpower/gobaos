@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"unsafe"
 )
 
 type ServerItem struct {
@@ -12,7 +11,7 @@ type ServerItem struct {
 	Data []byte
 }
 
-const serverItemHeaderSize = int(unsafe.Sizeof(ItemID(0))) + 1
+const serverItemHeaderSize = 3
 
 func (i *ServerItem) String() string {
 	return fmt.Sprintf("serverItem[id=%d,data=%x]", i.ID, i.Data)

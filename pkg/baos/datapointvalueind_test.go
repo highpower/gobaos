@@ -17,9 +17,9 @@ func TestDatapointValueIndValid(t *testing.T) {
 			Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}, errorExpected: false},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			err := tc.value.Valid()
 			switch {
 			case err == nil && tc.errorExpected:
@@ -50,9 +50,9 @@ func TestDatapointValueIndEqual(t *testing.T) {
 			other: DatapointValueInd{Values: []Datapoint{{ID: 2}}}, resultExpected: false},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			if res := tc.value.Equal(&tc.other); res != tc.resultExpected {
 				t.Errorf("incorrect result: expected %t, got %t", tc.resultExpected, res)
 			}
@@ -72,9 +72,9 @@ func TestDatapointValueIndMarshal(t *testing.T) {
 			{ID: 10, State: 0x10, Data: []byte{0x01}}, {ID: 11, State: 0x20, Data: []byte{0x03, 0x04}}}}},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			data, err := tc.value.MarshalBinary()
 			if err != nil {
 				t.Fatalf("marshal: %s", err.Error())
@@ -104,9 +104,9 @@ func TestDatapointValueIndUnmarshalErrors(t *testing.T) {
 		{name: "TruncatedValues", data: []byte{0xF0, 0xC1, 0x00, 0x00, 0x00, 0x01}, errExpected: true},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			r := DatapointValueInd{}
 			err := r.UnmarshalBinary(tc.data)
 			switch {
@@ -117,4 +117,15 @@ func TestDatapointValueIndUnmarshalErrors(t *testing.T) {
 			}
 		})
 	}
+}
+
+func FuzzDatapointValueInd(f *testing.F) {
+
+	ind := DatapointValueInd{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}
+	data, _ := ind.MarshalBinary()
+	f.Add(data)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		other := DatapointValueInd{}
+		_ = other.UnmarshalBinary(data)
+	})
 }

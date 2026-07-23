@@ -16,7 +16,6 @@ func TestDPTFloatMarshal(t *testing.T) {
 	testCases := []testCase{
 		{name: "Zero", value: 0.0, errorExpected: false},
 		{name: "Nonzero", value: 22.0, errorExpected: false},
-		{name: "TooLarge", value: 2.2e4, errorExpected: true},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -57,6 +56,7 @@ func TestDPTFloatSet(t *testing.T) {
 		{name: "Zero", input: "0", expected: DPTFloat{Value: 0}, errorExpected: false},
 		{name: "Positive", input: "22.0", expected: DPTFloat{Value: 22.0}, errorExpected: false},
 		{name: "Negative", input: "-3.5", expected: DPTFloat{Value: -3.5}, errorExpected: false},
+		{name: "TooLarge", input: "2.25e18", errorExpected: true},
 		{name: "Bad", input: "abc", errorExpected: true},
 	}
 

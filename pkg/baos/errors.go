@@ -26,30 +26,30 @@ func (e ErrorCode) Byte() byte {
 }
 
 func (e ErrorCode) Error() string {
-	switch byte(e) {
-	case byte(NoError):
+	switch e {
+	case NoError:
 		return "no error"
-	case byte(InternalError):
+	case InternalError:
 		return "internal error"
-	case byte(NoElementFound):
+	case NoElementFound:
 		return "no element found"
-	case byte(BufferIsTooSmall):
+	case BufferIsTooSmall:
 		return "buffer is too small"
-	case byte(ItemIsNotWriteable):
+	case ItemIsNotWriteable:
 		return "item is not writeable"
-	case byte(ServiceIsNotSupported):
+	case ServiceIsNotSupported:
 		return "service is not supported"
-	case byte(BadServiceParameter):
+	case BadServiceParameter:
 		return "bad service parameter"
-	case byte(BadID):
+	case BadID:
 		return "bad id"
-	case byte(BadCommandValue):
+	case BadCommandValue:
 		return "bad command/value"
-	case byte(BadLength):
+	case BadLength:
 		return "bad length"
-	case byte(MessageInconsistent):
+	case MessageInconsistent:
 		return "message inconsistent"
-	case byte(ObjectServerIsBusy):
+	case ObjectServerIsBusy:
 		return "object server is busy"
 	}
 	return "unknown error"

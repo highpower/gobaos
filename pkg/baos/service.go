@@ -1,6 +1,6 @@
 package baos
 
-type Service interface {
+type Message interface {
 	Service() byte
 	SubService() byte
 }

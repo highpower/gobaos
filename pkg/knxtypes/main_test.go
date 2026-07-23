@@ -1,6 +1,8 @@
 package knxtypes
 
-import "testing"
+import (
+	"testing"
+)
 
 type dptWrapper[G any] interface {
 	*G
@@ -9,13 +11,13 @@ type dptWrapper[G any] interface {
 
 func bytesRequired(code TypeCode) int {
 	switch code {
-	case Bool, Control, StepControl, Char, UInt8, Int8:
+	case Bool, Control, StepControl, Char, Uint8, Int8:
 		return 1
-	case UInt16, Int16, Float:
+	case Uint16, Int16, Float:
 		return 2
-	case TimeOfDay, Date:
+	case TimeOfDay, Date, RedGreenBlue:
 		return 3
-	case UInt32, Int32:
+	case Uint32, Int32, Float4Byte:
 		return 4
 	}
 	return -1
@@ -23,11 +25,16 @@ func bytesRequired(code TypeCode) int {
 
 func testBadUnmarshal[G any, W dptWrapper[G]](t *testing.T) {
 	var value G
-	data := make([]byte, bytesRequired(W(&value).TypeCode())+1)
+	code := W(&value).TypeCode()
+	length := bytesRequired(code)
+	if length < 0 {
+		t.Fatalf("unknown length for type %s", code.String())
+	}
+	data := make([]byte, length+1)
 	for i := range data {
 		data[i] = byte(i)
 	}
 	if err := W(&value).UnmarshalBinary(data); err == nil {
-		t.Fatalf("error expected during unmarshal of %s", W(&value).TypeCode().String())
+		t.Errorf("error expected during unmarshal of %s", W(&value).TypeCode().String())
 	}
 }

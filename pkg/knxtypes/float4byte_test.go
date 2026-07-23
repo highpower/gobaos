@@ -15,8 +15,8 @@ func TestDPTFloat4ByteMarshal(t *testing.T) {
 		{name: "Zero", value: 0.0},
 		{name: "Positive", value: 22.0},
 		{name: "Negative", value: -3.5},
-		{name: "MaxFloat32", value: float64(math.MaxFloat32)},
-		{name: "SmallestNonzeroFloat32", value: float64(math.SmallestNonzeroFloat32)},
+		{name: "MaxFloat32", value: math.MaxFloat32},
+		{name: "SmallestNonzeroFloat32", value: math.SmallestNonzeroFloat32},
 	}
 
 	for _, tc := range testCases {

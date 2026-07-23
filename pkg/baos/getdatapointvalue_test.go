@@ -18,9 +18,9 @@ func TestGetDatapointValueReqValid(t *testing.T) {
 			value: GetDatapointValueReq{1, 5, 6}, errorExpected: true},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			err := tc.value.Valid()
 			switch {
 			case err == nil && tc.errorExpected:
@@ -55,9 +55,9 @@ func TestGetDatapointValueReqEqual(t *testing.T) {
 			other: GetDatapointValueReq{1, 5, 1}, resultExpected: false},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			if res := tc.value.Equal(&tc.other); res != tc.resultExpected {
 				t.Errorf("incorrect result: expected %t, got %t", tc.resultExpected, res)
 			}
@@ -76,9 +76,9 @@ func TestGetDatapointValueReqMarshal(t *testing.T) {
 		{name: "Nonempty", value: GetDatapointValueReq{2, 4, ValidDatapoints}},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			data, err := tc.value.MarshalBinary()
 			if err != nil {
 				t.Fatalf("%s", err.Error())
@@ -107,9 +107,9 @@ func TestGetDatapointValueReqUnmarshalErrors(t *testing.T) {
 		{name: "WrongSubService", data: []byte{0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, errExpected: true},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			r := GetDatapointValueReq{}
 			err := r.UnmarshalBinary(tc.data)
 			switch {
@@ -139,9 +139,9 @@ func TestGetDatapointValueResValid(t *testing.T) {
 			StartDatapoint: 1, Values: []Datapoint{{ID: 1, Data: []byte{0x01}}}, ErrorCode: 5}, errorExpected: true},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			err := tc.value.Valid()
 			switch {
 			case err == nil && tc.errorExpected:
@@ -179,9 +179,9 @@ func TestGetDatapointValueResEqual(t *testing.T) {
 			other: GetDatapointValueRes{Values: []Datapoint{{ID: 1, Data: []byte{0x02}}}}, resultExpected: false},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			if res := tc.value.Equal(&tc.other); res != tc.resultExpected {
 				t.Errorf("incorrect result: expected %t, got %t", tc.resultExpected, res)
 			}
@@ -204,9 +204,9 @@ func TestGetDatapointValueResMarshal(t *testing.T) {
 		{name: "Error", value: GetDatapointValueRes{StartDatapoint: 3, ErrorCode: 5}},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			data, err := tc.value.MarshalBinary()
 			if err != nil {
 				t.Fatalf("marshal: %s", err.Error())
@@ -237,9 +237,9 @@ func TestGetDatapointValueResUnmarshalErrors(t *testing.T) {
 		{name: "InvalidLength", data: []byte{0xF0, 0x85, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x10, 0xFF}, errExpected: true},
 	}
 
-	t.Parallel()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			r := GetDatapointValueRes{}
 			err := r.UnmarshalBinary(tc.data)
 			switch {

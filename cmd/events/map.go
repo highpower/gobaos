@@ -68,5 +68,5 @@ func (m datapointMap) add(id baos.DatapointID, t string) error {
 	case knxtypes.Float:
 		m[id] = makeHandler(printDPT[knxtypes.DPTFloat])
 	}
-	return nil
+	return fmt.Errorf("unsupported type %s", code.String())
 }

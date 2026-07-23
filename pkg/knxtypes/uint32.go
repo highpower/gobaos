@@ -24,7 +24,7 @@ func (d *DPTUint32) Set(s string) error {
 }
 
 func (d *DPTUint32) TypeCode() TypeCode {
-	return UInt32
+	return Uint32
 }
 
 func (d *DPTUint32) String() string {
@@ -39,7 +39,7 @@ func (d *DPTUint32) MarshalBinary() ([]byte, error) {
 
 func (d *DPTUint32) UnmarshalBinary(data []byte) error {
 	if len(data) != 4 {
-		return fmt.Errorf("%w: type %s requires 4 bytes, got %d", ErrUnmarshal, UInt32.String(), len(data))
+		return fmt.Errorf("%w: type %s requires 4 bytes, got %d", ErrUnmarshal, Uint32.String(), len(data))
 	}
 	d.Value = binary.BigEndian.Uint32(data)
 	return nil

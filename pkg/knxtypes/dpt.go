@@ -17,20 +17,21 @@ type DPT interface {
 }
 
 const (
-	Bool        TypeCode = 1
-	Control     TypeCode = 2
-	StepControl TypeCode = 3
-	Char        TypeCode = 4
-	UInt8       TypeCode = 5
-	Int8        TypeCode = 6
-	UInt16      TypeCode = 7
-	Int16       TypeCode = 8
-	Float       TypeCode = 9
-	TimeOfDay   TypeCode = 10
-	Date        TypeCode = 11
-	UInt32      TypeCode = 12
-	Int32       TypeCode = 13
-	Float4Byte  TypeCode = 14
+	Bool         TypeCode = 1
+	Control      TypeCode = 2
+	StepControl  TypeCode = 3
+	Char         TypeCode = 4
+	Uint8        TypeCode = 5
+	Int8         TypeCode = 6
+	Uint16       TypeCode = 7
+	Int16        TypeCode = 8
+	Float        TypeCode = 9
+	TimeOfDay    TypeCode = 10
+	Date         TypeCode = 11
+	Uint32       TypeCode = 12
+	Int32        TypeCode = 13
+	Float4Byte   TypeCode = 14
+	RedGreenBlue TypeCode = 232
 )
 
 func (t TypeCode) String() string {
@@ -43,10 +44,10 @@ func (t TypeCode) String() string {
 		return "StepControl"
 	case Char:
 		return "Char"
-	case UInt8:
-		return "UInt8"
-	case UInt16:
-		return "UInt16"
+	case Uint8:
+		return "Uint8"
+	case Uint16:
+		return "Uint16"
 	case Int16:
 		return "Int16"
 	case Int8:
@@ -57,13 +58,14 @@ func (t TypeCode) String() string {
 		return "TimeOfDay"
 	case Date:
 		return "Date"
-	case UInt32:
-		return "UInt32"
+	case Uint32:
+		return "Uint32"
 	case Int32:
 		return "Int32"
 	case Float4Byte:
 		return "Float4Byte"
-
+	case RedGreenBlue:
+		return "RedGreenBlue"
 	}
 	return "Unknown"
 }
@@ -79,11 +81,11 @@ func ParseTypeCode(s string) (TypeCode, error) {
 	case "char":
 		return Char, nil
 	case "uint8":
-		return UInt8, nil
+		return Uint8, nil
 	case "int8":
 		return Int8, nil
 	case "uint16":
-		return UInt16, nil
+		return Uint16, nil
 	case "int16":
 		return Int16, nil
 	case "float":
@@ -93,11 +95,13 @@ func ParseTypeCode(s string) (TypeCode, error) {
 	case "date":
 		return Date, nil
 	case "uint32":
-		return UInt32, nil
+		return Uint32, nil
 	case "int32":
 		return Int32, nil
-	case "float4Byte":
+	case "float4byte":
 		return Float4Byte, nil
+	case "rgb", "redgreenblue":
+		return RedGreenBlue, nil
 	}
 	return TypeCode(0), fmt.Errorf("%w: %s", ErrUnknownType, s)
 }

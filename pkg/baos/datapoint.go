@@ -10,8 +10,6 @@ type DatapointID uint16
 
 type State byte
 
-type Command byte
-
 type Datapoint struct {
 	ID    DatapointID
 	State State
@@ -74,18 +72,18 @@ func (c *DatapointCommand) attachData(id DatapointID, extra byte, data []byte) {
 
 func datapointsSizeInBytes[G any, W datapointWrapper[G]](values []G) int {
 	totalSize := 0
-	for _, v := range values {
-		_, _, data := W(&v).data()
+	for i := range values {
+		_, _, data := W(&values[i]).data()
 		totalSize += datapointHeaderSize + len(data)
 	}
 	return totalSize
 }
 
 func marshalDatapointsTo[G any, W datapointWrapper[G]](data []byte, datapoints []G) error {
-	for _, v := range datapoints {
-		id, extra, d := W(&v).data()
-		if len(data) < 4+len(d) {
-			return fmt.Errorf("%w buffer has no capacity: %d while %d needed", ErrInvalid, len(data), 3+len(d))
+	for i := range datapoints {
+		id, extra, d := W(&datapoints[i]).data()
+		if len(data) < len(d)+4 {
+			return fmt.Errorf("%w buffer has no capacity: %d while %d needed", ErrInvalid, len(data), len(d)+4)
 		}
 		binary.BigEndian.PutUint16(data[0:2], uint16(id))
 		data[2] = extra

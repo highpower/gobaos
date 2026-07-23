@@ -94,26 +94,3 @@ func (d *DPT20) Unmarshal(data []byte) error {
 	*d = DPT20(data[0])
 	return nil
 }
-
-// DPT232 represents KNX DPT 232.600 (RGB color).
-type DPT232 struct {
-	R uint8
-	G uint8
-	B uint8
-}
-
-// Marshal encodes DPT232 into a 3-byte payload.
-func (d *DPT232) Marshal() ([]byte, error) {
-	return []byte{d.R, d.G, d.B}, nil
-}
-
-// Unmarshal decodes a 3-byte payload into DPT232.
-func (d *DPT232) Unmarshal(data []byte) error {
-	if len(data) != 3 {
-		return fmt.Errorf("DPT232 %w: expected 3 bytes, got %d", ErrUnmarshal, len(data))
-	}
-	d.R = data[0]
-	d.G = data[1]
-	d.B = data[2]
-	return nil
-}

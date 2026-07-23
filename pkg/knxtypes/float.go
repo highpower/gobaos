@@ -20,6 +20,9 @@ func (f *DPTFloat) Set(s string) error {
 	if err != nil {
 		return err
 	}
+	if err := validFloat(value); err != nil {
+		return err
+	}
 	f.Value = value
 	return nil
 }
@@ -32,14 +35,12 @@ func (f *DPTFloat) String() string {
 	return fmt.Sprintf("dptFloat[%0.4f]", f.Value)
 }
 
+func (f *DPTFloat) Valid() error {
+	return validFloat(f.Value)
+}
+
 func (f *DPTFloat) MarshalBinary() ([]byte, error) {
-	if math.IsNaN(f.Value) || math.IsInf(f.Value, 0) {
-		return nil, fmt.Errorf("%w: cannot encode NaN or Inf", ErrUnmarshal)
-	}
 	mantissa, exp, negative := floatExpansion(f.Value)
-	if mantissa > 2047 {
-		return nil, fmt.Errorf("%w: too big %f", ErrUnmarshal, f.Value)
-	}
 	compressed := uint16((exp&0x0F)<<11) | uint16(mantissa&0x7FF)
 	if negative {
 		compressed |= 0x800
@@ -47,7 +48,6 @@ func (f *DPTFloat) MarshalBinary() ([]byte, error) {
 	result := make([]byte, 2)
 	binary.BigEndian.PutUint16(result, compressed)
 	return result, nil
-
 }
 
 func (f *DPTFloat) UnmarshalBinary(data []byte) error {
@@ -79,4 +79,15 @@ func floatExpansion(number float64) (int, int, bool) {
 		exp++
 	}
 	return mantissa, exp, negative
+}
+
+func validFloat(value float64) error {
+	if math.IsNaN(value) || math.IsInf(value, 0) {
+		return fmt.Errorf("%w: cannot encode NaN or Inf", ErrBadValue)
+	}
+	mantissa, _, _ := floatExpansion(value)
+	if mantissa > 2047 {
+		return fmt.Errorf("%w: too big %f", ErrBadValue, value)
+	}
+	return nil
 }
