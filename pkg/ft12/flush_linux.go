@@ -4,6 +4,6 @@ package ft12
 
 import "golang.org/x/sys/unix"
 
-func flush(int fd) error {
-	return unix.IoctlSetInt(int(f.Fd()), unix.TCFLSH, unix.TCIFLUSH)
+func flush(fd int) error {
+	return unix.IoctlSetInt(fd, unix.TCFLSH, unix.TCIFLUSH)
 }
