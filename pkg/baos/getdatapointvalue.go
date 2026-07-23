@@ -67,9 +67,9 @@ func (r *GetDatapointValueReq) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) != 7:
 		return fmt.Errorf("%w data length %d, expected %d", ErrInvalid, len(data), 7)
-	case data[0] != byte(MainService):
+	case data[0] != MainService:
 		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], MainService)
-	case data[1] != byte(SubServiceGetDatapointValueReq):
+	case data[1] != SubServiceGetDatapointValueReq:
 		return fmt.Errorf("%w data subservice %d, expected %d", ErrInvalid, data[1], SubServiceGetDatapointValueReq)
 	}
 	r.StartDatapoint = DatapointID(binary.BigEndian.Uint16(data[2:4]))
@@ -97,7 +97,7 @@ func (r *GetDatapointValueRes) Valid() error {
 }
 
 func (r *GetDatapointValueRes) Equal(other *GetDatapointValueRes) bool {
-	if r.StartDatapoint != other.StartDatapoint || r.ErrorCode != other.ErrorCode {
+	if r.StartDatapoint != other.StartDatapoint || byte(r.ErrorCode) != byte(other.ErrorCode) {
 		return false
 	}
 	return slices.EqualFunc(r.Values, other.Values, func(v1, v2 Datapoint) bool {
@@ -121,16 +121,16 @@ func (r *GetDatapointValueRes) String() string {
 func (r *GetDatapointValueRes) MarshalBinary() ([]byte, error) {
 	if r.ErrorCode != 0 {
 		result := make([]byte, 7)
-		result[0] = byte(MainService)
-		result[1] = byte(SubServiceGetDatapointValueRes)
+		result[0] = MainService
+		result[1] = SubServiceGetDatapointValueRes
 		binary.BigEndian.PutUint16(result[2:4], uint16(r.StartDatapoint))
 		binary.BigEndian.PutUint16(result[4:6], uint16(0))
 		result[6] = byte(r.ErrorCode)
 		return result, nil
 	}
 	result := make([]byte, 6+datapointsSizeInBytes(r.Values))
-	result[0] = byte(MainService)
-	result[1] = byte(SubServiceGetDatapointValueRes)
+	result[0] = MainService
+	result[1] = SubServiceGetDatapointValueRes
 	binary.BigEndian.PutUint16(result[2:4], uint16(r.StartDatapoint))
 	binary.BigEndian.PutUint16(result[4:6], uint16(len(r.Values)))
 	if err := marshalDatapointsTo(result[6:], r.Values); err != nil {
@@ -143,9 +143,9 @@ func (r *GetDatapointValueRes) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) < 6:
 		return fmt.Errorf("%w data length %d, expected at least %d", ErrInvalid, len(data), 6)
-	case data[0] != byte(MainService):
+	case data[0] != MainService:
 		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], MainService)
-	case data[1] != byte(SubServiceGetDatapointValueRes):
+	case data[1] != SubServiceGetDatapointValueRes:
 		return fmt.Errorf("%w data subservice %d, expected %d", ErrInvalid, data[1], SubServiceGetDatapointValueRes)
 	}
 	startDatapoint := DatapointID(binary.BigEndian.Uint16(data[2:4]))

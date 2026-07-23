@@ -37,10 +37,6 @@ func (d *DPTControl) TypeCode() TypeCode {
 	return Control
 }
 
-func (d *DPTControl) BytesRequired() int {
-	return 1
-}
-
 func (d *DPTControl) String() string {
 	return fmt.Sprintf("dptControl[value=%t,control=%t]", d.Value, d.Control)
 }

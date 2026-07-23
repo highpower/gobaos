@@ -62,9 +62,9 @@ func (r *DatapointValueInd) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) < 6:
 		return fmt.Errorf("%w data length %d, expected at least %d", ErrInvalid, len(data), 6)
-	case data[0] != byte(MainService):
+	case data[0] != MainService:
 		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], MainService)
-	case data[1] != byte(SubServiceDatapointValueInd):
+	case data[1] != SubServiceDatapointValueInd:
 		return fmt.Errorf("%w data subservice %d, expected %d", ErrInvalid, data[1], SubServiceDatapointValueInd)
 	}
 	startDatapoint := DatapointID(binary.BigEndian.Uint16(data[2:4]))

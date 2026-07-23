@@ -28,8 +28,8 @@ func (s *DPTStepControl) Set(value string) error {
 	if err != nil {
 		return err
 	}
-	if stepCode > 7 {
-		return fmt.Errorf("%w: step code %d out of range [0,7]", ErrBadValue, stepCode)
+	if err := validStepControl(control, uint8(stepCode)); err != nil {
+		return err
 	}
 	s.Control = control
 	s.StepCode = uint8(stepCode)
@@ -40,8 +40,8 @@ func (s *DPTStepControl) TypeCode() TypeCode {
 	return StepControl
 }
 
-func (s *DPTStepControl) BytesRequired() int {
-	return 1
+func (s *DPTStepControl) Valid() error {
+	return validStepControl(s.Control, s.StepCode)
 }
 
 func (s *DPTStepControl) String() string {
@@ -49,9 +49,6 @@ func (s *DPTStepControl) String() string {
 }
 
 func (s *DPTStepControl) MarshalBinary() ([]byte, error) {
-	if s.StepCode > 7 {
-		return nil, fmt.Errorf("%w: step code %d out of range [0,7]", ErrBadValue, s.StepCode)
-	}
 	result := []byte{0}
 	if s.Control {
 		result[0] |= 0x08
@@ -66,5 +63,12 @@ func (s *DPTStepControl) UnmarshalBinary(data []byte) error {
 	}
 	s.Control = data[0]&0x08 != 0
 	s.StepCode = data[0] & 0x07
+	return nil
+}
+
+func validStepControl(_ bool, stepCode uint8) error {
+	if stepCode > 7 {
+		return fmt.Errorf("%w: step code %d out of range [0,7]", ErrBadValue, stepCode)
+	}
 	return nil
 }

@@ -53,8 +53,8 @@ func (r *SetDatapointValueReq) String() string {
 
 func (r *SetDatapointValueReq) MarshalBinary() ([]byte, error) {
 	result := make([]byte, 6+datapointsSizeInBytes(r.Commands))
-	result[0] = byte(MainService)
-	result[1] = byte(SubServiceSetDatapointValueReq)
+	result[0] = MainService
+	result[1] = SubServiceSetDatapointValueReq
 	startDatapoint := DatapointID(0)
 	if len(r.Commands) > 0 {
 		startDatapoint = r.Commands[0].ID
@@ -71,9 +71,9 @@ func (r *SetDatapointValueReq) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) < 6:
 		return fmt.Errorf("%w data length %d, expected at least %d", ErrInvalid, len(data), 6)
-	case data[0] != byte(MainService):
+	case data[0] != MainService:
 		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], MainService)
-	case data[1] != byte(SubServiceSetDatapointValueReq):
+	case data[1] != SubServiceSetDatapointValueReq:
 		return fmt.Errorf("%w data subservice %d, expected %d", ErrInvalid, data[1], SubServiceSetDatapointValueReq)
 	}
 	num := int(binary.BigEndian.Uint16(data[4:6]))
@@ -100,7 +100,7 @@ func (r *SetDatapointValueRes) Valid() error {
 func (r *SetDatapointValueRes) Equal(other *SetDatapointValueRes) bool {
 	return r.StartDatapoint == other.StartDatapoint &&
 		r.NumberOfDatapoints == other.NumberOfDatapoints &&
-		r.ErrorCode == other.ErrorCode
+		byte(r.ErrorCode) == byte(other.ErrorCode)
 }
 
 func (r *SetDatapointValueRes) String() string {
@@ -110,8 +110,8 @@ func (r *SetDatapointValueRes) String() string {
 
 func (r *SetDatapointValueRes) MarshalBinary() ([]byte, error) {
 	result := make([]byte, 7)
-	result[0] = byte(MainService)
-	result[1] = byte(SubServiceSetDatapointValueRes)
+	result[0] = MainService
+	result[1] = SubServiceSetDatapointValueRes
 	binary.BigEndian.PutUint16(result[2:4], uint16(r.StartDatapoint))
 	binary.BigEndian.PutUint16(result[4:6], r.NumberOfDatapoints)
 	result[6] = byte(r.ErrorCode)
@@ -122,9 +122,9 @@ func (r *SetDatapointValueRes) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) != 7:
 		return fmt.Errorf("%w data length %d, expected to be %d", ErrInvalid, len(data), 7)
-	case data[0] != byte(MainService):
+	case data[0] != MainService:
 		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], MainService)
-	case data[1] != byte(SubServiceSetDatapointValueRes):
+	case data[1] != SubServiceSetDatapointValueRes:
 		return fmt.Errorf("%w data subservice %d, expected %d", ErrInvalid, data[1], SubServiceSetDatapointValueRes)
 	}
 	r.StartDatapoint = DatapointID(binary.BigEndian.Uint16(data[2:4]))

@@ -53,8 +53,8 @@ func (r *SetServerItemReq) String() string {
 
 func (r *SetServerItemReq) MarshalBinary() ([]byte, error) {
 	result := make([]byte, 6+sizeInBytes(r.Items))
-	result[0] = byte(MainService)
-	result[1] = byte(SubServiceSetServerItemReq)
+	result[0] = MainService
+	result[1] = SubServiceSetServerItemReq
 	startItem := ItemID(0)
 	if len(r.Items) > 0 {
 		startItem = r.Items[0].ID
@@ -71,9 +71,9 @@ func (r *SetServerItemReq) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) < 6:
 		return fmt.Errorf("%w data length %d, expected at least %d", ErrInvalid, len(data), 6)
-	case data[0] != byte(MainService):
+	case data[0] != MainService:
 		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], MainService)
-	case data[1] != byte(SubServiceSetServerItemReq):
+	case data[1] != SubServiceSetServerItemReq:
 		return fmt.Errorf("%w data subservice %d, expected %d", ErrInvalid, data[1], SubServiceSetServerItemReq)
 	}
 	num := int(binary.BigEndian.Uint16(data[4:6]))
@@ -106,7 +106,8 @@ func (r *SetServerItemRes) Valid() error {
 }
 
 func (r *SetServerItemRes) Equal(other *SetServerItemRes) bool {
-	return r.StartItem == other.StartItem && r.NumberOfItems == other.NumberOfItems && r.ErrorCode == other.ErrorCode
+	return r.StartItem == other.StartItem && r.NumberOfItems == other.NumberOfItems &&
+		byte(r.ErrorCode) == byte(other.ErrorCode)
 }
 
 func (r *SetServerItemRes) String() string {
@@ -116,8 +117,8 @@ func (r *SetServerItemRes) String() string {
 
 func (r *SetServerItemRes) MarshalBinary() ([]byte, error) {
 	result := make([]byte, 7)
-	result[0] = byte(MainService)
-	result[1] = byte(SubServiceSetServerItemRes)
+	result[0] = MainService
+	result[1] = SubServiceSetServerItemRes
 	binary.BigEndian.PutUint16(result[2:4], uint16(r.StartItem))
 	binary.BigEndian.PutUint16(result[4:6], r.NumberOfItems)
 	result[6] = byte(r.ErrorCode)
@@ -128,9 +129,9 @@ func (r *SetServerItemRes) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) != 7:
 		return fmt.Errorf("%w data length %d, expected to be %d", ErrInvalid, len(data), 7)
-	case data[0] != byte(MainService):
+	case data[0] != MainService:
 		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], MainService)
-	case data[1] != byte(SubServiceSetServerItemRes):
+	case data[1] != SubServiceSetServerItemRes:
 		return fmt.Errorf("%w data subservice %d, expected %d", ErrInvalid, data[1], SubServiceSetServerItemRes)
 	}
 	r.StartItem = ItemID(binary.BigEndian.Uint16(data[2:4]))

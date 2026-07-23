@@ -26,10 +26,6 @@ func (b *DPTBool) TypeCode() TypeCode {
 	return Bool
 }
 
-func (b *DPTBool) BytesRequired() int {
-	return 1
-}
-
 func (b *DPTBool) String() string {
 	return fmt.Sprintf("dptBool[%t]", b.Value)
 }
@@ -44,7 +40,7 @@ func (b *DPTBool) MarshalBinary() ([]byte, error) {
 
 func (b *DPTBool) UnmarshalBinary(data []byte) error {
 	if len(data) != 1 {
-		return fmt.Errorf("%w: type %s requires 1 byte, got %b", ErrUnmarshal, Bool.String(), len(data))
+		return fmt.Errorf("%w: type %s requires 1 byte, got %d", ErrUnmarshal, Bool.String(), len(data))
 	}
 	b.Value = data[0]&0x01 != 0
 	return nil

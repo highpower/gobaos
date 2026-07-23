@@ -28,10 +28,6 @@ func (f *DPTFloat) TypeCode() TypeCode {
 	return Float
 }
 
-func (f *DPTFloat) BytesRequired() int {
-	return 2
-}
-
 func (f *DPTFloat) String() string {
 	return fmt.Sprintf("dptFloat[%0.4f]", f.Value)
 }
@@ -56,7 +52,7 @@ func (f *DPTFloat) MarshalBinary() ([]byte, error) {
 
 func (f *DPTFloat) UnmarshalBinary(data []byte) error {
 	if len(data) != 2 {
-		return fmt.Errorf("%w: expected 2 bytes, got %d", ErrUnmarshal, len(data))
+		return fmt.Errorf("%w: type %s requires 2 bytes, got %d", ErrUnmarshal, Float.String(), len(data))
 	}
 	compressed := binary.BigEndian.Uint16(data)
 	sign := compressed & 0x8000

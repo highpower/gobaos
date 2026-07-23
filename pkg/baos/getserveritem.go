@@ -42,8 +42,8 @@ func (r *GetServerItemReq) String() string {
 
 func (r *GetServerItemReq) MarshalBinary() ([]byte, error) {
 	b := make([]byte, 6)
-	b[0] = byte(MainService)
-	b[1] = byte(SubServiceGetServerItemReq)
+	b[0] = MainService
+	b[1] = SubServiceGetServerItemReq
 	binary.BigEndian.PutUint16(b[2:4], uint16(r.StartItem))
 	binary.BigEndian.PutUint16(b[4:6], r.NumberOfItems)
 	return b, nil
@@ -82,7 +82,7 @@ func (r *GetServerItemRes) Valid() error {
 }
 
 func (r *GetServerItemRes) Equal(other *GetServerItemRes) bool {
-	if r.StartItem != other.StartItem || r.ErrorCode != other.ErrorCode {
+	if r.StartItem != other.StartItem || byte(r.ErrorCode) != byte(other.ErrorCode) {
 		return false
 	}
 	return slices.EqualFunc(r.Items, other.Items, func(i1, i2 ServerItem) bool {
@@ -128,9 +128,9 @@ func (r *GetServerItemRes) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) < 6:
 		return fmt.Errorf("%w data length %d, expected at least 6", ErrInvalid, len(data))
-	case data[0] != byte(MainService):
+	case data[0] != MainService:
 		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], MainService)
-	case data[1] != byte(SubServiceGetServerItemRes):
+	case data[1] != SubServiceGetServerItemRes:
 		return fmt.Errorf("%w data subservice %d, expected %d", ErrInvalid, data[1], SubServiceGetServerItemRes)
 	}
 	startItem := ItemID(binary.BigEndian.Uint16(data[2:4]))

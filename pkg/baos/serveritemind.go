@@ -38,8 +38,8 @@ func (r *ServerItemInd) String() string {
 
 func (r *ServerItemInd) MarshalBinary() ([]byte, error) {
 	result := make([]byte, 6+sizeInBytes(r.Items))
-	result[0] = byte(MainService)
-	result[1] = byte(SubServiceServerItemInd)
+	result[0] = MainService
+	result[1] = SubServiceServerItemInd
 	binary.BigEndian.PutUint16(result[2:4], uint16(r.StartItem))
 	binary.BigEndian.PutUint16(result[4:6], uint16(len(r.Items)))
 	if err := marshalItemsTo(result[6:], r.Items); err != nil {
@@ -52,9 +52,9 @@ func (r *ServerItemInd) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) < 6:
 		return fmt.Errorf("%w data length %d, expected at least %d", ErrInvalid, len(data), 6)
-	case data[0] != byte(MainService):
+	case data[0] != MainService:
 		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], MainService)
-	case data[1] != byte(SubServiceServerItemInd):
+	case data[1] != SubServiceServerItemInd:
 		return fmt.Errorf("%w data subservice %d, expected %d", ErrInvalid, data[1], SubServiceServerItemInd)
 	}
 	startItem := ItemID(binary.BigEndian.Uint16(data[2:4]))
