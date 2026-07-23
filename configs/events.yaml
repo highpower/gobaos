@@ -1,0 +1,6 @@
+device: /dev/ttyAMA0
+datapoints:
+  - ids: [1, 2, 3, 4, 5, 6, 7] 
+    type: float
+  - ids: [38, 39, 40]
+    type: bool
