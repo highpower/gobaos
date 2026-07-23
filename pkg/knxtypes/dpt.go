@@ -28,6 +28,9 @@ const (
 	Float       TypeCode = 9
 	TimeOfDay   TypeCode = 10
 	Date        TypeCode = 11
+	UInt32      TypeCode = 12
+	Int32       TypeCode = 13
+	Float4Byte  TypeCode = 14
 )
 
 func (t TypeCode) String() string {
@@ -54,6 +57,13 @@ func (t TypeCode) String() string {
 		return "TimeOfDay"
 	case Date:
 		return "Date"
+	case UInt32:
+		return "UInt32"
+	case Int32:
+		return "Int32"
+	case Float4Byte:
+		return "Float4Byte"
+
 	}
 	return "Unknown"
 }
@@ -82,6 +92,12 @@ func ParseTypeCode(s string) (TypeCode, error) {
 		return TimeOfDay, nil
 	case "date":
 		return Date, nil
+	case "uint32":
+		return UInt32, nil
+	case "int32":
+		return Int32, nil
+	case "float4Byte":
+		return Float4Byte, nil
 	}
 	return TypeCode(0), fmt.Errorf("%w: %s", ErrUnknownType, s)
 }

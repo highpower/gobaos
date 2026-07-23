@@ -79,3 +79,13 @@ func TestDPTFloatSet(t *testing.T) {
 		})
 	}
 }
+
+func FuzzDPTFloat(f *testing.F) {
+	dpt := DPTFloat{Value: 22.0}
+	data, _ := dpt.MarshalBinary()
+	f.Add(data)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		other := DPTFloat{}
+		_ = other.UnmarshalBinary(data)
+	})
+}

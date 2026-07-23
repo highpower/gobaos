@@ -27,7 +27,7 @@ func (d *DPTInt8) TypeCode() TypeCode {
 }
 
 func (d *DPTInt8) String() string {
-	return fmt.Sprintf("int8[%d]", d.Value)
+	return fmt.Sprintf("dptInt8[%d]", d.Value)
 }
 
 func (d *DPTInt8) MarshalBinary() ([]byte, error) {

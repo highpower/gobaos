@@ -34,7 +34,7 @@ func (c *DPTChar) Valid() error {
 }
 
 func (c *DPTChar) String() string {
-	return fmt.Sprintf("char[%c]", c.Value)
+	return fmt.Sprintf("dptChar[%c]", c.Value)
 }
 
 func (c *DPTChar) MarshalBinary() (data []byte, err error) {

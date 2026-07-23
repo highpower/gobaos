@@ -110,3 +110,13 @@ func TestDPTDateValid(t *testing.T) {
 		})
 	}
 }
+
+func FuzzDPTDate(f *testing.F) {
+	dpt := DPTDate{Day: 15, Month: 6, Year: 23}
+	data, _ := dpt.MarshalBinary()
+	f.Add(data)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		other := DPTDate{}
+		_ = other.UnmarshalBinary(data)
+	})
+}

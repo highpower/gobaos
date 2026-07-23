@@ -45,7 +45,7 @@ func (s *DPTStepControl) Valid() error {
 }
 
 func (s *DPTStepControl) String() string {
-	return fmt.Sprintf("stepControl[%t:%d]", s.Control, s.StepCode)
+	return fmt.Sprintf("dptStepControl[%t:%d]", s.Control, s.StepCode)
 }
 
 func (s *DPTStepControl) MarshalBinary() ([]byte, error) {

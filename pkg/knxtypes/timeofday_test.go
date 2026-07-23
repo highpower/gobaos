@@ -113,3 +113,13 @@ func TestDPTTimeOfDaySet(t *testing.T) {
 		})
 	}
 }
+
+func FuzzDPTTimeOfDay(f *testing.F) {
+	dpt := DPTTimeOfDay{Weekday: 3, Hour: 12, Minute: 30, Second: 45}
+	data, _ := dpt.MarshalBinary()
+	f.Add(data)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		other := DPTTimeOfDay{}
+		_ = other.UnmarshalBinary(data)
+	})
+}

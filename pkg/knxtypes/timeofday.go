@@ -71,7 +71,8 @@ func (t *DPTTimeOfDay) Valid() error {
 }
 
 func (t *DPTTimeOfDay) String() string {
-	return fmt.Sprintf("timeOfDay[weekday=%d,hour=%d,minute=%d,second=%d]", t.Weekday, t.Hour, t.Minute, t.Second)
+	wd := weekdays[t.Weekday]
+	return fmt.Sprintf("dptTimeOfDay['%s',%d:%d:%d]", wd, t.Hour, t.Minute, t.Second)
 }
 
 func (t *DPTTimeOfDay) MarshalBinary() ([]byte, error) {

@@ -1,6 +1,10 @@
 package knxtypes
 
-import "testing"
+import (
+	"math"
+	"strconv"
+	"testing"
+)
 
 func TestDPTInt8Marshal(t *testing.T) {
 	type testCase struct {
@@ -10,8 +14,8 @@ func TestDPTInt8Marshal(t *testing.T) {
 
 	testCases := []testCase{
 		{name: "Zero", value: 0},
-		{name: "Positive", value: 127},
-		{name: "Negative", value: -128},
+		{name: "Positive", value: math.MaxInt8},
+		{name: "Negative", value: math.MinInt8},
 	}
 
 	for _, tc := range testCases {
@@ -50,6 +54,7 @@ func TestDPTInt8Set(t *testing.T) {
 		{name: "Max", input: "127", expected: DPTInt8{Value: 127}, errorExpected: false},
 		{name: "Min", input: "-128", expected: DPTInt8{Value: -128}, errorExpected: false},
 		{name: "Bad", input: "abc", errorExpected: true},
+		{name: "Overflow", input: strconv.FormatInt(int64(math.MaxInt8)+1, 10), errorExpected: true},
 	}
 
 	for _, tc := range testCases {
@@ -70,4 +75,14 @@ func TestDPTInt8Set(t *testing.T) {
 			}
 		})
 	}
+}
+
+func FuzzDPTInt8(f *testing.F) {
+	dpt := DPTInt8{Value: -42}
+	data, _ := dpt.MarshalBinary()
+	f.Add(data)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		other := DPTInt8{}
+		_ = other.UnmarshalBinary(data)
+	})
 }

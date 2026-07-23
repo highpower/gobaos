@@ -74,3 +74,13 @@ func TestDPTStepControlSet(t *testing.T) {
 		})
 	}
 }
+
+func FuzzDPTStepControl(f *testing.F) {
+	dpt := DPTStepControl{Control: true, StepCode: 3}
+	data, _ := dpt.MarshalBinary()
+	f.Add(data)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		other := DPTStepControl{}
+		_ = other.UnmarshalBinary(data)
+	})
+}

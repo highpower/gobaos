@@ -71,3 +71,13 @@ func TestDPTCharSet(t *testing.T) {
 		})
 	}
 }
+
+func FuzzDPTChar(f *testing.F) {
+	dpt := DPTChar{Value: 'A'}
+	data, _ := dpt.MarshalBinary()
+	f.Add(data)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		other := DPTChar{}
+		_ = other.UnmarshalBinary(data)
+	})
+}

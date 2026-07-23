@@ -45,7 +45,7 @@ func (d *DPTDate) Valid() error {
 }
 
 func (d *DPTDate) String() string {
-	return fmt.Sprintf("date[%02d/%02d/%02d]", d.Day, d.Month, d.Year)
+	return fmt.Sprintf("dptDate[%02d/%02d/%02d]", d.Day, d.Month, d.Year)
 }
 
 func (d *DPTDate) MarshalBinary() ([]byte, error) {

@@ -1,68 +1,9 @@
 package knxtypes
 
 import (
-	"encoding/binary"
 	"fmt"
-	"math"
 	"strings"
 )
-
-// DPT12 represents KNX DPT 12.xxx (4-byte unsigned).
-type DPT12 uint32
-
-// Marshal encodes DPT12 into a 4-byte big-endian payload.
-func (d DPT12) Marshal() ([]byte, error) {
-	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b, uint32(d))
-	return b, nil
-}
-
-// Unmarshal decodes a 4-byte big-endian payload into DPT12.
-func (d *DPT12) Unmarshal(data []byte) error {
-	if len(data) != 4 {
-		return fmt.Errorf("DPT12 %w: expected 4 bytes, got %d", ErrUnmarshal, len(data))
-	}
-	*d = DPT12(binary.BigEndian.Uint32(data))
-	return nil
-}
-
-// DPT13 represents KNX DPT 13.xxx (4-byte signed).
-type DPT13 int32
-
-// Marshal encodes DPT13 into a 4-byte big-endian payload.
-func (d DPT13) Marshal() ([]byte, error) {
-	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b, uint32(d))
-	return b, nil
-}
-
-// Unmarshal decodes a 4-byte big-endian payload into DPT13.
-func (d *DPT13) Unmarshal(data []byte) error {
-	if len(data) != 4 {
-		return fmt.Errorf("DPT13 %w: expected 4 bytes, got %d", ErrUnmarshal, len(data))
-	}
-	*d = DPT13(int32(binary.BigEndian.Uint32(data)))
-	return nil
-}
-
-// DPT14 represents KNX DPT 14.xxx (4-byte float, IEEE 754).
-type DPT14 float64
-
-// Marshal encodes DPT14 into a 4-byte IEEE 754 big-endian payload.
-func (d DPT14) Marshal() ([]byte, error) {
-	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b, math.Float32bits(float32(d)))
-	return b, nil
-}
-
-// Unmarshal decodes a 4-byte IEEE 754 big-endian payload into DPT14.
-func (d *DPT14) Unmarshal(data []byte) error {
-	if len(data) != 4 {
-		return fmt.Errorf("DPT14 %w: expected 4 bytes, got %d", ErrUnmarshal, len(data))
-	}
-	*d = DPT14(math.Float32frombits(binary.BigEndian.Uint32(data)))
-	return nil
-}
 
 // DPT16 represents KNX DPT 16.xxx (14-byte string).
 type DPT16 string

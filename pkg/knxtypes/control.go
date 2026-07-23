@@ -38,7 +38,7 @@ func (d *DPTControl) TypeCode() TypeCode {
 }
 
 func (d *DPTControl) String() string {
-	return fmt.Sprintf("dptControl[value=%t,control=%t]", d.Value, d.Control)
+	return fmt.Sprintf("dptControl[%t,%t]", d.Value, d.Control)
 }
 
 func (d *DPTControl) MarshalBinary() ([]byte, error) {

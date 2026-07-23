@@ -1,6 +1,10 @@
 package knxtypes
 
-import "testing"
+import (
+	"math"
+	"strconv"
+	"testing"
+)
 
 func TestDPTInt16Marshal(t *testing.T) {
 	type testCase struct {
@@ -10,8 +14,8 @@ func TestDPTInt16Marshal(t *testing.T) {
 
 	testCases := []testCase{
 		{name: "Zero", value: 0},
-		{name: "Positive", value: 32767},
-		{name: "Negative", value: -32768},
+		{name: "Positive", value: math.MaxInt16},
+		{name: "Negative", value: math.MinInt16},
 	}
 
 	for _, tc := range testCases {
@@ -47,11 +51,10 @@ func TestDPTInt16Set(t *testing.T) {
 
 	testCases := []testCase{
 		{name: "Zero", input: "0", expected: DPTInt16{Value: 0}, errorExpected: false},
-		{name: "Positive", input: "1234", expected: DPTInt16{Value: 1234}, errorExpected: false},
-		{name: "Negative", input: "-1234", expected: DPTInt16{Value: -1234}, errorExpected: false},
-		{name: "Max", input: "32767", expected: DPTInt16{Value: 32767}, errorExpected: false},
-		{name: "Min", input: "-32768", expected: DPTInt16{Value: -32768}, errorExpected: false},
+		{name: "Max", input: strconv.Itoa(math.MaxInt16), expected: DPTInt16{Value: math.MaxInt16}, errorExpected: false},
+		{name: "Min", input: strconv.Itoa(math.MinInt16), expected: DPTInt16{Value: math.MinInt16}, errorExpected: false},
 		{name: "Bad", input: "abc", errorExpected: true},
+		{name: "Overflow", input: strconv.FormatInt(int64(math.MaxInt16)+1, 10), errorExpected: true},
 	}
 
 	for _, tc := range testCases {
@@ -72,4 +75,14 @@ func TestDPTInt16Set(t *testing.T) {
 			}
 		})
 	}
+}
+
+func FuzzDPTInt16(f *testing.F) {
+	dpt := DPTInt16{Value: -12345}
+	data, _ := dpt.MarshalBinary()
+	f.Add(data)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		other := DPTInt16{}
+		_ = other.UnmarshalBinary(data)
+	})
 }

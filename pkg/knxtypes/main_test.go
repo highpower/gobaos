@@ -15,8 +15,10 @@ func bytesRequired(code TypeCode) int {
 		return 2
 	case TimeOfDay, Date:
 		return 3
+	case UInt32, Int32:
+		return 4
 	}
-	return 0
+	return -1
 }
 
 func testBadUnmarshal[G any, W dptWrapper[G]](t *testing.T) {

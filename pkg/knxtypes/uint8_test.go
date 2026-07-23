@@ -1,6 +1,10 @@
 package knxtypes
 
-import "testing"
+import (
+	"math"
+	"strconv"
+	"testing"
+)
 
 func TestDPTUInt8Marshal(t *testing.T) {
 	type testCase struct {
@@ -10,7 +14,7 @@ func TestDPTUInt8Marshal(t *testing.T) {
 
 	testCases := []testCase{
 		{name: "Zero", value: 0},
-		{name: "Max", value: 255},
+		{name: "Max", value: math.MaxUint8},
 	}
 
 	for _, tc := range testCases {
@@ -46,9 +50,10 @@ func TestDPTUInt8Set(t *testing.T) {
 
 	testCases := []testCase{
 		{name: "Zero", input: "0", expected: DPTUInt8{Value: 0}, errorExpected: false},
-		{name: "Max", input: "255", expected: DPTUInt8{Value: 255}, errorExpected: false},
+		{name: "Max", input: strconv.Itoa(math.MaxUint8), expected: DPTUInt8{Value: 255}, errorExpected: false},
 		{name: "Bad", input: "abc", errorExpected: true},
 		{name: "Negative", input: "-1", errorExpected: true},
+		{name: "Overflow", input: strconv.FormatInt(int64(math.MaxUint8)+1, 10), errorExpected: true},
 	}
 
 	for _, tc := range testCases {
@@ -69,4 +74,14 @@ func TestDPTUInt8Set(t *testing.T) {
 			}
 		})
 	}
+}
+
+func FuzzDPTUInt8(f *testing.F) {
+	dpt := DPTUInt8{Value: 42}
+	data, _ := dpt.MarshalBinary()
+	f.Add(data)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		other := DPTUInt8{}
+		_ = other.UnmarshalBinary(data)
+	})
 }

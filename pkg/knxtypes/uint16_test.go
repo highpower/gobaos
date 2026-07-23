@@ -1,6 +1,9 @@
 package knxtypes
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 func TestDPTUint16Marshal(t *testing.T) {
 	type testCase struct {
@@ -10,7 +13,7 @@ func TestDPTUint16Marshal(t *testing.T) {
 
 	testCases := []testCase{
 		{name: "Zero", value: 0},
-		{name: "Max", value: 65535},
+		{name: "Max", value: math.MaxUint16},
 	}
 
 	for _, tc := range testCases {
@@ -69,4 +72,14 @@ func TestDPTUint16Set(t *testing.T) {
 			}
 		})
 	}
+}
+
+func FuzzDPTUint16(f *testing.F) {
+	dpt := DPTUint16{Value: 12345}
+	data, _ := dpt.MarshalBinary()
+	f.Add(data)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		other := DPTUint16{}
+		_ = other.UnmarshalBinary(data)
+	})
 }
