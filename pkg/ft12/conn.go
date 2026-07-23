@@ -141,8 +141,22 @@ func (c *Conn) readAck() error {
 	if _, err := io.ReadFull(c.file, buffer[:]); err != nil {
 		return err
 	}
-	if buffer[0] != 0xE5 {
-		return fmt.Errorf("%w ack: %02x", ErrInvalid, buffer[0])
+	switch buffer[0] {
+	case 0xE5:
+		return nil
+	case 0x10:
+		return c.readResetIndicationRest()
+	}
+	return fmt.Errorf("%w ack: %02x", ErrInvalid, buffer[0])
+}
+
+func (c *Conn) readResetIndicationRest() error {
+	buffer := [3]byte{}
+	if _, err := io.ReadFull(c.file, buffer[:]); err != nil {
+		return err
+	}
+	if !bytes.Equal(buffer[:], []byte{0xC0, 0xC0, 0x16}) {
+		return fmt.Errorf("%w reset indication", ErrInvalid)
 	}
 	return nil
 }

@@ -9,37 +9,26 @@ import (
 	"os"
 )
 
-func handleDatapointValueInd(buffer []byte) error {
-	indication := baos.DatapointValueInd{}
-	if err := indication.UnmarshalBinary(buffer); err != nil {
+func run(name string) error {
+	c, err := newConfig(name)
+	if err != nil {
 		return err
 	}
-	switch indication.StartDatapoint {
-	case 2, 3, 4, 5, 6, 7:
-		dpt, err := indication.Values[0].DPTFloat()
-		if err != nil {
+	dm := datapointMap{}
+	for _, d := range c.Datapoints {
+		if err := dm.add(d.ID, d.Type); err != nil {
 			return err
 		}
-		_, _ = fmt.Fprintf(os.Stdout, "datapoint %d: %s\n", indication.Values[0].ID, dpt.String())
-	case 38, 39, 40:
-		dpt, err := indication.Values[0].DPTBool()
-		if err != nil {
-			return err
-		}
-		_, _ = fmt.Fprintf(os.Stdout, "datapoint %d: %s\n", indication.Values[0].ID, dpt.String())
-	default:
-		_, _ = fmt.Fprintf(os.Stdout, "happen value indication of %d datapoint\n", indication.StartDatapoint)
 	}
-	return nil
-}
-
-func run(device string) error {
-	conn, err := ft12.NewConn(device)
+	conn, err := ft12.NewConn(c.Device)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = conn.Close() }()
+	return runWith(conn, dm)
+}
 
+func runWith(conn *ft12.Conn, dm datapointMap) error {
 	for {
 		if _, err := conn.Read(nil); err != nil {
 			return err
@@ -50,10 +39,15 @@ func run(device string) error {
 		if err != nil {
 			return err
 		}
-		if baos.IsDatapointValueInd(buffer) {
-			if err := handleDatapointValueInd(buffer); err != nil {
-				return err
-			}
+		if !baos.IsDatapointValueInd(buffer) {
+			continue
+		}
+		indication := baos.DatapointValueInd{}
+		if err := indication.UnmarshalBinary(buffer); err != nil {
+			return err
+		}
+		if err := dm.handleIndication(&indication); err != nil {
+			return err
 		}
 	}
 }
@@ -65,17 +59,17 @@ func usage(writer io.Writer) {
 
 func main() {
 
-	var device string
-	flag.StringVar(&device, "device", "", "device to read uart")
+	var conf string
+	flag.StringVar(&conf, "config", "", "config file to read")
 
 	flag.Usage = func() { usage(os.Stdout) }
 	flag.Parse()
 
-	if !flag.Parsed() || device == "" {
+	if !flag.Parsed() || conf == "" {
 		usage(os.Stderr)
 		os.Exit(2)
 	}
-	if err := run(device); err != nil {
+	if err := run(conf); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 	}
 }

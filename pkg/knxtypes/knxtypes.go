@@ -7,61 +7,6 @@ import (
 	"strings"
 )
 
-type DPTControl struct {
-	Control bool
-	Value   bool
-}
-
-type DPTStepControl struct {
-	Control  bool
-	StepCode uint8
-}
-
-//goland:noinspection GoMixedReceiverTypes
-func (d DPTControl) MarshalBinary() ([]byte, error) {
-	result := []byte{0}
-	if d.Control {
-		result[0] |= 0x02
-	}
-	if d.Value {
-		result[0] |= 0x01
-	}
-	return result, nil
-}
-
-//goland:noinspection GoMixedReceiverTypes
-func (d *DPTControl) UnmarshalBinary(data []byte) error {
-	if len(data) != 1 {
-		return fmt.Errorf("DPTControl %w: expected 1 byte, got %d", ErrUnmarshal, len(data))
-	}
-	d.Control = data[0]&0x02 != 0
-	d.Value = data[0]&0x01 != 0
-	return nil
-}
-
-//goland:noinspection GoMixedReceiverTypes
-func (d DPTStepControl) MarshalBinary() ([]byte, error) {
-	if d.StepCode > 7 {
-		return nil, fmt.Errorf("DPTStepControl %w: step code %d out of range [0,7]", ErrUnmarshal, d.StepCode)
-	}
-	var b byte
-	if d.Control {
-		b |= 0x08
-	}
-	b |= d.StepCode & 0x07
-	return []byte{b}, nil
-}
-
-//goland:noinspection GoMixedReceiverTypes
-func (d *DPTStepControl) UnmarshalBinary(data []byte) error {
-	if len(data) != 1 {
-		return fmt.Errorf("DPTStepControl %w: expected 1 byte, got %d", ErrUnmarshal, len(data))
-	}
-	d.Control = data[0]&0x08 != 0
-	d.StepCode = data[0] & 0x07
-	return nil
-}
-
 // DPT5 represents KNX DPT 5.xxx (1-byte unsigned).
 type DPT5 uint8
 

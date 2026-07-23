@@ -1,34 +1,51 @@
 package knxtypes
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 type DPTBool struct {
 	Value bool
 }
 
-//goland:noinspection GoMixedReceiverTypes
-func (d DPTBool) String() string {
-	return fmt.Sprintf("dptBool[%t]", d.Value)
+func (b *DPTBool) Get() string {
+	return fmt.Sprintf("%t", b.Value)
 }
 
-//goland:noinspection GoMixedReceiverTypes
-func (d DPTBool) MarshalBinary() ([]byte, error) {
+func (b *DPTBool) Set(s string) error {
+	value, err := strconv.ParseBool(s)
+	if err != nil {
+		return err
+	}
+	b.Value = value
+	return nil
+}
+
+func (b *DPTBool) TypeCode() TypeCode {
+	return Bool
+}
+
+func (b *DPTBool) BytesRequired() int {
+	return 1
+}
+
+func (b *DPTBool) String() string {
+	return fmt.Sprintf("dptBool[%t]", b.Value)
+}
+
+func (b *DPTBool) MarshalBinary() ([]byte, error) {
 	result := []byte{0}
-	if d.Value {
+	if b.Value {
 		result[0] = 1
 	}
 	return result, nil
 }
 
-//goland:noinspection GoMixedReceiverTypes
-func (d *DPTBool) UnmarshalBinary(data []byte) error {
+func (b *DPTBool) UnmarshalBinary(data []byte) error {
 	if len(data) != 1 {
-		return fmt.Errorf("DPTBool %w: expected 1 byte, got %d", ErrUnmarshal, len(data))
+		return fmt.Errorf("%w: type %s requires 1 byte, got %b", ErrUnmarshal, Bool.String(), len(data))
 	}
-	d.Value = data[0]&0x01 != 0
+	b.Value = data[0]&0x01 != 0
 	return nil
-}
-
-func NewDPTBool() DPTBool {
-	return DPTBool{}
 }
