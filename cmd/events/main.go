@@ -16,8 +16,10 @@ func run(name string) error {
 	}
 	dm := datapointMap{}
 	for _, d := range c.Datapoints {
-		if err := dm.add(d.ID, d.Type); err != nil {
-			return err
+		for _, id := range d.IDs {
+			if err := dm.add(id, d.Type); err != nil {
+				return err
+			}
 		}
 	}
 	conn, err := ft12.NewConn(c.Device)

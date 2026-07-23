@@ -7,7 +7,7 @@ import (
 )
 
 type datapoint struct {
-	ID   []baos.DatapointID `yaml:"ids"`
+	IDs  []baos.DatapointID `yaml:"ids"`
 	Type string             `yaml:"type"`
 }
 
