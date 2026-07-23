@@ -3,6 +3,7 @@ package ft12
 import (
 	"bytes"
 	"fmt"
+	"golang.org/x/sys/unix"
 	"io"
 	"os"
 	"syscall"
@@ -174,7 +175,12 @@ func NewConn(ttyName string) (*Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := syscall.SetNonblock(int(f.Fd()), true); err != nil {
+	fd := int(f.Fd())
+	if err := syscall.SetNonblock(fd, true); err != nil {
+		_ = f.Close()
+		return nil, err
+	}
+	if err := unix.IoctlSetInt(int(f.Fd()), unix.TCIFLUSH, fd); err != nil {
 		_ = f.Close()
 		return nil, err
 	}
