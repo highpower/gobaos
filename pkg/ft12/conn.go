@@ -164,6 +164,7 @@ func (c *Conn) readResetIndicationRest() error {
 	if !bytes.Equal(buffer[:], []byte{0xC0, 0xC0, 0x16}) {
 		return fmt.Errorf("%w reset indication", ErrInvalid)
 	}
+	c.needReset = true
 	return nil
 }
 
