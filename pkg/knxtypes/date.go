@@ -6,16 +6,19 @@ import (
 	"strings"
 )
 
+// DPTDate represents KNX DPT 11.xxx (date).
 type DPTDate struct {
 	Day   uint8
 	Month uint8
 	Year  uint8
 }
 
+// Get returns the date as a "DD/MM/YY" string.
 func (d *DPTDate) Get() string {
 	return fmt.Sprintf("%02d/%02d/%02d", d.Day, d.Month, d.Year)
 }
 
+// Set parses a "DD/MM/YY" string and stores the fields.
 func (d *DPTDate) Set(value string) error {
 	parts := strings.Split(value, "/")
 	if len(parts) != 3 {
@@ -36,22 +39,27 @@ func (d *DPTDate) Set(value string) error {
 	return nil
 }
 
+// TypeCode returns the type code for DPTDate.
 func (d *DPTDate) TypeCode() TypeCode {
 	return Date
 }
 
+// Valid checks whether the date fields are within valid ranges.
 func (d *DPTDate) Valid() error {
 	return validDate(d.Day, d.Month, d.Year)
 }
 
+// String returns a human-readable representation of DPTDate.
 func (d *DPTDate) String() string {
 	return fmt.Sprintf("dptDate[%02d/%02d/%02d]", d.Day, d.Month, d.Year)
 }
 
+// MarshalBinary encodes DPTDate into a 3-byte payload.
 func (d *DPTDate) MarshalBinary() ([]byte, error) {
 	return []byte{d.Day, d.Month, d.Year}, nil
 }
 
+// UnmarshalBinary decodes a 3-byte payload into DPTDate.
 func (d *DPTDate) UnmarshalBinary(data []byte) error {
 	if len(data) != 3 {
 		return fmt.Errorf("%w: type %s requires 3 bytes, got %d", ErrUnmarshal, Date.String(), len(data))

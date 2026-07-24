@@ -7,14 +7,17 @@ import (
 	"strconv"
 )
 
+// DPTFloat represents KNX DPT 9.xxx (2-byte float).
 type DPTFloat struct {
 	Value float64
 }
 
+// Get returns the value as a formatted decimal string.
 func (f *DPTFloat) Get() string {
 	return fmt.Sprintf("%0.4f", f.Value)
 }
 
+// Set parses a decimal string, validates it, and stores the value.
 func (f *DPTFloat) Set(s string) error {
 	value, err := strconv.ParseFloat(s, 64)
 	if err != nil {
@@ -27,18 +30,22 @@ func (f *DPTFloat) Set(s string) error {
 	return nil
 }
 
+// TypeCode returns the type code for DPTFloat.
 func (f *DPTFloat) TypeCode() TypeCode {
 	return Float
 }
 
+// String returns a human-readable representation of DPTFloat.
 func (f *DPTFloat) String() string {
 	return fmt.Sprintf("dptFloat[%0.4f]", f.Value)
 }
 
+// Valid checks whether the float value can be encoded.
 func (f *DPTFloat) Valid() error {
 	return validFloat(f.Value)
 }
 
+// MarshalBinary encodes DPTFloat into a 2-byte payload.
 func (f *DPTFloat) MarshalBinary() ([]byte, error) {
 	mantissa, exp, negative := floatExpansion(f.Value)
 	compressed := uint16((exp&0x0F)<<11) | uint16(mantissa&0x7FF)
@@ -50,6 +57,7 @@ func (f *DPTFloat) MarshalBinary() ([]byte, error) {
 	return result, nil
 }
 
+// UnmarshalBinary decodes a 2-byte payload into DPTFloat.
 func (f *DPTFloat) UnmarshalBinary(data []byte) error {
 	if len(data) != 2 {
 		return fmt.Errorf("%w: type %s requires 2 bytes, got %d", ErrUnmarshal, Float.String(), len(data))

@@ -7,24 +7,29 @@ import (
 	"slices"
 )
 
+// SetDatapointValueReq is a request to write datapoint values.
 type SetDatapointValueReq struct {
 	Commands []DatapointCommand
 }
 
+// SetDatapointValueRes is a response confirming the set operation or reporting an error.
 type SetDatapointValueRes struct {
 	StartDatapoint     DatapointID
 	NumberOfDatapoints uint16
 	ErrorCode          ErrorCode
 }
 
+// Service returns the main service identifier.
 func (r *SetDatapointValueReq) Service() byte {
 	return MainService
 }
 
+// SubService returns the sub-service identifier for the request.
 func (r *SetDatapointValueReq) SubService() byte {
 	return SubServiceSetDatapointValueReq
 }
 
+// Valid validates the request fields.
 func (r *SetDatapointValueReq) Valid() error {
 	if len(r.Commands) == 0 {
 		return fmt.Errorf("%w request must contain at least one value", ErrInvalid)
@@ -32,12 +37,14 @@ func (r *SetDatapointValueReq) Valid() error {
 	return nil
 }
 
+// Equal reports whether r and other are identical requests.
 func (r *SetDatapointValueReq) Equal(other *SetDatapointValueReq) bool {
 	return slices.EqualFunc(r.Commands, other.Commands, func(v1, v2 DatapointCommand) bool {
 		return v1.Equal(&v2)
 	})
 }
 
+// String returns a human-readable representation of the request.
 func (r *SetDatapointValueReq) String() string {
 	buffer := bytes.Buffer{}
 	buffer.WriteString("setDatapointValueReq[commands=[")
@@ -51,6 +58,7 @@ func (r *SetDatapointValueReq) String() string {
 	return buffer.String()
 }
 
+// MarshalBinary encodes the request into its BAOS wire format.
 func (r *SetDatapointValueReq) MarshalBinary() ([]byte, error) {
 	result := make([]byte, 6+datapointsSizeInBytes(r.Commands))
 	result[0] = MainService
@@ -67,6 +75,7 @@ func (r *SetDatapointValueReq) MarshalBinary() ([]byte, error) {
 	return result, nil
 }
 
+// UnmarshalBinary decodes the BAOS wire format into the request.
 func (r *SetDatapointValueReq) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) < 6:
@@ -85,29 +94,35 @@ func (r *SetDatapointValueReq) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
+// Service returns the main service identifier.
 func (r *SetDatapointValueRes) Service() byte {
 	return MainService
 }
 
+// SubService returns the sub-service identifier for the response.
 func (r *SetDatapointValueRes) SubService() byte {
 	return SubServiceSetDatapointValueRes
 }
 
+// Valid validates the response fields.
 func (r *SetDatapointValueRes) Valid() error {
 	return nil
 }
 
+// Equal reports whether r and other are identical responses.
 func (r *SetDatapointValueRes) Equal(other *SetDatapointValueRes) bool {
 	return r.StartDatapoint == other.StartDatapoint &&
 		r.NumberOfDatapoints == other.NumberOfDatapoints &&
 		byte(r.ErrorCode) == byte(other.ErrorCode)
 }
 
+// String returns a human-readable representation of the response.
 func (r *SetDatapointValueRes) String() string {
 	return fmt.Sprintf("setDatapointValueRes[startDatapoint=%d,numberOfDatapoints=%d,errorCode=%d]",
 		r.StartDatapoint, r.NumberOfDatapoints, r.ErrorCode)
 }
 
+// MarshalBinary encodes the response into its BAOS wire format.
 func (r *SetDatapointValueRes) MarshalBinary() ([]byte, error) {
 	result := make([]byte, 7)
 	result[0] = MainService
@@ -118,6 +133,7 @@ func (r *SetDatapointValueRes) MarshalBinary() ([]byte, error) {
 	return result, nil
 }
 
+// UnmarshalBinary decodes the BAOS wire format into the response.
 func (r *SetDatapointValueRes) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) != 7:

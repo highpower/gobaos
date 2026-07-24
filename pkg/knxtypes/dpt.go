@@ -6,8 +6,10 @@ import (
 	"strings"
 )
 
+// TypeCode identifies a KNX datapoint type.
 type TypeCode int
 
+// DPT is the common interface for all KNX datapoint types.
 type DPT interface {
 	Get() string
 	Set(value string) error
@@ -16,6 +18,7 @@ type DPT interface {
 	encoding.BinaryUnmarshaler
 }
 
+// Supported KNX datapoint type codes.
 const (
 	Bool         TypeCode = 1
 	Control      TypeCode = 2
@@ -34,6 +37,7 @@ const (
 	RedGreenBlue TypeCode = 232
 )
 
+// String returns the textual name of the type code.
 func (t TypeCode) String() string {
 	switch t {
 	case Bool:
@@ -70,6 +74,7 @@ func (t TypeCode) String() string {
 	return "Unknown"
 }
 
+// ParseTypeCode converts a string name to a TypeCode.
 func ParseTypeCode(s string) (TypeCode, error) {
 	switch strings.ToLower(s) {
 	case "bool":

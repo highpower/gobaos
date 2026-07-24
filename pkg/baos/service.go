@@ -1,12 +1,15 @@
 package baos
 
+// Message is the common interface for all BAOS protocol messages.
 type Message interface {
 	Service() byte
 	SubService() byte
 }
 
+// MainService is the top-level service identifier for BAOS messages.
 const MainService byte = 0xF0
 
+// BAOS sub-service identifiers.
 const (
 	SubServiceGetServerItemReq     byte = 0x01
 	SubServiceGetServerItemRes     byte = 0x81

@@ -7,34 +7,41 @@ import (
 	"slices"
 )
 
+// Filter controls which datapoints are returned in a get-value request.
 type Filter byte
 
+// GetDatapointValueReq is a request to read datapoint values.
 type GetDatapointValueReq struct {
 	StartDatapoint     DatapointID
 	NumberOfDatapoints uint16
 	Filter             Filter
 }
 
+// GetDatapointValueRes is a response containing datapoint values or an error.
 type GetDatapointValueRes struct {
 	StartDatapoint DatapointID
 	Values         []Datapoint
 	ErrorCode      ErrorCode
 }
 
+// Supported datapoint filters.
 const (
 	AllDatapoints     Filter = 0
 	ValidDatapoints   Filter = 1
 	UpdatedDatapoints Filter = 2
 )
 
+// Service returns the main service identifier.
 func (r *GetDatapointValueReq) Service() byte {
 	return MainService
 }
 
+// SubService returns the sub-service identifier for the request.
 func (r *GetDatapointValueReq) SubService() byte {
 	return SubServiceGetDatapointValueReq
 }
 
+// Valid validates the request fields.
 func (r *GetDatapointValueReq) Valid() error {
 	switch r.Filter {
 	case AllDatapoints, ValidDatapoints, UpdatedDatapoints:
@@ -43,16 +50,19 @@ func (r *GetDatapointValueReq) Valid() error {
 	return fmt.Errorf("%w filter: %d", ErrInvalid, r.Filter)
 }
 
+// Equal reports whether r and other are identical requests.
 func (r *GetDatapointValueReq) Equal(other *GetDatapointValueReq) bool {
 	return r.StartDatapoint == other.StartDatapoint && r.NumberOfDatapoints == other.NumberOfDatapoints &&
 		r.Filter == other.Filter
 }
 
+// String returns a human-readable representation of the request.
 func (r *GetDatapointValueReq) String() string {
 	return fmt.Sprintf("getDatapointValueReq[startDatapoint=%d,numberOfDatapoints=%d,filter=%d]",
 		r.StartDatapoint, r.NumberOfDatapoints, r.Filter)
 }
 
+// MarshalBinary encodes the request into its BAOS wire format.
 func (r *GetDatapointValueReq) MarshalBinary() ([]byte, error) {
 	b := make([]byte, 7)
 	b[0] = MainService
@@ -63,6 +73,7 @@ func (r *GetDatapointValueReq) MarshalBinary() ([]byte, error) {
 	return b, nil
 }
 
+// UnmarshalBinary decodes the BAOS wire format into the request.
 func (r *GetDatapointValueReq) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) != 7:
@@ -78,14 +89,17 @@ func (r *GetDatapointValueReq) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
+// Service returns the main service identifier.
 func (r *GetDatapointValueRes) Service() byte {
 	return MainService
 }
 
+// SubService returns the sub-service identifier for the response.
 func (r *GetDatapointValueRes) SubService() byte {
 	return SubServiceGetDatapointValueRes
 }
 
+// Valid validates the response fields.
 func (r *GetDatapointValueRes) Valid() error {
 	switch {
 	case len(r.Values) == 0 && r.ErrorCode == 0:
@@ -96,6 +110,7 @@ func (r *GetDatapointValueRes) Valid() error {
 	return nil
 }
 
+// Equal reports whether r and other are identical responses.
 func (r *GetDatapointValueRes) Equal(other *GetDatapointValueRes) bool {
 	if r.StartDatapoint != other.StartDatapoint || byte(r.ErrorCode) != byte(other.ErrorCode) {
 		return false
@@ -105,6 +120,7 @@ func (r *GetDatapointValueRes) Equal(other *GetDatapointValueRes) bool {
 	})
 }
 
+// String returns a human-readable representation of the response.
 func (r *GetDatapointValueRes) String() string {
 	buffer := bytes.Buffer{}
 	buffer.WriteString(fmt.Sprintf("getDatapointValueRes[startDatapoint=%d,datapoints=[", r.StartDatapoint))
@@ -118,6 +134,7 @@ func (r *GetDatapointValueRes) String() string {
 	return buffer.String()
 }
 
+// MarshalBinary encodes the response into its BAOS wire format.
 func (r *GetDatapointValueRes) MarshalBinary() ([]byte, error) {
 	if r.ErrorCode != 0 {
 		result := make([]byte, 7)
@@ -139,6 +156,7 @@ func (r *GetDatapointValueRes) MarshalBinary() ([]byte, error) {
 	return result, nil
 }
 
+// UnmarshalBinary decodes the BAOS wire format into the response.
 func (r *GetDatapointValueRes) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) < 6:

@@ -8,6 +8,7 @@ import (
 	"syscall"
 )
 
+// Conn is an FT1.2 serial connection.
 type Conn struct {
 	needReset  bool
 	serverEven bool
@@ -16,6 +17,7 @@ type Conn struct {
 	data       bytes.Buffer
 }
 
+// Read implements io.Reader by returning framed payload data.
 func (c *Conn) Read(p []byte) (int, error) {
 	if len(p) != 0 && c.data.Len() != 0 {
 		return c.copyFromBuffer(p)
@@ -26,6 +28,7 @@ func (c *Conn) Read(p []byte) (int, error) {
 	return 0, nil
 }
 
+// Write implements io.Writer. Currently it only handles reset logic.
 func (c *Conn) Write(p []byte) (int, error) {
 	if err := c.resetIfNeeded(); err != nil {
 		return 0, err
@@ -34,10 +37,12 @@ func (c *Conn) Write(p []byte) (int, error) {
 	return 0, nil
 }
 
+// Close closes the underlying serial device.
 func (c *Conn) Close() error {
 	return c.file.Close()
 }
 
+// Available returns the number of unread payload bytes in the internal buffer.
 func (c *Conn) Available() int {
 	return c.data.Len()
 }
@@ -170,6 +175,7 @@ func (c *Conn) writeAck() error {
 	return nil
 }
 
+// NewConn opens an FT1.2 connection on the named TTY device.
 func NewConn(ttyName string) (*Conn, error) {
 	f, err := os.OpenFile(ttyName, os.O_RDWR, 0)
 	if err != nil {

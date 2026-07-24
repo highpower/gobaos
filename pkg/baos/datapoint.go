@@ -6,16 +6,20 @@ import (
 	"fmt"
 )
 
+// DatapointID identifies a single BAOS datapoint.
 type DatapointID uint16
 
+// State represents the state bits of a datapoint value.
 type State byte
 
+// Datapoint holds a single datapoint value with its state.
 type Datapoint struct {
 	ID    DatapointID
 	State State
 	Data  []byte
 }
 
+// DatapointCommand holds a command to be sent to a datapoint.
 type DatapointCommand struct {
 	ID      DatapointID
 	Command Command
@@ -34,10 +38,12 @@ type datapointWrapper[G any] interface {
 
 const datapointHeaderSize = 4
 
+// Equal reports whether d and other represent the same datapoint value.
 func (d *Datapoint) Equal(other *Datapoint) bool {
 	return d.ID == other.ID && d.State == other.State && bytes.Equal(d.Data, other.Data)
 }
 
+// String returns a human-readable representation of the datapoint.
 func (d *Datapoint) String() string {
 	return fmt.Sprintf("datapointValue[id=%d,state=%d,data=%x]", d.ID, d.State, d.Data)
 }
@@ -52,10 +58,12 @@ func (d *Datapoint) attachData(id DatapointID, extra byte, data []byte) {
 	d.Data = data
 }
 
+// Equal reports whether c and other represent the same datapoint command.
 func (c *DatapointCommand) Equal(other *DatapointCommand) bool {
 	return c.ID == other.ID && c.Command == other.Command && bytes.Equal(c.Data, other.Data)
 }
 
+// String returns a human-readable representation of the datapoint command.
 func (c *DatapointCommand) String() string {
 	return fmt.Sprintf("datapointCommand[id=%d,command=%d,data=%x]", c.ID, c.Command, c.Data)
 }

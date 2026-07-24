@@ -6,15 +6,18 @@ import (
 	"strings"
 )
 
+// DPTStepControl represents KNX DPT 3.xxx (step control).
 type DPTStepControl struct {
 	Control  bool
 	StepCode uint8
 }
 
+// Get returns the control and step code as a colon-separated string.
 func (s *DPTStepControl) Get() string {
 	return fmt.Sprintf("%t:%d", s.Control, s.StepCode)
 }
 
+// Set parses a "control:stepCode" string and stores the fields.
 func (s *DPTStepControl) Set(value string) error {
 	parts := strings.Split(value, ":")
 	if len(parts) != 2 {
@@ -36,18 +39,22 @@ func (s *DPTStepControl) Set(value string) error {
 	return nil
 }
 
+// TypeCode returns the type code for DPTStepControl.
 func (s *DPTStepControl) TypeCode() TypeCode {
 	return StepControl
 }
 
+// Valid checks whether the step code is within the valid range [0,7].
 func (s *DPTStepControl) Valid() error {
 	return validStepControl(s.Control, s.StepCode)
 }
 
+// String returns a human-readable representation of DPTStepControl.
 func (s *DPTStepControl) String() string {
 	return fmt.Sprintf("dptStepControl[%t:%d]", s.Control, s.StepCode)
 }
 
+// MarshalBinary encodes DPTStepControl into a 1-byte payload.
 func (s *DPTStepControl) MarshalBinary() ([]byte, error) {
 	result := []byte{0}
 	if s.Control {
@@ -57,6 +64,7 @@ func (s *DPTStepControl) MarshalBinary() ([]byte, error) {
 	return result, nil
 }
 
+// UnmarshalBinary decodes a 1-byte payload into DPTStepControl.
 func (s *DPTStepControl) UnmarshalBinary(data []byte) error {
 	if len(data) != 1 {
 		return fmt.Errorf("%w: type %s expected 1 byte, got %d", ErrUnmarshal, StepControl.String(), len(data))

@@ -5,14 +5,17 @@ import (
 	"unicode/utf8"
 )
 
+// DPTChar represents KNX DPT 4.xxx (ASCII character).
 type DPTChar struct {
 	Value rune
 }
 
+// Get returns the character as a string.
 func (c *DPTChar) Get() string {
 	return fmt.Sprintf("%c", c.Value)
 }
 
+// Set parses a single-character string and stores it.
 func (c *DPTChar) Set(s string) error {
 	if utf8.RuneCountInString(s) != 1 {
 		return fmt.Errorf("%w: char value '%s'", ErrBadValue, s)
@@ -25,22 +28,27 @@ func (c *DPTChar) Set(s string) error {
 	return nil
 }
 
+// TypeCode returns the type code for DPTChar.
 func (c *DPTChar) TypeCode() TypeCode {
 	return Char
 }
 
+// Valid checks whether the character value is in the valid range.
 func (c *DPTChar) Valid() error {
 	return validChar(c.Value)
 }
 
+// String returns a human-readable representation of DPTChar.
 func (c *DPTChar) String() string {
 	return fmt.Sprintf("dptChar[%c]", c.Value)
 }
 
+// MarshalBinary encodes DPTChar into a 1-byte payload.
 func (c *DPTChar) MarshalBinary() (data []byte, err error) {
 	return []byte{byte(c.Value)}, nil
 }
 
+// UnmarshalBinary decodes a 1-byte payload into DPTChar.
 func (c *DPTChar) UnmarshalBinary(data []byte) error {
 	if len(data) != 1 {
 		return fmt.Errorf("%w: type %s requires 1 byte, got %d", ErrUnmarshal, Char.String(), len(data))

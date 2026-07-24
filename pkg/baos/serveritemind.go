@@ -6,19 +6,23 @@ import (
 	"slices"
 )
 
+// ServerItemInd is an unsolicited indication carrying server items.
 type ServerItemInd struct {
 	StartItem ItemID
 	Items     []ServerItem
 }
 
+// Service returns the main service identifier.
 func (r *ServerItemInd) Service() byte {
 	return MainService
 }
 
+// SubService returns the sub-service identifier for the indication.
 func (r *ServerItemInd) SubService() byte {
 	return SubServiceServerItemInd
 }
 
+// Valid validates the indication fields.
 func (r *ServerItemInd) Valid() error {
 	if len(r.Items) == 0 {
 		return fmt.Errorf("%w indication must contain at least one item", ErrInvalid)
@@ -26,16 +30,19 @@ func (r *ServerItemInd) Valid() error {
 	return nil
 }
 
+// Equal reports whether r and other are identical indications.
 func (r *ServerItemInd) Equal(other *ServerItemInd) bool {
 	return r.StartItem == other.StartItem && slices.EqualFunc(r.Items, other.Items, func(i1, i2 ServerItem) bool {
 		return i1.Equal(&i2)
 	})
 }
 
+// String returns a human-readable representation of the indication.
 func (r *ServerItemInd) String() string {
 	return fmt.Sprintf("serverItemInd[startItem=%d,items=%d]", r.StartItem, len(r.Items))
 }
 
+// MarshalBinary encodes the indication into its BAOS wire format.
 func (r *ServerItemInd) MarshalBinary() ([]byte, error) {
 	result := make([]byte, 6+sizeInBytes(r.Items))
 	result[0] = MainService
@@ -48,6 +55,7 @@ func (r *ServerItemInd) MarshalBinary() ([]byte, error) {
 	return result, nil
 }
 
+// UnmarshalBinary decodes the BAOS wire format into the indication.
 func (r *ServerItemInd) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) < 6:

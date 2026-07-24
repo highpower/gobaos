@@ -1,7 +1,9 @@
 package baos
 
+// Command represents a datapoint command code.
 type Command byte
 
+// Supported datapoint commands.
 const (
 	NoCommand         Command = 0b0000
 	SetNewValue       Command = 0b0001

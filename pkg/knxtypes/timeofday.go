@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// DPTTimeOfDay represents KNX DPT 10.xxx (time of day).
 type DPTTimeOfDay struct {
 	Weekday uint8
 	Hour    uint8
@@ -23,6 +24,7 @@ var weekdays = map[uint8]string{
 	1: "mon", 2: "tue", 3: "wed", 4: "thu", 5: "fri", 6: "sat", 7: "sun",
 }
 
+// Get returns the time as a string, optionally prefixed by the weekday.
 func (t *DPTTimeOfDay) Get() string {
 	if s, ok := weekdays[t.Weekday]; ok {
 		return fmt.Sprintf("%s,%02d:%02d:%02d", s, t.Hour, t.Minute, t.Second)
@@ -30,6 +32,7 @@ func (t *DPTTimeOfDay) Get() string {
 	return fmt.Sprintf("%02d:%02d:%02d", t.Hour, t.Minute, t.Second)
 }
 
+// Set parses a time string and stores the fields.
 func (t *DPTTimeOfDay) Set(value string) error {
 	parts := strings.Split(value, ",")
 	switch len(parts) {
@@ -56,10 +59,12 @@ func (t *DPTTimeOfDay) Set(value string) error {
 	return fmt.Errorf("%w: timeOfDay %s", ErrBadValue, value)
 }
 
+// TypeCode returns the type code for DPTTimeOfDay.
 func (t *DPTTimeOfDay) TypeCode() TypeCode {
 	return TimeOfDay
 }
 
+// Valid checks whether the time and weekday are within valid ranges.
 func (t *DPTTimeOfDay) Valid() error {
 	if err := validTime(t.Hour, t.Minute, t.Second); err != nil {
 		return err
@@ -70,15 +75,18 @@ func (t *DPTTimeOfDay) Valid() error {
 	return nil
 }
 
+// String returns a human-readable representation of DPTTimeOfDay.
 func (t *DPTTimeOfDay) String() string {
 	wd := weekdays[t.Weekday]
 	return fmt.Sprintf("dptTimeOfDay['%s',%d:%d:%d]", wd, t.Hour, t.Minute, t.Second)
 }
 
+// MarshalBinary encodes DPTTimeOfDay into a 3-byte payload.
 func (t *DPTTimeOfDay) MarshalBinary() ([]byte, error) {
 	return []byte{(t.Weekday&0x07)<<5 | (t.Hour & 0x1F), t.Minute & 0x3F, t.Second & 0x3F}, nil
 }
 
+// UnmarshalBinary decodes a 3-byte payload into DPTTimeOfDay.
 func (t *DPTTimeOfDay) UnmarshalBinary(data []byte) error {
 	if len(data) != 3 {
 		return fmt.Errorf("%w: type %s requires 3 bytes, got %d", ErrUnmarshal, TimeOfDay.String(), len(data))

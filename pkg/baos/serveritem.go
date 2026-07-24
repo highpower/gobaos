@@ -6,6 +6,7 @@ import (
 	"fmt"
 )
 
+// ServerItem holds a single server item with its ID and raw data.
 type ServerItem struct {
 	ID   ItemID
 	Data []byte
@@ -13,10 +14,12 @@ type ServerItem struct {
 
 const serverItemHeaderSize = 3
 
+// String returns a human-readable representation of the server item.
 func (i *ServerItem) String() string {
 	return fmt.Sprintf("serverItem[id=%d,data=%x]", i.ID, i.Data)
 }
 
+// Equal reports whether i and other represent the same server item.
 func (i *ServerItem) Equal(other *ServerItem) bool {
 	return i.ID == other.ID && bytes.Equal(i.Data, other.Data)
 }
