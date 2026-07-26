@@ -32,13 +32,11 @@ func run(name string) error {
 
 func runWith(conn *ft12.Conn, dm datapointMap) error {
 	for {
-		if _, err := conn.Read(nil); err != nil {
+		if err := conn.Poll(); err != nil {
 			return err
 		}
-		l := conn.Available()
-		buffer := make([]byte, l)
-		_, err := conn.Read(buffer)
-		if err != nil {
+		buffer := make([]byte, conn.Available())
+		if _, err := conn.Read(buffer); err != nil {
 			return err
 		}
 		if !baos.IsDatapointValueInd(buffer) {

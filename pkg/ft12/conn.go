@@ -17,18 +17,39 @@ type Conn struct {
 	data       bytes.Buffer
 }
 
-// Read implements io.Reader by returning framed payload data.
-func (c *Conn) Read(p []byte) (int, error) {
-	if len(p) != 0 && c.data.Len() != 0 {
-		return c.copyFromBuffer(p)
+func (c *Conn) Poll() error {
+	if err := c.resetIfNeeded(); err != nil {
+		return err
 	}
-	if err := c.readToBuffer(); err != nil {
-		return 0, err
+	buffer := [260]byte{}
+	reading := true
+	for reading {
+		n, err := c.readFrameToBuffer(buffer[:])
+		switch {
+		case err != nil:
+			return err
+		case n == 0:
+			reading = false
+		}
 	}
-	return 0, nil
+	return nil
 }
 
-// Write implements io.Writer. Currently it only handles reset logic.
+func (c *Conn) Read(p []byte) (int, error) {
+	if len(p) == 0 {
+		return 0, nil
+	}
+	if len(p) < c.data.Len() {
+		return 0, fmt.Errorf("%w data: %d, expected %d", ErrNoSpace, len(p), c.data.Len())
+	}
+	result, err := c.data.Read(p)
+	if err != nil {
+		return 0, err
+	}
+	c.data.Reset()
+	return result, err
+}
+
 func (c *Conn) Write(p []byte) (int, error) {
 	if err := c.resetIfNeeded(); err != nil {
 		return 0, err
@@ -61,24 +82,6 @@ func (c *Conn) writeResetRequest() error {
 		return err
 	}
 	return c.readAck()
-}
-
-func (c *Conn) readToBuffer() error {
-	if err := c.resetIfNeeded(); err != nil {
-		return err
-	}
-	buffer := [260]byte{}
-	reading := true
-	for reading {
-		n, err := c.readFrameToBuffer(buffer[:])
-		switch {
-		case err != nil:
-			return err
-		case n == 0:
-			reading = false
-		}
-	}
-	return nil
 }
 
 func (c *Conn) readFrameToBuffer(buffer []byte) (int, error) {
@@ -128,18 +131,6 @@ func (c *Conn) unmarshalFrame(data []byte) ([]byte, error) {
 		return nil, fmt.Errorf("%w checksum: %d, expected %d", ErrInvalid, checksum%256, cs)
 	}
 	return data[1 : len(data)-2], nil
-}
-
-func (c *Conn) copyFromBuffer(p []byte) (int, error) {
-	if len(p) < c.data.Len() {
-		return 0, fmt.Errorf("%w data: %d, expected %d", ErrNoSpace, len(p), c.data.Len())
-	}
-	result, err := c.data.Read(p)
-	if err != nil {
-		return 0, err
-	}
-	c.data.Reset()
-	return result, err
 }
 
 func (c *Conn) readAck() error {
