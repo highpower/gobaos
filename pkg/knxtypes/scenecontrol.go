@@ -66,7 +66,7 @@ func (c *DPTSceneControl) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary decodes a 1-byte payload into DPTSceneControl.
 func (c *DPTSceneControl) UnmarshalBinary(data []byte) error {
 	if len(data) != 1 {
-		return fmt.Errorf("DPTSceneControl %w: expected 1 byte, got %d", ErrUnmarshal, len(data))
+		return fmt.Errorf("%w: type %s requires 1 byte, got %d", ErrUnmarshal, SceneControlCode.String(), len(data))
 	}
 	c.Save = data[0]&0x80 != 0
 	c.Scene = (data[0] & 0x3F) + 1

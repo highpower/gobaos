@@ -61,7 +61,7 @@ func (d *DPTControl) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary decodes a 1-byte payload into DPTControl.
 func (d *DPTControl) UnmarshalBinary(data []byte) error {
 	if len(data) != 1 {
-		return fmt.Errorf("%w: type %s, requires 1 byte, got %d", ErrUnmarshal, ControlCode.String(), len(data))
+		return fmt.Errorf("%w: type %s requires 1 byte, got %d", ErrUnmarshal, ControlCode.String(), len(data))
 	}
 	d.Value = data[0]&0x01 != 0
 	d.Control = data[0]&0x02 != 0
