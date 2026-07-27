@@ -20,55 +20,67 @@ type DPT interface {
 
 // Supported KNX datapoint type codes.
 const (
-	Bool         TypeCode = 1
-	Control      TypeCode = 2
-	StepControl  TypeCode = 3
-	Char         TypeCode = 4
-	Uint8        TypeCode = 5
-	Int8         TypeCode = 6
-	Uint16       TypeCode = 7
-	Int16        TypeCode = 8
-	Float        TypeCode = 9
-	TimeOfDay    TypeCode = 10
-	Date         TypeCode = 11
-	Uint32       TypeCode = 12
-	Int32        TypeCode = 13
-	Float4Byte   TypeCode = 14
-	RedGreenBlue TypeCode = 232
+	BoolCode         TypeCode = 1
+	ControlCode      TypeCode = 2
+	StepControlCode  TypeCode = 3
+	CharCode         TypeCode = 4
+	Uint8Code        TypeCode = 5
+	Int8Code         TypeCode = 6
+	Uint16Code       TypeCode = 7
+	Int16Code        TypeCode = 8
+	FloatCode        TypeCode = 9
+	TimeOfDayCode    TypeCode = 10
+	DateCode         TypeCode = 11
+	Uint32Code       TypeCode = 12
+	Int32Code        TypeCode = 13
+	Float4ByteCode   TypeCode = 14
+	StringCode       TypeCode = 16
+	SceneNumberCode  TypeCode = 17
+	SceneControlCode TypeCode = 18
+	EnumCode         TypeCode = 20
+	RedGreenBlueCode TypeCode = 232
 )
 
 // String returns the textual name of the type code.
 func (t TypeCode) String() string {
 	switch t {
-	case Bool:
+	case BoolCode:
 		return "Bool"
-	case Control:
+	case ControlCode:
 		return "Control"
-	case StepControl:
+	case StepControlCode:
 		return "StepControl"
-	case Char:
+	case CharCode:
 		return "Char"
-	case Uint8:
+	case Uint8Code:
 		return "Uint8"
-	case Uint16:
+	case Uint16Code:
 		return "Uint16"
-	case Int16:
+	case Int16Code:
 		return "Int16"
-	case Int8:
+	case Int8Code:
 		return "Int8"
-	case Float:
+	case FloatCode:
 		return "Float"
-	case TimeOfDay:
+	case TimeOfDayCode:
 		return "TimeOfDay"
-	case Date:
+	case DateCode:
 		return "Date"
-	case Uint32:
+	case Uint32Code:
 		return "Uint32"
-	case Int32:
+	case Int32Code:
 		return "Int32"
-	case Float4Byte:
+	case Float4ByteCode:
 		return "Float4Byte"
-	case RedGreenBlue:
+	case StringCode:
+		return "String"
+	case SceneNumberCode:
+		return "SceneNumber"
+	case SceneControlCode:
+		return "SceneControl"
+	case EnumCode:
+		return "Enum"
+	case RedGreenBlueCode:
 		return "RedGreenBlue"
 	}
 	return "Unknown"
@@ -78,35 +90,43 @@ func (t TypeCode) String() string {
 func ParseTypeCode(s string) (TypeCode, error) {
 	switch strings.ToLower(s) {
 	case "bool":
-		return Bool, nil
+		return BoolCode, nil
 	case "control":
-		return Control, nil
+		return ControlCode, nil
 	case "stepcontrol":
-		return StepControl, nil
+		return StepControlCode, nil
 	case "char":
-		return Char, nil
+		return CharCode, nil
 	case "uint8":
-		return Uint8, nil
+		return Uint8Code, nil
 	case "int8":
-		return Int8, nil
+		return Int8Code, nil
 	case "uint16":
-		return Uint16, nil
+		return Uint16Code, nil
 	case "int16":
-		return Int16, nil
+		return Int16Code, nil
 	case "float":
-		return Float, nil
+		return FloatCode, nil
 	case "timeofday":
-		return TimeOfDay, nil
+		return TimeOfDayCode, nil
 	case "date":
-		return Date, nil
+		return DateCode, nil
 	case "uint32":
-		return Uint32, nil
+		return Uint32Code, nil
 	case "int32":
-		return Int32, nil
+		return Int32Code, nil
 	case "float4byte":
-		return Float4Byte, nil
+		return Float4ByteCode, nil
+	case "string":
+		return StringCode, nil
+	case "scenenumber":
+		return SceneNumberCode, nil
+	case "scenecontrol":
+		return SceneControlCode, nil
+	case "enum":
+		return EnumCode, nil
 	case "rgb", "redgreenblue":
-		return RedGreenBlue, nil
+		return RedGreenBlueCode, nil
 	}
 	return TypeCode(0), fmt.Errorf("%w: %s", ErrUnknownType, s)
 }

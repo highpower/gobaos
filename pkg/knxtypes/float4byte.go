@@ -29,7 +29,7 @@ func (d *DPTFloat4Byte) Set(s string) error {
 
 // TypeCode returns the type code for DPTFloat4Byte.
 func (d *DPTFloat4Byte) TypeCode() TypeCode {
-	return Float4Byte
+	return Float4ByteCode
 }
 
 // String returns a human-readable representation of DPTFloat4Byte.
@@ -47,7 +47,7 @@ func (d *DPTFloat4Byte) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary decodes a 4-byte IEEE 754 payload into DPTFloat4Byte.
 func (d *DPTFloat4Byte) UnmarshalBinary(data []byte) error {
 	if len(data) != 4 {
-		return fmt.Errorf("%w: type %s requires 4 bytes, got %d", ErrUnmarshal, Float4Byte.String(), len(data))
+		return fmt.Errorf("%w: type %s requires 4 bytes, got %d", ErrUnmarshal, Float4ByteCode.String(), len(data))
 	}
 	d.Value = float64(math.Float32frombits(binary.BigEndian.Uint32(data)))
 	return nil

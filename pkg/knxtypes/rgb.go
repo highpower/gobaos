@@ -38,7 +38,7 @@ func (d *DPTRedGreenBlue) Set(value string) error {
 
 // TypeCode returns the type code for DPTRedGreenBlue.
 func (d *DPTRedGreenBlue) TypeCode() TypeCode {
-	return RedGreenBlue
+	return RedGreenBlueCode
 }
 
 // String returns a human-readable representation of DPTRedGreenBlue.
@@ -54,7 +54,7 @@ func (d *DPTRedGreenBlue) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary decodes a 3-byte payload into DPTRedGreenBlue.
 func (d *DPTRedGreenBlue) UnmarshalBinary(data []byte) error {
 	if len(data) != 3 {
-		return fmt.Errorf("%w: type %s requires 3 bytes, got %d", ErrUnmarshal, RedGreenBlue.String(), len(data))
+		return fmt.Errorf("%w: type %s requires 3 bytes, got %d", ErrUnmarshal, RedGreenBlueCode.String(), len(data))
 	}
 	d.Red = data[0]
 	d.Green = data[1]

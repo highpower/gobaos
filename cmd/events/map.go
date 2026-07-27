@@ -59,23 +59,23 @@ func (m datapointMap) add(id baos.DatapointID, t string) error {
 		return err
 	}
 	switch code {
-	case knxtypes.Bool:
+	case knxtypes.BoolCode:
 		m[id] = makeHandler(printDPT[knxtypes.DPTBool])
-	case knxtypes.Control:
+	case knxtypes.ControlCode:
 		m[id] = makeHandler(printDPT[knxtypes.DPTControl])
-	case knxtypes.StepControl:
+	case knxtypes.StepControlCode:
 		m[id] = makeHandler(printDPT[knxtypes.DPTStepControl])
-	case knxtypes.Char:
+	case knxtypes.CharCode:
 		m[id] = makeHandler(printDPT[knxtypes.DPTChar])
-	case knxtypes.Uint8:
+	case knxtypes.Uint8Code:
 		m[id] = makeHandler(printDPT[knxtypes.DPTUint8])
-	case knxtypes.Int8:
+	case knxtypes.Int8Code:
 		m[id] = makeHandler(printDPT[knxtypes.DPTInt8])
-	case knxtypes.Uint16:
+	case knxtypes.Uint16Code:
 		m[id] = makeHandler(printDPT[knxtypes.DPTUint16])
-	case knxtypes.Int16:
+	case knxtypes.Int16Code:
 		m[id] = makeHandler(printDPT[knxtypes.DPTInt16])
-	case knxtypes.Float:
+	case knxtypes.FloatCode:
 		m[id] = makeHandler(printDPT[knxtypes.DPTFloat])
 	default:
 		return fmt.Errorf("unsupported type %s", code.String())

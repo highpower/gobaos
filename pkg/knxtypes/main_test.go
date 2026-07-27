@@ -11,14 +11,16 @@ type dptWrapper[G any] interface {
 
 func bytesRequired(code TypeCode) int {
 	switch code {
-	case Bool, Control, StepControl, Char, Uint8, Int8:
+	case BoolCode, ControlCode, StepControlCode, CharCode, Uint8Code, Int8Code, SceneNumberCode, SceneControlCode, EnumCode:
 		return 1
-	case Uint16, Int16, Float:
+	case Uint16Code, Int16Code, FloatCode:
 		return 2
-	case TimeOfDay, Date, RedGreenBlue:
+	case TimeOfDayCode, DateCode, RedGreenBlueCode:
 		return 3
-	case Uint32, Int32, Float4Byte:
+	case Uint32Code, Int32Code, Float4ByteCode:
 		return 4
+	case StringCode:
+		return 14
 	}
 	return -1
 }

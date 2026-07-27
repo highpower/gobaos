@@ -27,7 +27,7 @@ func (b *DPTBool) Set(s string) error {
 
 // TypeCode returns the type code for DPTBool.
 func (b *DPTBool) TypeCode() TypeCode {
-	return Bool
+	return BoolCode
 }
 
 // String returns a human-readable representation of DPTBool.
@@ -47,7 +47,7 @@ func (b *DPTBool) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary decodes a 1-byte payload into DPTBool.
 func (b *DPTBool) UnmarshalBinary(data []byte) error {
 	if len(data) != 1 {
-		return fmt.Errorf("%w: type %s requires 1 byte, got %d", ErrUnmarshal, Bool.String(), len(data))
+		return fmt.Errorf("%w: type %s requires 1 byte, got %d", ErrUnmarshal, BoolCode.String(), len(data))
 	}
 	b.Value = data[0]&0x01 != 0
 	return nil

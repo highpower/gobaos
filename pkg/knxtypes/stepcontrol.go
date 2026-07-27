@@ -21,7 +21,7 @@ func (s *DPTStepControl) Get() string {
 func (s *DPTStepControl) Set(value string) error {
 	parts := strings.Split(value, ":")
 	if len(parts) != 2 {
-		return fmt.Errorf("%w: type %s, requires 2 parts, got %d", ErrBadValue, Control.String(), len(parts))
+		return fmt.Errorf("%w: type %s, requires 2 parts, got %d", ErrBadValue, ControlCode.String(), len(parts))
 	}
 	control, err := strconv.ParseBool(parts[0])
 	if err != nil {
@@ -41,7 +41,7 @@ func (s *DPTStepControl) Set(value string) error {
 
 // TypeCode returns the type code for DPTStepControl.
 func (s *DPTStepControl) TypeCode() TypeCode {
-	return StepControl
+	return StepControlCode
 }
 
 // Valid checks whether the step code is within the valid range [0,7].
@@ -67,7 +67,7 @@ func (s *DPTStepControl) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary decodes a 1-byte payload into DPTStepControl.
 func (s *DPTStepControl) UnmarshalBinary(data []byte) error {
 	if len(data) != 1 {
-		return fmt.Errorf("%w: type %s expected 1 byte, got %d", ErrUnmarshal, StepControl.String(), len(data))
+		return fmt.Errorf("%w: type %s expected 1 byte, got %d", ErrUnmarshal, StepControlCode.String(), len(data))
 	}
 	s.Control = data[0]&0x08 != 0
 	s.StepCode = data[0] & 0x07

@@ -32,7 +32,7 @@ func (f *DPTFloat) Set(s string) error {
 
 // TypeCode returns the type code for DPTFloat.
 func (f *DPTFloat) TypeCode() TypeCode {
-	return Float
+	return FloatCode
 }
 
 // String returns a human-readable representation of DPTFloat.
@@ -60,7 +60,7 @@ func (f *DPTFloat) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary decodes a 2-byte payload into DPTFloat.
 func (f *DPTFloat) UnmarshalBinary(data []byte) error {
 	if len(data) != 2 {
-		return fmt.Errorf("%w: type %s requires 2 bytes, got %d", ErrUnmarshal, Float.String(), len(data))
+		return fmt.Errorf("%w: type %s requires 2 bytes, got %d", ErrUnmarshal, FloatCode.String(), len(data))
 	}
 	compressed := binary.BigEndian.Uint16(data)
 	sign := compressed & 0x8000

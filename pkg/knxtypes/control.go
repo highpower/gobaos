@@ -21,7 +21,7 @@ func (d *DPTControl) Get() string {
 func (d *DPTControl) Set(s string) error {
 	parts := strings.Split(s, ":")
 	if len(parts) != 2 {
-		return fmt.Errorf("%w: type %s expected format <value>:<value>", ErrBadValue, Control.String())
+		return fmt.Errorf("%w: type %s expected format <value>:<value>", ErrBadValue, ControlCode.String())
 	}
 	value, err := strconv.ParseBool(parts[0])
 	if err != nil {
@@ -38,7 +38,7 @@ func (d *DPTControl) Set(s string) error {
 
 // TypeCode returns the type code for DPTControl.
 func (d *DPTControl) TypeCode() TypeCode {
-	return Control
+	return ControlCode
 }
 
 // String returns a human-readable representation of DPTControl.
@@ -61,7 +61,7 @@ func (d *DPTControl) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary decodes a 1-byte payload into DPTControl.
 func (d *DPTControl) UnmarshalBinary(data []byte) error {
 	if len(data) != 1 {
-		return fmt.Errorf("%w: type %s, requires 1 byte, got %d", ErrUnmarshal, Control.String(), len(data))
+		return fmt.Errorf("%w: type %s, requires 1 byte, got %d", ErrUnmarshal, ControlCode.String(), len(data))
 	}
 	d.Value = data[0]&0x01 != 0
 	d.Control = data[0]&0x02 != 0

@@ -61,7 +61,7 @@ func (t *DPTTimeOfDay) Set(value string) error {
 
 // TypeCode returns the type code for DPTTimeOfDay.
 func (t *DPTTimeOfDay) TypeCode() TypeCode {
-	return TimeOfDay
+	return TimeOfDayCode
 }
 
 // Valid checks whether the time and weekday are within valid ranges.
@@ -89,7 +89,7 @@ func (t *DPTTimeOfDay) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary decodes a 3-byte payload into DPTTimeOfDay.
 func (t *DPTTimeOfDay) UnmarshalBinary(data []byte) error {
 	if len(data) != 3 {
-		return fmt.Errorf("%w: type %s requires 3 bytes, got %d", ErrUnmarshal, TimeOfDay.String(), len(data))
+		return fmt.Errorf("%w: type %s requires 3 bytes, got %d", ErrUnmarshal, TimeOfDayCode.String(), len(data))
 	}
 	t.Weekday = (data[0] >> 5) & 0x07
 	t.Hour = data[0] & 0x1F

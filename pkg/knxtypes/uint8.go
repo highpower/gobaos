@@ -27,7 +27,7 @@ func (u *DPTUint8) Set(s string) error {
 
 // TypeCode returns the type code for DPTUint8.
 func (u *DPTUint8) TypeCode() TypeCode {
-	return Uint8
+	return Uint8Code
 }
 
 // String returns a human-readable representation of DPTUint8.
@@ -43,7 +43,7 @@ func (u *DPTUint8) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary decodes a 1-byte payload into DPTUint8.
 func (u *DPTUint8) UnmarshalBinary(data []byte) error {
 	if len(data) != 1 {
-		return fmt.Errorf("%w: type %s requires 1 byte, got %d", ErrUnmarshal, Uint8.String(), len(data))
+		return fmt.Errorf("%w: type %s requires 1 byte, got %d", ErrUnmarshal, Uint8Code.String(), len(data))
 	}
 	u.Value = data[0]
 	return nil

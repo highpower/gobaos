@@ -28,7 +28,7 @@ func (d *DPTInt32) Set(s string) error {
 
 // TypeCode returns the type code for DPTInt32.
 func (d *DPTInt32) TypeCode() TypeCode {
-	return Int32
+	return Int32Code
 }
 
 // String returns a human-readable representation of DPTInt32.
@@ -46,7 +46,7 @@ func (d *DPTInt32) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary decodes a 4-byte big-endian payload into DPTInt32.
 func (d *DPTInt32) UnmarshalBinary(data []byte) error {
 	if len(data) != 4 {
-		return fmt.Errorf("%w: type %s requires 4 bytes, got %d", ErrUnmarshal, Int32.String(), len(data))
+		return fmt.Errorf("%w: type %s requires 4 bytes, got %d", ErrUnmarshal, Int32Code.String(), len(data))
 	}
 	d.Value = int32(binary.BigEndian.Uint32(data))
 	return nil

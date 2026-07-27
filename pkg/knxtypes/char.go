@@ -30,7 +30,7 @@ func (c *DPTChar) Set(s string) error {
 
 // TypeCode returns the type code for DPTChar.
 func (c *DPTChar) TypeCode() TypeCode {
-	return Char
+	return CharCode
 }
 
 // Valid checks whether the character value is in the valid range.
@@ -51,7 +51,7 @@ func (c *DPTChar) MarshalBinary() (data []byte, err error) {
 // UnmarshalBinary decodes a 1-byte payload into DPTChar.
 func (c *DPTChar) UnmarshalBinary(data []byte) error {
 	if len(data) != 1 {
-		return fmt.Errorf("%w: type %s requires 1 byte, got %d", ErrUnmarshal, Char.String(), len(data))
+		return fmt.Errorf("%w: type %s requires 1 byte, got %d", ErrUnmarshal, CharCode.String(), len(data))
 	}
 	c.Value = rune(data[0])
 	return nil

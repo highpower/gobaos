@@ -17,6 +17,7 @@ type Conn struct {
 	data       bytes.Buffer
 }
 
+// Poll reads incoming FT1.2 frames from the serial connection and buffers the payload for later retrieval via Read.
 func (c *Conn) Poll() error {
 	if err := c.resetIfNeeded(); err != nil {
 		return err
@@ -54,7 +55,6 @@ func (c *Conn) Write(p []byte) (int, error) {
 	if err := c.resetIfNeeded(); err != nil {
 		return 0, err
 	}
-
 	return 0, nil
 }
 
@@ -69,11 +69,13 @@ func (c *Conn) Available() int {
 }
 
 func (c *Conn) resetIfNeeded() error {
-	if c.needReset {
-		err := c.writeResetRequest()
-		c.needReset = false
+	if !c.needReset {
+		return nil
+	}
+	if err := c.writeResetRequest(); err != nil {
 		return err
 	}
+	c.needReset = false
 	return nil
 }
 

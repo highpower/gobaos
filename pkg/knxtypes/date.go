@@ -41,7 +41,7 @@ func (d *DPTDate) Set(value string) error {
 
 // TypeCode returns the type code for DPTDate.
 func (d *DPTDate) TypeCode() TypeCode {
-	return Date
+	return DateCode
 }
 
 // Valid checks whether the date fields are within valid ranges.
@@ -62,7 +62,7 @@ func (d *DPTDate) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary decodes a 3-byte payload into DPTDate.
 func (d *DPTDate) UnmarshalBinary(data []byte) error {
 	if len(data) != 3 {
-		return fmt.Errorf("%w: type %s requires 3 bytes, got %d", ErrUnmarshal, Date.String(), len(data))
+		return fmt.Errorf("%w: type %s requires 3 bytes, got %d", ErrUnmarshal, DateCode.String(), len(data))
 	}
 	d.Day = data[0]
 	d.Month = data[1]
