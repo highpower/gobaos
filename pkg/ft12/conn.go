@@ -25,23 +25,12 @@ func (c *Conn) Poll() error {
 	if err := c.resetIfNeeded(); err != nil {
 		return err
 	}
-	buffer := [260]byte{}
-	reading := true
-	for reading {
-		n, err := c.readFrameToBuffer(buffer[:])
-		switch {
-		case err != nil:
-			return err
-		case n == 0:
-			reading = false
-		}
+	if err := c.pollWrite(); err != nil {
+		return err
 	}
-	for _, f := range c.outgoing {
-		if _, err := c.file.Write(f); err != nil {
-			return err
-		}
+	if err := c.pollRead(); err != nil {
+		return err
 	}
-	c.outgoing = c.outgoing[:0]
 	return nil
 }
 
@@ -62,9 +51,9 @@ func (c *Conn) Read(p []byte) (int, error) {
 
 func (c *Conn) Write(p []byte) (int, error) {
 	for len(p) != 0 {
-		length := min(len(p), 255)
+		length := min(len(p), 254)
 		fr := make(frame, length+7) // sizeof(header) + cr + checksum + 0x16
-		copy(fr[:4], []byte{0x68, byte(length), byte(length), 0x68})
+		copy(fr[:4], []byte{0x68, byte(length + 1), byte(length + 1), 0x68})
 		if c.outgoingEven {
 			fr[4] = 0x53
 		} else {
@@ -72,7 +61,7 @@ func (c *Conn) Write(p []byte) (int, error) {
 		}
 		c.outgoingEven = !c.outgoingEven
 		copy(fr[5:length+5], p[:length])
-		fr[len(fr)-2] = checksum(p[:length])
+		fr[len(fr)-2] = checksum(fr[4 : length+5])
 		fr[len(fr)-1] = 0x16
 		c.outgoing = append(c.outgoing, fr)
 		p = p[length:]
@@ -98,6 +87,32 @@ func (c *Conn) resetIfNeeded() error {
 		return err
 	}
 	c.needReset = false
+	return nil
+}
+
+func (c *Conn) pollRead() error {
+	buffer := [260]byte{}
+	for {
+		n, err := c.readFrameToBuffer(buffer[:])
+		switch {
+		case err != nil:
+			return err
+		case n == 0:
+			return nil
+		}
+	}
+}
+
+func (c *Conn) pollWrite() error {
+	for _, f := range c.outgoing {
+		if _, err := c.file.Write(f); err != nil {
+			return err
+		}
+		if err := c.readAck(); err != nil {
+			return err
+		}
+	}
+	c.outgoing = c.outgoing[:0]
 	return nil
 }
 
