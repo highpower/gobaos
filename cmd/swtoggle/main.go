@@ -74,7 +74,7 @@ func runWith(device string, id baos.DatapointID, on bool) error {
 }
 
 func usage(writer io.Writer) {
-	_, _ = fmt.Fprintf(writer, "usage: toggle -device <device> <id> <on|off>\n")
+	_, _ = fmt.Fprintf(writer, "usage: swtoggle -device <device> <id> <on|off>\n")
 	flag.CommandLine.SetOutput(writer)
 	flag.CommandLine.PrintDefaults()
 }
