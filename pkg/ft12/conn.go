@@ -77,7 +77,7 @@ func (c *Conn) Write(p []byte) (int, error) {
 		c.outgoing = append(c.outgoing, fr)
 		p = p[length:]
 	}
-	return 0, nil
+	return len(p), nil
 }
 
 // Close closes the underlying serial device.

@@ -53,6 +53,7 @@ func runWith(conn *ft12.Conn, dm datapointMap) error {
 }
 
 func usage(writer io.Writer) {
+	_, _ = fmt.Fprintf(writer, "usage: events -config <config file>\n")
 	flag.CommandLine.SetOutput(writer)
 	flag.CommandLine.PrintDefaults()
 }
