@@ -12,6 +12,36 @@ import (
 	"strings"
 )
 
+func processRequest(conn *ft12.Conn, id baos.DatapointID, data []byte) error {
+	req := baos.SetDatapointValueReq{Commands: []baos.DatapointCommand{{ID: id, Command: baos.SetNewValue, Data: data}}}
+	reqData, err := req.MarshalBinary()
+	if err != nil {
+		return err
+	}
+	if _, err := conn.Write(reqData); err != nil {
+		return err
+	}
+	for conn.Available() == 0 {
+		if err := conn.Poll(); err != nil {
+			return err
+		}
+	}
+	buffer := make([]byte, conn.Available())
+	if _, err := conn.Read(buffer); err != nil {
+		return err
+	}
+	return processResponse(buffer)
+}
+
+func processResponse(buffer []byte) error {
+	resp := baos.SetDatapointValueRes{}
+	if err := resp.UnmarshalBinary(buffer); err != nil {
+		return err
+	}
+	_, _ = fmt.Fprintf(os.Stdout, "%s\n", resp.String())
+	return nil
+}
+
 func run(device string, args []string) error {
 	id, err := strconv.ParseUint(args[0], 10, 16)
 	if err != nil {
@@ -36,20 +66,11 @@ func runWith(device string, id baos.DatapointID, on bool) error {
 	}
 	defer func() { _ = conn.Close() }()
 	dpt := knxtypes.DPTBool{Value: on}
-	dptBytes, err := dpt.MarshalBinary()
+	data, err := dpt.MarshalBinary()
 	if err != nil {
 		return err
 	}
-	req := baos.SetDatapointValueReq{Commands: []baos.DatapointCommand{{ID: id,
-		Command: baos.SetNewValue, Data: dptBytes}}}
-	data, err := req.MarshalBinary()
-	if err != nil {
-		return err
-	}
-	if _, err := conn.Write(data); err != nil {
-		return err
-	}
-	return conn.Poll()
+	return processRequest(conn, id, data)
 }
 
 func usage(writer io.Writer) {
@@ -70,7 +91,6 @@ func main() {
 		usage(os.Stderr)
 		os.Exit(2)
 	}
-
 	args := flag.Args()
 	if len(args) != 2 {
 		usage(os.Stderr)
