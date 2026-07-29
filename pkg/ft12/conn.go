@@ -8,13 +8,16 @@ import (
 	"syscall"
 )
 
+type frame []byte
+
 // Conn is an FT1.2 serial connection.
 type Conn struct {
-	needReset  bool
-	serverEven bool
-	hostEven   bool
-	file       *os.File
-	data       bytes.Buffer
+	needReset    bool
+	file         *os.File
+	incoming     bytes.Buffer
+	incomingEven bool
+	outgoing     []frame
+	outgoingEven bool
 }
 
 // Poll reads incoming FT1.2 frames from the serial connection and buffers the payload for later retrieval via Read.
@@ -33,6 +36,12 @@ func (c *Conn) Poll() error {
 			reading = false
 		}
 	}
+	for _, f := range c.outgoing {
+		if _, err := c.file.Write(f); err != nil {
+			return err
+		}
+	}
+	c.outgoing = c.outgoing[:0]
 	return nil
 }
 
@@ -40,20 +49,33 @@ func (c *Conn) Read(p []byte) (int, error) {
 	if len(p) == 0 {
 		return 0, nil
 	}
-	if len(p) < c.data.Len() {
-		return 0, fmt.Errorf("%w data: %d, expected %d", ErrNoSpace, len(p), c.data.Len())
+	if len(p) < c.incoming.Len() {
+		return 0, fmt.Errorf("%w: %d, expected %d", ErrNoSpace, len(p), c.incoming.Len())
 	}
-	result, err := c.data.Read(p)
+	result, err := c.incoming.Read(p)
 	if err != nil {
 		return 0, err
 	}
-	c.data.Reset()
+	c.incoming.Reset()
 	return result, err
 }
 
 func (c *Conn) Write(p []byte) (int, error) {
-	if err := c.resetIfNeeded(); err != nil {
-		return 0, err
+	for len(p) != 0 {
+		length := min(len(p), 255)
+		fr := make(frame, length+7) // sizeof(header) + cr + checksum + 0x16
+		copy(fr[:4], []byte{0x68, byte(length), byte(length), 0x68})
+		if c.outgoingEven {
+			fr[4] = 0x53
+		} else {
+			fr[4] = 0x73
+		}
+		c.outgoingEven = !c.outgoingEven
+		copy(fr[5:length+5], p[:length])
+		fr[len(fr)-2] = checksum(p[:length])
+		fr[len(fr)-1] = 0x16
+		c.outgoing = append(c.outgoing, fr)
+		p = p[length:]
 	}
 	return 0, nil
 }
@@ -65,7 +87,7 @@ func (c *Conn) Close() error {
 
 // Available returns the number of unread payload bytes in the internal buffer.
 func (c *Conn) Available() int {
-	return c.data.Len()
+	return c.incoming.Len()
 }
 
 func (c *Conn) resetIfNeeded() error {
@@ -110,7 +132,7 @@ func (c *Conn) readFrameToBuffer(buffer []byte) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	c.data.Write(data)
+	c.incoming.Write(data)
 	return 0, nil
 }
 
@@ -118,19 +140,16 @@ func (c *Conn) unmarshalFrame(data []byte) ([]byte, error) {
 	if len(data) < 3 {
 		return nil, fmt.Errorf("%w frame length", ErrInvalid)
 	}
-	if !validControl(c.serverEven, data[0]) {
+	if (c.incomingEven && data[0] != 0xD3) || (!c.incomingEven && data[0] != 0xF3) {
 		return nil, fmt.Errorf("%w control byte: %d", ErrInvalid, data[0])
 	}
-	c.serverEven = !c.serverEven
+	c.incomingEven = !c.incomingEven
+	calculated := checksum(data[:len(data)-2])
+	if cs := data[len(data)-2]; cs != calculated {
+		return nil, fmt.Errorf("%w checksum: %d, expected %d", ErrInvalid, calculated, cs)
+	}
 	if data[len(data)-1] != 0x16 {
 		return nil, fmt.Errorf("%w last byte: %d", ErrInvalid, data[len(data)-1])
-	}
-	checksum := 0
-	for i := 0; i < len(data)-2; i++ {
-		checksum += int(data[i])
-	}
-	if cs := int(data[len(data)-2]); cs != checksum%256 {
-		return nil, fmt.Errorf("%w checksum: %d, expected %d", ErrInvalid, checksum%256, cs)
 	}
 	return data[1 : len(data)-2], nil
 }
@@ -184,12 +203,14 @@ func NewConn(ttyName string) (*Conn, error) {
 		_ = f.Close()
 		return nil, err
 	}
-	return &Conn{needReset: true, serverEven: false, hostEven: false, file: f, data: bytes.Buffer{}}, nil
+	return &Conn{needReset: true, file: f, incoming: bytes.Buffer{}, incomingEven: false,
+		outgoing: nil, outgoingEven: false}, nil
 }
 
-func validControl(even bool, seen byte) bool {
-	if even {
-		return seen == 0xD3
+func checksum(data []byte) byte {
+	checksum := 0
+	for _, b := range data {
+		checksum += int(b)
 	}
-	return seen == 0xF3
+	return byte(checksum % 256)
 }
