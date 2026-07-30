@@ -251,3 +251,23 @@ func TestGetDatapointValueResUnmarshalErrors(t *testing.T) {
 		})
 	}
 }
+
+func FuzzGetDatapointValueReq(f *testing.F) {
+	req := GetDatapointValueReq{StartDatapoint: 1, NumberOfDatapoints: 2, Filter: AllDatapoints}
+	data, _ := req.MarshalBinary()
+	f.Add(data)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		other := GetDatapointValueReq{}
+		_ = other.UnmarshalBinary(data)
+	})
+}
+
+func FuzzGetDatapointValueRes(f *testing.F) {
+	res := GetDatapointValueRes{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}
+	data, _ := res.MarshalBinary()
+	f.Add(data)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		other := GetDatapointValueRes{}
+		_ = other.UnmarshalBinary(data)
+	})
+}

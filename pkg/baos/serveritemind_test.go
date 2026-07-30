@@ -110,3 +110,13 @@ func TestServerItemIndUnmarshalErrors(t *testing.T) {
 		})
 	}
 }
+
+func FuzzServerItemInd(f *testing.F) {
+	ind := ServerItemInd{StartItem: 1, Items: []ServerItem{{ID: 1, Data: []byte{0x01, 0x02}}}}
+	data, _ := ind.MarshalBinary()
+	f.Add(data)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		other := ServerItemInd{}
+		_ = other.UnmarshalBinary(data)
+	})
+}
