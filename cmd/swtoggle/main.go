@@ -13,7 +13,8 @@ import (
 )
 
 func processRequest(conn *ft12.Conn, id baos.DatapointID, data []byte) error {
-	req := baos.SetDatapointValueReq{Commands: []baos.DatapointCommand{{ID: id, Command: baos.SetNewValue, Data: data}}}
+	req := baos.SetDatapointValueReq{Commands: []baos.DatapointCommand{{ID: id,
+		Command: baos.SetAndSendOnBus, Data: data}}}
 	reqData, err := req.MarshalBinary()
 	if err != nil {
 		return err
