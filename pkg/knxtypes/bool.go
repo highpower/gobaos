@@ -25,7 +25,7 @@ func (b *DPTBool) Set(s string) error {
 	return nil
 }
 
-// TypeCode returns the type code for DPTBool.
+// TypeCode returns the KNX type code for DPTBool.
 func (b *DPTBool) TypeCode() TypeCode {
 	return BoolCode
 }

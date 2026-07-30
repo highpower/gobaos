@@ -34,7 +34,7 @@ func (s *DPTString) String() string {
 	return fmt.Sprintf("dptString['%s']", s.Value)
 }
 
-// Valid checks whether the current value is valid.
+// Valid reports whether the current string value is valid.
 func (s *DPTString) Valid() error {
 	return validString(s.Value)
 }

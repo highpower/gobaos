@@ -17,7 +17,7 @@ func bytesRequired(code TypeCode) int {
 		return 2
 	case TimeOfDayCode, DateCode, RedGreenBlueCode:
 		return 3
-	case Uint32Code, Int32Code, Float4ByteCode:
+	case Uint32Code, Int32Code, Float4ByteCode, AccessCode:
 		return 4
 	case StringCode:
 		return 14

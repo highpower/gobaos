@@ -3,6 +3,7 @@ package baos
 import (
 	"encoding/binary"
 	"fmt"
+	"gobaos/pkg/knxtypes"
 	"slices"
 )
 
@@ -11,7 +12,7 @@ type DatapointDescription struct {
 	ID          DatapointID
 	ValueType   byte
 	ConfigFlags byte
-	DPT         byte
+	DPT         knxtypes.TypeCode
 }
 
 // GetDatapointDescriptionReq is a request to read datapoint descriptions.
@@ -174,7 +175,7 @@ func marshalDescriptionsTo(data []byte, descriptions []DatapointDescription) err
 		binary.BigEndian.PutUint16(data[0:2], uint16(descriptions[i].ID))
 		data[2] = descriptions[i].ValueType
 		data[3] = descriptions[i].ConfigFlags
-		data[4] = descriptions[i].DPT
+		data[4] = byte(descriptions[i].DPT)
 		data = data[datapointDescriptionSize:]
 	}
 	if len(data) != 0 {
@@ -194,7 +195,7 @@ func unmarshalDescriptionsFrom(data []byte, n int) ([]DatapointDescription, erro
 			ID:          DatapointID(binary.BigEndian.Uint16(data[0:2])),
 			ValueType:   data[2],
 			ConfigFlags: data[3],
-			DPT:         data[4],
+			DPT:         knxtypes.TypeCode(data[4]),
 		})
 		data = data[datapointDescriptionSize:]
 	}

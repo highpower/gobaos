@@ -39,12 +39,12 @@ func (d *DPTDate) Set(value string) error {
 	return nil
 }
 
-// TypeCode returns the type code for DPTDate.
+// TypeCode returns the KNX type code for DPTDate.
 func (d *DPTDate) TypeCode() TypeCode {
 	return DateCode
 }
 
-// Valid checks whether the date fields are within valid ranges.
+// Valid reports whether the date fields are within valid ranges.
 func (d *DPTDate) Valid() error {
 	return validDate(d.Day, d.Month, d.Year)
 }

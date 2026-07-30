@@ -25,7 +25,7 @@ func (d *DPTInt8) Set(s string) error {
 	return nil
 }
 
-// TypeCode returns the type code for DPTInt8.
+// TypeCode returns the KNX type code for DPTInt8.
 func (d *DPTInt8) TypeCode() TypeCode {
 	return Int8Code
 }

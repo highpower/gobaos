@@ -26,7 +26,7 @@ func (d *DPTUint32) Set(s string) error {
 	return nil
 }
 
-// TypeCode returns the type code for DPTUint32.
+// TypeCode returns the KNX type code for DPTUint32.
 func (d *DPTUint32) TypeCode() TypeCode {
 	return Uint32Code
 }

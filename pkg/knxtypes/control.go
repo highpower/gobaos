@@ -36,7 +36,7 @@ func (d *DPTControl) Set(s string) error {
 	return nil
 }
 
-// TypeCode returns the type code for DPTControl.
+// TypeCode returns the KNX type code for DPTControl.
 func (d *DPTControl) TypeCode() TypeCode {
 	return ControlCode
 }

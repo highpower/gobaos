@@ -30,7 +30,7 @@ func (f *DPTFloat) Set(s string) error {
 	return nil
 }
 
-// TypeCode returns the type code for DPTFloat.
+// TypeCode returns the KNX type code for DPTFloat.
 func (f *DPTFloat) TypeCode() TypeCode {
 	return FloatCode
 }
@@ -40,7 +40,7 @@ func (f *DPTFloat) String() string {
 	return fmt.Sprintf("dptFloat[%0.4f]", f.Value)
 }
 
-// Valid checks whether the float value can be encoded.
+// Valid reports whether the float value can be encoded.
 func (f *DPTFloat) Valid() error {
 	return validFloat(f.Value)
 }

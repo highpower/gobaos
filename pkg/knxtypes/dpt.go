@@ -34,6 +34,7 @@ const (
 	Uint32Code       TypeCode = 12
 	Int32Code        TypeCode = 13
 	Float4ByteCode   TypeCode = 14
+	AccessCode       TypeCode = 15
 	StringCode       TypeCode = 16
 	SceneNumberCode  TypeCode = 17
 	SceneControlCode TypeCode = 18
@@ -72,6 +73,8 @@ func (t TypeCode) String() string {
 		return "Int32"
 	case Float4ByteCode:
 		return "Float4Byte"
+	case AccessCode:
+		return "Access"
 	case StringCode:
 		return "String"
 	case SceneNumberCode:
@@ -117,6 +120,8 @@ func ParseTypeCode(s string) (TypeCode, error) {
 		return Int32Code, nil
 	case "float4byte":
 		return Float4ByteCode, nil
+	case "access":
+		return AccessCode, nil
 	case "string":
 		return StringCode, nil
 	case "scenenumber":

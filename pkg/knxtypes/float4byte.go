@@ -27,7 +27,7 @@ func (d *DPTFloat4Byte) Set(s string) error {
 	return nil
 }
 
-// TypeCode returns the type code for DPTFloat4Byte.
+// TypeCode returns the KNX type code for DPTFloat4Byte.
 func (d *DPTFloat4Byte) TypeCode() TypeCode {
 	return Float4ByteCode
 }

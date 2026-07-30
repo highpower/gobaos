@@ -36,7 +36,7 @@ func (d *DPTRedGreenBlue) Set(value string) error {
 	return nil
 }
 
-// TypeCode returns the type code for DPTRedGreenBlue.
+// TypeCode returns the KNX type code for DPTRedGreenBlue.
 func (d *DPTRedGreenBlue) TypeCode() TypeCode {
 	return RedGreenBlueCode
 }

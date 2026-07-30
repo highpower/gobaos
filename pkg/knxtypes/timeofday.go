@@ -59,12 +59,12 @@ func (t *DPTTimeOfDay) Set(value string) error {
 	return fmt.Errorf("%w: timeOfDay %s", ErrBadValue, value)
 }
 
-// TypeCode returns the type code for DPTTimeOfDay.
+// TypeCode returns the KNX type code for DPTTimeOfDay.
 func (t *DPTTimeOfDay) TypeCode() TypeCode {
 	return TimeOfDayCode
 }
 
-// Valid checks whether the time and weekday are within valid ranges.
+// Valid reports whether the time and weekday are within valid ranges.
 func (t *DPTTimeOfDay) Valid() error {
 	if err := validTime(t.Hour, t.Minute, t.Second); err != nil {
 		return err

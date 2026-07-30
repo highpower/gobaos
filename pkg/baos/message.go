@@ -11,6 +11,8 @@ const (
 	SubServiceSetServerItemRes           byte = 0x82
 	SubServiceGetDatapointDescriptionReq byte = 0x03
 	SubServiceGetDatapointDescriptionRes byte = 0x83
+	SubServiceGetDescriptionStringReq    byte = 0x04
+	SubServiceGetDescriptionStringRes    byte = 0x84
 	SubServiceGetDatapointValueReq       byte = 0x05
 	SubServiceGetDatapointValueRes       byte = 0x85
 	SubServiceSetDatapointValueReq       byte = 0x06

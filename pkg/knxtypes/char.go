@@ -28,12 +28,12 @@ func (c *DPTChar) Set(s string) error {
 	return nil
 }
 
-// TypeCode returns the type code for DPTChar.
+// TypeCode returns the KNX type code for DPTChar.
 func (c *DPTChar) TypeCode() TypeCode {
 	return CharCode
 }
 
-// Valid checks whether the character value is in the valid range.
+// Valid reports whether the character value is in the valid ASCII range.
 func (c *DPTChar) Valid() error {
 	return validChar(c.Value)
 }

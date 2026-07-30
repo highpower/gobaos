@@ -40,7 +40,7 @@ func (s *DPTStepControl) Set(value string) error {
 	return nil
 }
 
-// TypeCode returns the type code for DPTStepControl.
+// TypeCode returns the KNX type code for DPTStepControl.
 func (s *DPTStepControl) TypeCode() TypeCode {
 	return StepControlCode
 }
