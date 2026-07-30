@@ -236,3 +236,23 @@ func TestSetDatapointValueResUnmarshalErrors(t *testing.T) {
 		})
 	}
 }
+
+func FuzzSetDatapointValueReq(f *testing.F) {
+	req := SetDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Command: SetNewValue, Data: []byte{0x01}}}}
+	data, _ := req.MarshalBinary()
+	f.Add(data)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		other := SetDatapointValueReq{}
+		_ = other.UnmarshalBinary(data)
+	})
+}
+
+func FuzzSetDatapointValueRes(f *testing.F) {
+	res := SetDatapointValueRes{StartDatapoint: 1, NumberOfDatapoints: 0, ErrorCode: 0}
+	data, _ := res.MarshalBinary()
+	f.Add(data)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		other := SetDatapointValueRes{}
+		_ = other.UnmarshalBinary(data)
+	})
+}

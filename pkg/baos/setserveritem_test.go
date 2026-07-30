@@ -223,3 +223,23 @@ func TestSetServerItemResUnmarshalErrors(t *testing.T) {
 		})
 	}
 }
+
+func FuzzSetServerItemReq(f *testing.F) {
+	req := SetServerItemReq{Items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}
+	data, _ := req.MarshalBinary()
+	f.Add(data)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		other := SetServerItemReq{}
+		_ = other.UnmarshalBinary(data)
+	})
+}
+
+func FuzzSetServerItemRes(f *testing.F) {
+	res := SetServerItemRes{StartItem: 1, NumberOfItems: 0, ErrorCode: 0}
+	data, _ := res.MarshalBinary()
+	f.Add(data)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		other := SetServerItemRes{}
+		_ = other.UnmarshalBinary(data)
+	})
+}

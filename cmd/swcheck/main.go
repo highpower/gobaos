@@ -73,7 +73,7 @@ func main() {
 		usage(os.Stderr)
 		os.Exit(2)
 	}
-	if err := run(device, args); err != nil {
+	if err := run(device, args[0]); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		os.Exit(1)
 	}
