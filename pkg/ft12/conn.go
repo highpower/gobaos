@@ -101,7 +101,6 @@ func (c *Conn) pollRead() error {
 		case err != nil:
 			return err
 		case n == 0:
-			_, _ = fmt.Fprintf(os.Stderr, "no frames read to buffer\n")
 			return nil
 		}
 	}
