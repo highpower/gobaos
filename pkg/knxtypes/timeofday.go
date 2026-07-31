@@ -37,18 +37,18 @@ func (t *DPTTimeOfDay) Set(value string) error {
 	parts := strings.Split(value, ",")
 	switch len(parts) {
 	case 1:
-		tm, err := t.parseTime(parts[0])
+		tm, err := parseTime(parts[0])
 		if err != nil {
 			return err
 		}
 		t.Hour, t.Minute, t.Second = tm.hour, tm.minute, tm.second
 		return nil
 	case 2:
-		tm, err := t.parseTime(parts[1])
+		tm, err := parseTime(parts[1])
 		if err != nil {
 			return err
 		}
-		wd, err := t.parseWeekday(parts[0])
+		wd, err := parseWeekday(parts[0])
 		if err != nil {
 			return err
 		}
@@ -98,7 +98,7 @@ func (t *DPTTimeOfDay) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-func (t *DPTTimeOfDay) parseTime(s string) (timeStruct, error) {
+func parseTime(s string) (timeStruct, error) {
 	parts := strings.Split(s, ":")
 	if len(parts) != 3 {
 		return timeStruct{}, fmt.Errorf("%w: time %s", ErrBadValue, s)
@@ -117,7 +117,7 @@ func (t *DPTTimeOfDay) parseTime(s string) (timeStruct, error) {
 	return timeStruct{hour: numbers[0], minute: numbers[1], second: numbers[2]}, nil
 }
 
-func (t *DPTTimeOfDay) parseWeekday(s string) (uint8, error) {
+func parseWeekday(s string) (uint8, error) {
 	for k, v := range weekdays {
 		if strings.EqualFold(s, v) {
 			return k, nil

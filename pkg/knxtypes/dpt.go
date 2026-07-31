@@ -33,13 +33,14 @@ const (
 	DateCode         TypeCode = 11
 	Uint32Code       TypeCode = 12
 	Int32Code        TypeCode = 13
-	Float4ByteCode   TypeCode = 14
-	AccessCode       TypeCode = 15
-	StringCode       TypeCode = 16
-	SceneNumberCode  TypeCode = 17
-	SceneControlCode TypeCode = 18
-	EnumCode         TypeCode = 20
-	RedGreenBlueCode TypeCode = 232
+	Float4ByteCode     TypeCode = 14
+	AccessCode         TypeCode = 15
+	StringCode         TypeCode = 16
+	SceneNumberCode    TypeCode = 17
+	SceneControlCode   TypeCode = 18
+	DateTime8ByteCode  TypeCode = 19
+	EnumCode           TypeCode = 20
+	RedGreenBlueCode   TypeCode = 232
 )
 
 // String returns the textual name of the type code.
@@ -81,6 +82,8 @@ func (t TypeCode) String() string {
 		return "SceneNumber"
 	case SceneControlCode:
 		return "SceneControl"
+	case DateTime8ByteCode:
+		return "DateTime8Byte"
 	case EnumCode:
 		return "Enum"
 	case RedGreenBlueCode:
@@ -128,6 +131,8 @@ func ParseTypeCode(s string) (TypeCode, error) {
 		return SceneNumberCode, nil
 	case "scenecontrol":
 		return SceneControlCode, nil
+	case "datetime8byte":
+		return DateTime8ByteCode, nil
 	case "enum":
 		return EnumCode, nil
 	case "rgb", "redgreenblue":

@@ -42,10 +42,12 @@ func (d *DatapointDescription) String() string {
 		d.ID, d.ValueType, d.ConfigFlags, d.DPT)
 }
 
+// Service returns the main service identifier.
 func (r *GetDatapointDescriptionReq) Service() byte {
 	return MainService
 }
 
+// SubService returns the sub-service identifier.
 func (r *GetDatapointDescriptionReq) SubService() byte {
 	return SubServiceGetDatapointDescriptionReq
 }
@@ -92,10 +94,12 @@ func (r *GetDatapointDescriptionReq) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
+// Service returns the main service identifier.
 func (r *GetDatapointDescriptionRes) Service() byte {
 	return MainService
 }
 
+// SubService returns the sub-service identifier.
 func (r *GetDatapointDescriptionRes) SubService() byte {
 	return SubServiceGetDatapointDescriptionRes
 }

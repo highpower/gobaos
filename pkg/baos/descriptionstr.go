@@ -19,10 +19,12 @@ type GetDescriptionStringRes struct {
 	ErrorCode      ErrorCode
 }
 
+// Service returns the main service identifier.
 func (r *GetDescriptionStringReq) Service() byte {
 	return MainService
 }
 
+// SubService returns the sub-service identifier.
 func (r *GetDescriptionStringReq) SubService() byte {
 	return SubServiceGetDescriptionStringReq
 }
@@ -69,10 +71,12 @@ func (r *GetDescriptionStringReq) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
+// Service returns the main service identifier.
 func (r *GetDescriptionStringRes) Service() byte {
 	return MainService
 }
 
+// SubService returns the sub-service identifier.
 func (r *GetDescriptionStringRes) SubService() byte {
 	return SubServiceGetDescriptionStringRes
 }

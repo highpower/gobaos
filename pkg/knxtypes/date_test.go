@@ -37,7 +37,7 @@ func TestDPTDateMarshal(t *testing.T) {
 	}
 }
 
-func TestDPTDateUnmarshal(t *testing.T) {
+func TestDPTDateBadUnmarshal(t *testing.T) {
 	testBadUnmarshal[DPTDate](t)
 }
 

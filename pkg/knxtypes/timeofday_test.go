@@ -3,6 +3,7 @@ package knxtypes
 import "testing"
 
 func TestDPTTimeOfDayMarshal(t *testing.T) {
+
 	type testCase struct {
 		name    string
 		weekday uint8
@@ -81,8 +82,10 @@ func TestDPTTimeOfDaySet(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		{name: "ValidTimeOnly", input: "12:30:45", expected: DPTTimeOfDay{Weekday: 0, Hour: 12, Minute: 30, Second: 45}, errorExpected: false},
-		{name: "ValidWithWeekday", input: "mon,12:30:45", expected: DPTTimeOfDay{Weekday: 1, Hour: 12, Minute: 30, Second: 45}, errorExpected: false},
+		{name: "ValidTimeOnly", input: "12:30:45", expected: DPTTimeOfDay{Weekday: 0, Hour: 12, Minute: 30, Second: 45},
+			errorExpected: false},
+		{name: "ValidWithWeekday", input: "mon,12:30:45", expected: DPTTimeOfDay{Weekday: 1, Hour: 12, Minute: 30, Second: 45},
+			errorExpected: false},
 		{name: "WrongParts", input: "mon,12:30:45,extra", errorExpected: true},
 		{name: "BadTimeFormat", input: "12:30", errorExpected: true},
 		{name: "NotAnHour", input: "mon,bad:00:00", errorExpected: true},
