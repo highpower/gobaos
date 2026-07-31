@@ -2,9 +2,12 @@ package ft12
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"os"
+	"time"
 	"syscall"
 )
 
@@ -126,8 +129,12 @@ func (c *Conn) writeResetRequest() error {
 
 func (c *Conn) readFrameToBuffer(buffer []byte) (int, error) {
 	hd := header{}
-	n, err := io.ReadFull(c.file, hd[:])
+	c.file.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+	n, err := c.file.Read(hd[:])
+	var ne net.Error
 	switch {
+	case errors.As(err, &ne):
+		return 0, nil
 	case err != nil:
 		return 0, err
 	case n == 0:
