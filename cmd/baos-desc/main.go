@@ -51,7 +51,7 @@ func runWith(conn *ft12.Conn, id baos.DatapointID) error {
 }
 
 func usage(writer io.Writer) {
-	_, _ = fmt.Fprintf(writer, "usage: baos-get -device <device> <id>\n")
+	_, _ = fmt.Fprintf(writer, "usage: baos-desc -device <device> <id>\n")
 	flag.CommandLine.SetOutput(writer)
 	flag.CommandLine.PrintDefaults()
 }

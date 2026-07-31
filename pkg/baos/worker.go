@@ -110,6 +110,26 @@ func (w *Worker) Description(id DatapointID) (DatapointDescription, error) {
 	return result[0], nil
 }
 
+func (w *Worker) DescriptionString(id DatapointID) (string, error) {
+	req := GetDescriptionStringReq{StartDatapoint: id, NumberOfStrings: 1}
+	res := GetDescriptionStringRes{}
+
+	current := w.makeCall(&req, &res)
+	w.calls <- current
+	current.waitForReady()
+	w.releaseCall(current)
+
+	switch {
+	case current.err != nil:
+		return "", current.err
+	case res.ErrorCode != 0:
+		return "", Error{res.ErrorCode}
+	case len(res.Strings) == 0:
+		return "", fmt.Errorf("%w response: 0 values for datapoint %d", ErrInvalid, id)
+	}
+	return res.Strings[0], nil
+}
+
 func (w *Worker) description(start DatapointID, number uint16) ([]DatapointDescription, error) {
 	req := GetDatapointDescriptionReq{StartDatapoint: start, NumberOfDatapoints: uint16(number)}
 	res := GetDatapointDescriptionRes{}
