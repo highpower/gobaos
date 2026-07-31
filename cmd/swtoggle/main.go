@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 func run(device string, args []string) error {
@@ -26,7 +27,7 @@ func run(device string, args []string) error {
 	default:
 		return fmt.Errorf("unknown command: %s", args[1])
 	}
-	conn, err := ft12.NewConn(device)
+	conn, err := ft12.NewConn(device, ft12.WithTimeout(50*time.Millisecond))
 	if err != nil {
 		return err
 	}

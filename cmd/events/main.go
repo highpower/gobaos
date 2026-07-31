@@ -7,6 +7,7 @@ import (
 	"gobaos/pkg/ft12"
 	"io"
 	"os"
+	"time"
 )
 
 func run(name string) error {
@@ -22,7 +23,7 @@ func run(name string) error {
 			}
 		}
 	}
-	conn, err := ft12.NewConn(c.Device)
+	conn, err := ft12.NewConn(c.Device, ft12.WithTimeout(50*time.Millisecond))
 	if err != nil {
 		return err
 	}

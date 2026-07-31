@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 )
 
 func run(device string, id string) error {
@@ -16,7 +17,7 @@ func run(device string, id string) error {
 	if err != nil {
 		return err
 	}
-	conn, err := ft12.NewConn(device)
+	conn, err := ft12.NewConn(device, ft12.WithTimeout(50*time.Millisecond))
 	if err != nil {
 		return err
 	}

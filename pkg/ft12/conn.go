@@ -21,7 +21,14 @@ type Conn struct {
 	incomingEven bool
 	outgoing     []frame
 	outgoingEven bool
+	pollTimeout  time.Duration
 }
+
+type ConnOption interface {
+	apply(conn *Conn)
+}
+
+type timeoutOption time.Duration
 
 // Poll reads incoming FT1.2 frames from the serial connection and buffers the payload for later retrieval via Read.
 func (c *Conn) Poll() error {
@@ -150,21 +157,19 @@ func (c *Conn) readFrameToBuffer(buffer []byte) (int, error) {
 
 func (c *Conn) readHeader() (header, error) {
 	hd := header{}
-	if err := setTimeout(c.file, 100*time.Millisecond); err != nil {
+	if err := setTimeout(c.file, c.pollTimeout); err != nil {
 		return header{}, err
 	}
 	defer func() { _ = clearTimeout(c.file) }()
 	n, err := io.ReadFull(c.file, hd[:])
 	var ne net.Error
 	switch {
-	case errors.As(err, &ne) && ne.Timeout():
+	case (errors.As(err, &ne) && ne.Timeout()) || n == 0:
 		return header{}, nil
 	case err != nil:
 		return header{}, err
 	case hd.valid() != nil:
 		return hd, fmt.Errorf("%w header: %x", ErrInvalid, hd)
-	case n == 0:
-		return header{}, nil
 	case hd.isResetIndication():
 		c.needReset = true
 		return header{}, nil
@@ -224,8 +229,12 @@ func (c *Conn) writeAck() error {
 	return nil
 }
 
+func (t timeoutOption) apply(conn *Conn) {
+	conn.pollTimeout = time.Duration(t)
+}
+
 // NewConn opens an FT1.2 connection on the named TTY device.
-func NewConn(ttyName string) (*Conn, error) {
+func NewConn(ttyName string, options ...ConnOption) (*Conn, error) {
 	f, err := os.OpenFile(ttyName, os.O_RDWR, 0)
 	if err != nil {
 		return nil, err
@@ -239,8 +248,16 @@ func NewConn(ttyName string) (*Conn, error) {
 		_ = f.Close()
 		return nil, err
 	}
-	return &Conn{needReset: true, file: f, incoming: bytes.Buffer{}, incomingEven: false,
-		outgoing: nil, outgoingEven: false}, nil
+	result := Conn{needReset: true, file: f, incoming: bytes.Buffer{}, incomingEven: false,
+		outgoing: nil, outgoingEven: false, pollTimeout: 100 * time.Millisecond}
+	for _, option := range options {
+		option.apply(&result)
+	}
+	return &result, nil
+}
+
+func WithTimeout(timeout time.Duration) ConnOption {
+	return timeoutOption(timeout)
 }
 
 func setTimeout(f *os.File, d time.Duration) error {
