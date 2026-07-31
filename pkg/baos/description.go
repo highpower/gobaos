@@ -2,6 +2,7 @@ package baos
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"gobaos/pkg/knxtypes"
 	"slices"
@@ -40,6 +41,11 @@ func (d *DatapointDescription) Equal(other *DatapointDescription) bool {
 func (d *DatapointDescription) String() string {
 	return fmt.Sprintf("datapointDescription[id=%d,valueType=%d,configFlags=%d,dpt=%d]",
 		d.ID, d.ValueType, d.ConfigFlags, d.DPT)
+}
+
+// Valid validates the datapoint description fields.
+func (d *DatapointDescription) Valid() error {
+	return errors.Join(d.DPT.Valid())
 }
 
 // Service returns the main service identifier.

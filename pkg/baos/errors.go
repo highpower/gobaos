@@ -5,6 +5,11 @@ import "fmt"
 // ErrorCode represents a BAOS protocol error code.
 type ErrorCode byte
 
+// Error wraps an ErrorCode to implement the error interface.
+type Error struct {
+	Code ErrorCode
+}
+
 // Supported BAOS error codes.
 const (
 	NoError               ErrorCode = 0
@@ -24,13 +29,13 @@ const (
 // ErrInvalid is returned when a message or value fails validation.
 var ErrInvalid = fmt.Errorf("invalid")
 
-// Byte returns the error code as a byte.
-func (e ErrorCode) Byte() byte {
-	return byte(e)
+// Error returns the string representation of the wrapped error code.
+func (e Error) Error() string {
+	return e.Code.String()
 }
 
-// Error returns a human-readable description of the error code.
-func (e ErrorCode) Error() string {
+// String returns a human-readable description of the error code.
+func (e ErrorCode) String() string {
 	switch e {
 	case NoError:
 		return "no error"

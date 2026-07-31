@@ -95,6 +95,22 @@ func (t TypeCode) String() string {
 	return "Unknown"
 }
 
+// Valid returns nil if code is a valid KNX DPT type,
+// otherwise it returns ErrUnknownType.
+func (t TypeCode) Valid() error {
+	switch t {
+	case BoolCode, ControlCode, StepControlCode, CharCode,
+		Uint8Code, Int8Code, Uint16Code, Int16Code,
+		FloatCode, TimeOfDayCode, DateCode,
+		Uint32Code, Int32Code, Float4ByteCode,
+		AccessCode, StringCode, SceneNumberCode,
+		SceneControlCode, DateTime8ByteCode, EnumCode,
+		RedGreenBlueCode, RedGreenBlueWhiteCode:
+		return nil
+	}
+	return fmt.Errorf("%w: %d", ErrUnknownType, t)
+}
+
 // ParseTypeCode converts a string name to a TypeCode.
 func ParseTypeCode(s string) (TypeCode, error) {
 	switch strings.ToLower(s) {

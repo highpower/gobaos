@@ -52,3 +52,57 @@ func TestValidTypeCode(t *testing.T) {
 		})
 	}
 }
+
+func TestParseTypeCode(t *testing.T) {
+	type testCase struct {
+		name          string
+		value         string
+		result        TypeCode
+		errorExpected bool
+	}
+
+	testCases := []testCase{
+		{name: "Bool", value: "bool", result: BoolCode, errorExpected: false},
+		{name: "BoolUpper", value: "BOOL", result: BoolCode, errorExpected: false},
+		{name: "Control", value: "control", result: ControlCode, errorExpected: false},
+		{name: "StepControl", value: "stepcontrol", result: StepControlCode, errorExpected: false},
+		{name: "Char", value: "char", result: CharCode, errorExpected: false},
+		{name: "Uint8", value: "uint8", result: Uint8Code, errorExpected: false},
+		{name: "Int8", value: "int8", result: Int8Code, errorExpected: false},
+		{name: "Uint16", value: "uint16", result: Uint16Code, errorExpected: false},
+		{name: "Int16", value: "int16", result: Int16Code, errorExpected: false},
+		{name: "Float", value: "float", result: FloatCode, errorExpected: false},
+		{name: "TimeOfDay", value: "timeofday", result: TimeOfDayCode, errorExpected: false},
+		{name: "Date", value: "date", result: DateCode, errorExpected: false},
+		{name: "Uint32", value: "uint32", result: Uint32Code, errorExpected: false},
+		{name: "Int32", value: "int32", result: Int32Code, errorExpected: false},
+		{name: "Float4Byte", value: "float4byte", result: Float4ByteCode, errorExpected: false},
+		{name: "Access", value: "access", result: AccessCode, errorExpected: false},
+		{name: "String", value: "string", result: StringCode, errorExpected: false},
+		{name: "SceneNumber", value: "scenenumber", result: SceneNumberCode, errorExpected: false},
+		{name: "SceneControl", value: "scenecontrol", result: SceneControlCode, errorExpected: false},
+		{name: "DateTime8Byte", value: "datetime8byte", result: DateTime8ByteCode, errorExpected: false},
+		{name: "Enum", value: "enum", result: EnumCode, errorExpected: false},
+		{name: "RGB", value: "rgb", result: RedGreenBlueCode, errorExpected: false},
+		{name: "RedGreenBlue", value: "redgreenblue", result: RedGreenBlueCode, errorExpected: false},
+		{name: "RGBW", value: "rgbw", result: RedGreenBlueWhiteCode, errorExpected: false},
+		{name: "RedGreenBlueWhite", value: "redgreenbluewhite", result: RedGreenBlueWhiteCode, errorExpected: false},
+		{name: "Empty", value: "", result: TypeCode(0), errorExpected: true},
+		{name: "Invalid", value: "unknown", result: TypeCode(0), errorExpected: true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			res, err := ParseTypeCode(tc.value)
+			switch {
+			case err == nil && tc.errorExpected:
+				t.Errorf("expected error for value %q", tc.value)
+			case err != nil && !tc.errorExpected:
+				t.Errorf("unexpected error for value %q: %s", tc.value, err.Error())
+			case err == nil && !tc.errorExpected && res != tc.result:
+				t.Errorf("ParseTypeCode(%q) = %d, want %d", tc.value, res, tc.result)
+			}
+		})
+	}
+}

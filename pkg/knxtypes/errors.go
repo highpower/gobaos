@@ -4,7 +4,7 @@ import "errors"
 
 // Sentinel errors for the knxtypes package.
 var (
-	// ErrUnmarshal is returned when binary unmarshaling fails.
+	// ErrUnmarshal is returned when binary unmarshalling fails.
 	ErrUnmarshal = errors.New("unmarshal error")
 	// ErrUnknownType is returned when a type code string cannot be parsed.
 	ErrUnknownType = errors.New("unknown type")

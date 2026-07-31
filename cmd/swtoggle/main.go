@@ -5,43 +5,12 @@ import (
 	"fmt"
 	"gobaos/pkg/baos"
 	"gobaos/pkg/ft12"
-	"gobaos/pkg/knxtypes"
 	"io"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
-
-func processRequest(conn *ft12.Conn, id baos.DatapointID, data []byte) error {
-	req := baos.SetDatapointValueReq{Commands: []baos.DatapointCommand{{ID: id,
-		Command: baos.SetAndSendOnBus, Data: data}}}
-	reqData, err := req.MarshalBinary()
-	if err != nil {
-		return err
-	}
-	if _, err := conn.Write(reqData); err != nil {
-		return err
-	}
-	for conn.Available() == 0 {
-		if err := conn.Poll(); err != nil {
-			return err
-		}
-	}
-	buffer := make([]byte, conn.Available())
-	if _, err := conn.Read(buffer); err != nil {
-		return err
-	}
-	return processResponse(buffer)
-}
-
-func processResponse(buffer []byte) error {
-	resp := baos.SetDatapointValueRes{}
-	if err := resp.UnmarshalBinary(buffer); err != nil {
-		return err
-	}
-	_, _ = fmt.Fprintf(os.Stdout, "%s\n", resp.String())
-	return nil
-}
 
 func run(device string, args []string) error {
 	id, err := strconv.ParseUint(args[0], 10, 16)
@@ -60,18 +29,28 @@ func run(device string, args []string) error {
 	return runWith(device, baos.DatapointID(id), on)
 }
 
+func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
+	if err := w.Run(); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+	}
+	wg.Done()
+}
+
 func runWith(device string, id baos.DatapointID, on bool) error {
 	conn, err := ft12.NewConn(device)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = conn.Close() }()
-	dpt := knxtypes.DPTBool{Value: on}
-	data, err := dpt.MarshalBinary()
-	if err != nil {
+	worker := baos.NewWorker(conn)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go runWorker(worker, &wg)
+	if err := worker.SetBool(id, on); err != nil {
 		return err
 	}
-	return processRequest(conn, id, data)
+	wg.Wait()
+	return nil
 }
 
 func usage(writer io.Writer) {
