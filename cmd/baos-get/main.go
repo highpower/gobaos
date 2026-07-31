@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"gobaos/pkg/baos"
 	"gobaos/pkg/ft12"
-	"gobaos/pkg/knxtypes"
 	"io"
 	"os"
 	"strconv"
@@ -43,7 +42,7 @@ func runWith(conn *ft12.Conn, id baos.DatapointID) error {
 	wg.Add(1)
 	go runWorker(worker, &wg)
 
-	dpt, err := createFor(worker, id)
+	dpt, err := baos.CreateForID(worker, id)
 	if err != nil {
 		return err
 	}
@@ -52,14 +51,6 @@ func runWith(conn *ft12.Conn, id baos.DatapointID) error {
 	}
 	_, _ = fmt.Fprintf(os.Stdout, "datapoint %d: %s\n", id, dpt.Get())
 	return nil
-}
-
-func createFor(worker *baos.Worker, id baos.DatapointID) (knxtypes.DPT, error) {
-	description, err := worker.Description(id)
-	if err != nil {
-		return nil, err
-	}
-	return knxtypes.NewDPT(description.DPT)
 }
 
 func usage(writer io.Writer) {
