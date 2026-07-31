@@ -7,8 +7,8 @@ import (
 	"io"
 	"net"
 	"os"
-	"time"
 	"syscall"
+	"time"
 )
 
 type frame []byte
@@ -129,8 +129,10 @@ func (c *Conn) writeResetRequest() error {
 
 func (c *Conn) readFrameToBuffer(buffer []byte) (int, error) {
 	hd := header{}
-	c.file.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
-	n, err := c.file.Read(hd[:])
+	if err := c.file.SetReadDeadline(time.Now().Add(100 * time.Millisecond)); err != nil {
+		return 0, err
+	}
+	n, err := io.ReadFull(c.file, hd[:])
 	var ne net.Error
 	switch {
 	case errors.As(err, &ne):
