@@ -45,6 +45,23 @@ func (w *Worker) Run() error {
 	}
 }
 
+func (w *Worker) Stop() {
+	w.stop <- true
+}
+
+func (w *Worker) Bool(id DatapointID) (bool, error) {
+	dpt := knxtypes.DPTBool{}
+	if err := w.getValue(id, &dpt); err != nil {
+		return false, err
+	}
+	return dpt.Value, nil
+}
+
+func (w *Worker) SetBool(id DatapointID, value bool) error {
+	dpt := knxtypes.DPTBool{Value: value}
+	return w.setValue(id, &dpt)
+}
+
 func (w *Worker) handleCall(current *call) error {
 	data, err := current.request.MarshalBinary()
 	if err != nil {
@@ -93,32 +110,6 @@ func (w *Worker) handleIndication() error {
 	return nil
 }
 
-func (w *Worker) Stop() {
-	w.stop <- true
-}
-
-func (w *Worker) makeCall(req encoding.BinaryMarshaler, resp encoding.BinaryUnmarshaler) *call {
-	result := call{request: req, response: resp, ready: make(chan bool, 1)}
-	return &result
-}
-
-func (w *Worker) releaseCall(call *call) {
-	close(call.ready)
-}
-
-func (w *Worker) Bool(id DatapointID) (bool, error) {
-	dpt := knxtypes.DPTBool{}
-	if err := w.getValue(id, &dpt); err != nil {
-		return false, err
-	}
-	return dpt.Value, nil
-}
-
-func (w *Worker) SetBool(id DatapointID, value bool) error {
-	dpt := knxtypes.DPTBool{Value: value}
-	return w.setValue(id, &dpt)
-}
-
 func (w *Worker) getValue(id DatapointID, dpt knxtypes.DPT) error {
 	req := GetDatapointValueReq{StartDatapoint: id, NumberOfDatapoints: 1}
 	resp := GetDatapointValueRes{}
@@ -163,35 +154,13 @@ func (w *Worker) setValue(id DatapointID, dpt knxtypes.DPT) error {
 	return nil
 }
 
-func (w *Worker) readCall(current *call) error {
-	if current == nil {
-		return nil
-	}
-	if cap(w.buffer) < w.conn.Available() {
-		w.buffer = make([]byte, w.conn.Available())
-	}
-	if _, err := w.conn.Read(w.buffer); err != nil {
-		return err
-	}
-	if err := current.response.UnmarshalBinary(w.buffer); err != nil {
-		current.err = err
-	}
-	current.ready <- true
-	return nil
+func (w *Worker) makeCall(req encoding.BinaryMarshaler, resp encoding.BinaryUnmarshaler) *call {
+	result := call{request: req, response: resp, ready: make(chan bool, 1)}
+	return &result
 }
 
-func (w *Worker) writeСall(current *call) error {
-	if current == nil {
-		return nil
-	}
-	data, err := current.request.MarshalBinary()
-	if err != nil {
-		return err
-	}
-	if _, err := w.conn.Write(data); err != nil {
-		return err
-	}
-	return nil
+func (w *Worker) releaseCall(call *call) {
+	close(call.ready)
 }
 
 func (c *call) waitForReady() {

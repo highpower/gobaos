@@ -30,29 +30,29 @@ func run(device string, args []string) error {
 }
 
 func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
+	defer wg.Done()
 	if err := w.Run(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 	}
-	wg.Done()
+
 }
 
 func runWith(device string, id baos.DatapointID, on bool) error {
+	var wg sync.WaitGroup
+	defer wg.Wait()
 	conn, err := ft12.NewConn(device)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = conn.Close() }()
 	worker := baos.NewWorker(conn)
-	var wg sync.WaitGroup
+	defer worker.Stop()
 	wg.Add(1)
 	go runWorker(worker, &wg)
 	if err := worker.SetBool(id, on); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
-		worker.Stop()
 		return err
 	}
-	worker.Stop()
-	wg.Wait()
 	return nil
 }
 
