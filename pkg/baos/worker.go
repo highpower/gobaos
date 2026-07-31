@@ -113,17 +113,18 @@ func (w *Worker) handleIndication() error {
 func (w *Worker) getValue(id DatapointID, dpt knxtypes.DPT) error {
 	req := GetDatapointValueReq{StartDatapoint: id, NumberOfDatapoints: 1}
 	resp := GetDatapointValueRes{}
+
 	current := w.makeCall(&req, &resp)
-	defer w.releaseCall(current)
 	w.calls <- current
 	current.waitForReady()
-	if current.err != nil {
+	w.releaseCall(current)
+
+	switch {
+	case current.err != nil:
 		return current.err
-	}
-	if resp.ErrorCode != NoError {
-		return Error{Code: resp.ErrorCode}
-	}
-	if len(resp.Values) == 0 {
+	case resp.ErrorCode != 0:
+		return Error{resp.ErrorCode}
+	case len(resp.Values) == 0:
 		return fmt.Errorf("%w response: 0 values for datapoint %d", ErrInvalid, id)
 	}
 	if err := dpt.UnmarshalBinary(resp.Values[0].Data); err != nil {
@@ -138,18 +139,18 @@ func (w *Worker) setValue(id DatapointID, dpt knxtypes.DPT) error {
 		return err
 	}
 	req := SetDatapointValueReq{Commands: []DatapointCommand{{ID: id, Command: SetAndSendOnBus, Data: data}}}
-	res := SetDatapointValueRes{ErrorCode: ErrorCode(0xff)}
-	current := w.makeCall(&req, &res)
-	defer w.releaseCall(current)
+	resp := SetDatapointValueRes{ErrorCode: ErrorCode(0xff)}
 
+	current := w.makeCall(&req, &resp)
 	w.calls <- current
 	current.waitForReady()
+	w.releaseCall(current)
 
-	if current.err != nil {
+	switch {
+	case current.err != nil:
 		return current.err
-	}
-	if res.ErrorCode != NoError {
-		return Error{Code: res.ErrorCode}
+	case resp.ErrorCode != 0:
+		return Error{resp.ErrorCode}
 	}
 	return nil
 }
