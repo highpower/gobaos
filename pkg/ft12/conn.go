@@ -30,6 +30,8 @@ type ConnOption interface {
 
 type timeoutOption time.Duration
 
+const MaxMessageLength = 254
+
 // Poll reads incoming FT1.2 frames from the serial connection and buffers the payload for later retrieval via Read.
 func (c *Conn) Poll() error {
 	if err := c.resetIfNeeded(); err != nil {
@@ -61,7 +63,7 @@ func (c *Conn) Read(p []byte) (int, error) {
 
 func (c *Conn) Write(p []byte) (int, error) {
 	for len(p) != 0 {
-		length := min(len(p), 254)
+		length := min(len(p), MaxMessageLength)
 		fr := make(frame, length+7) // sizeof(header) + cr + checksum + 0x16
 		copy(fr[:4], []byte{0x68, byte(length + 1), byte(length + 1), 0x68})
 		if c.outgoingEven {

@@ -14,7 +14,7 @@ import (
 )
 
 func run(device string, args []string) error {
-	value, err := strconv.ParseUint(args[0], 10, 16)
+	id, err := strconv.ParseUint(args[0], 10, 16)
 	if err != nil {
 		return err
 	}
@@ -26,13 +26,15 @@ func run(device string, args []string) error {
 	if err != nil {
 		return err
 	}
-
+	if err := dpt.Set(args[2]); err != nil {
+		return err
+	}
 	conn, err := ft12.NewConn(device, ft12.WithTimeout(50*time.Millisecond))
 	if err != nil {
 		return err
 	}
 	defer func() { _ = conn.Close() }()
-	return runWith(conn, baos.DatapointID(value), dpt)
+	return runWith(conn, baos.DatapointID(id), dpt)
 }
 
 func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
@@ -52,15 +54,14 @@ func runWith(conn *ft12.Conn, id baos.DatapointID, dpt knxtypes.DPT) error {
 	wg.Add(1)
 	go runWorker(worker, &wg)
 
-	if err := worker.GetValue(id, dpt); err != nil {
+	if err := worker.Set(id, dpt); err != nil {
 		return err
 	}
-	_, _ = fmt.Fprintf(os.Stdout, "datapoint %d: %s\n", id, dpt.Get())
 	return nil
 }
 
 func usage(writer io.Writer) {
-	_, _ = fmt.Fprintf(writer, "usage: baos-check -device <device> <id>\n")
+	_, _ = fmt.Fprintf(writer, "usage: baos-set -device <device> <id> <on|off>\n")
 	flag.CommandLine.SetOutput(writer)
 	flag.CommandLine.PrintDefaults()
 }
@@ -77,9 +78,8 @@ func main() {
 		usage(os.Stderr)
 		os.Exit(2)
 	}
-
 	args := flag.Args()
-	if len(args) == 2 {
+	if len(args) != 3 {
 		usage(os.Stderr)
 		os.Exit(2)
 	}
