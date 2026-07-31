@@ -29,8 +29,10 @@ type call struct {
 }
 
 func (w *Worker) Run() error {
+
 	for {
 		current := (*call)(nil)
+		w.buffer = w.buffer[:0]
 		select {
 		case <-w.stop:
 			return nil
@@ -38,8 +40,7 @@ func (w *Worker) Run() error {
 			current = c
 		default:
 		}
-		w.buffer = w.buffer[:0]
-		if err := w.writeCurrent(current); err != nil {
+		if err := w.writeСall(current); err != nil {
 			return err
 		}
 		if err := w.conn.Poll(); err != nil {
@@ -59,22 +60,6 @@ func (w *Worker) makeCall(req encoding.BinaryMarshaler, resp encoding.BinaryUnma
 
 func (w *Worker) releaseCall(call *call) {
 	close(call.ready)
-}
-
-func (w *Worker) readCall(current *call) error {
-	if current == nil {
-		return nil
-	}
-	if cap(w.buffer) < w.conn.Available() {
-		w.buffer = make([]byte, w.conn.Available())
-	}
-	if _, err := w.conn.Read(w.buffer); err != nil {
-		return err
-	}
-	if err := current.response.UnmarshalBinary(w.buffer); err != nil {
-		current.err = err
-	}
-	return nil
 }
 
 func (w *Worker) Bool(id DatapointID) (bool, error) {
@@ -117,12 +102,10 @@ func (w *Worker) setValue(id DatapointID, dpt knxtypes.DPT) error {
 	if err != nil {
 		return err
 	}
-	_, _ = fmt.Fprintf(os.Stderr, "binary marshalled\n")
 	req := SetDatapointValueReq{Commands: []DatapointCommand{
 		{ID: id, Command: SetAndSendOnBus, Data: data},
 	}}
 	resp := SetDatapointValueRes{ErrorCode: ErrorCode(0xff)}
-	_, _ = fmt.Fprintf(os.Stderr, "request and response created\n")
 	current := w.makeCall(&req, &resp)
 	defer w.releaseCall(current)
 	_, _ = fmt.Fprintf(os.Stderr, "call created\n")
@@ -141,7 +124,24 @@ func (w *Worker) setValue(id DatapointID, dpt knxtypes.DPT) error {
 	return nil
 }
 
-func (w *Worker) writeCurrent(current *call) error {
+func (w *Worker) readCall(current *call) error {
+	if current == nil {
+		return nil
+	}
+	if cap(w.buffer) < w.conn.Available() {
+		w.buffer = make([]byte, w.conn.Available())
+	}
+	if _, err := w.conn.Read(w.buffer); err != nil {
+		return err
+	}
+	if err := current.response.UnmarshalBinary(w.buffer); err != nil {
+		current.err = err
+	}
+	current.ready <- true
+	return nil
+}
+
+func (w *Worker) writeСall(current *call) error {
 	if current == nil {
 		return nil
 	}
@@ -152,7 +152,6 @@ func (w *Worker) writeCurrent(current *call) error {
 	if _, err := w.conn.Write(data); err != nil {
 		return err
 	}
-	current.ready <- true
 	return nil
 }
 
