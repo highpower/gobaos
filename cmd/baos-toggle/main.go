@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gobaos/pkg/baos"
 	"gobaos/pkg/ft12"
+	"gobaos/pkg/knxtypes"
 	"io"
 	"os"
 	"strconv"
@@ -12,9 +13,20 @@ import (
 	"time"
 )
 
-func run(device string, id string) error {
-	value, err := strconv.ParseUint(id, 10, 16)
+func run(device string, args []string) error {
+	id, err := strconv.ParseUint(args[0], 10, 16)
 	if err != nil {
+		return err
+	}
+	t, err := knxtypes.ParseTypeCode(args[1])
+	if err != nil {
+		return err
+	}
+	dpt, err := knxtypes.NewDPT(t)
+	if err != nil {
+		return err
+	}
+	if err := dpt.Set(args[2]); err != nil {
 		return err
 	}
 	conn, err := ft12.NewConn(device, ft12.WithTimeout(50*time.Millisecond))
@@ -22,7 +34,7 @@ func run(device string, id string) error {
 		return err
 	}
 	defer func() { _ = conn.Close() }()
-	return runWith(conn, baos.DatapointID(value))
+	return runWith(conn, baos.DatapointID(id), dpt)
 }
 
 func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
@@ -32,7 +44,7 @@ func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
 	}
 }
 
-func runWith(conn *ft12.Conn, id baos.DatapointID) error {
+func runWith(conn *ft12.Conn, id baos.DatapointID, dpt knxtypes.DPT) error {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
@@ -42,16 +54,14 @@ func runWith(conn *ft12.Conn, id baos.DatapointID) error {
 	wg.Add(1)
 	go runWorker(worker, &wg)
 
-	result, err := worker.Bool(id)
-	if err != nil {
+	if err := worker.SetValue(id, dpt); err != nil {
 		return err
 	}
-	_, _ = fmt.Fprintf(os.Stdout, "%t\n", result)
 	return nil
 }
 
 func usage(writer io.Writer) {
-	_, _ = fmt.Fprintf(writer, "usage: swcheck -device <device> <id>\n")
+	_, _ = fmt.Fprintf(writer, "usage: baos-toggle -device <device> <id> <on|off>\n")
 	flag.CommandLine.SetOutput(writer)
 	flag.CommandLine.PrintDefaults()
 }
@@ -68,13 +78,12 @@ func main() {
 		usage(os.Stderr)
 		os.Exit(2)
 	}
-
 	args := flag.Args()
-	if len(args) == 0 {
+	if len(args) != 3 {
 		usage(os.Stderr)
 		os.Exit(2)
 	}
-	if err := run(device, args[0]); err != nil {
+	if err := run(device, args); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		os.Exit(1)
 	}

@@ -3,6 +3,7 @@ package knxtypes
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // DPTBool represents KNX DPT 1.xxx (boolean).
@@ -17,11 +18,18 @@ func (b *DPTBool) Get() string {
 
 // Set parses a boolean string and stores the value.
 func (b *DPTBool) Set(s string) error {
-	value, err := strconv.ParseBool(s)
-	if err != nil {
-		return err
+	switch strings.ToLower(s) {
+	case "on", "enable":
+		b.Value = true
+	case "off", "disable":
+		b.Value = false
+	default:
+		value, err := strconv.ParseBool(s)
+		if err != nil {
+			return err
+		}
+		b.Value = value
 	}
-	b.Value = value
 	return nil
 }
 

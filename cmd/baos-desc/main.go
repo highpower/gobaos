@@ -8,31 +8,25 @@ import (
 	"io"
 	"os"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
 
 func run(device string, args []string) error {
-	id, err := strconv.ParseUint(args[0], 10, 16)
+	start, err := strconv.ParseUint(args[0], 10, 16)
 	if err != nil {
 		return err
 	}
-	on := true
-	switch strings.ToLower(args[1]) {
-	case "on":
-		on = true
-	case "off":
-		on = false
-	default:
-		return fmt.Errorf("unknown command: %s", args[1])
+	number, err := strconv.ParseUint(args[1], 10, 16)
+	if err != nil {
+
 	}
 	conn, err := ft12.NewConn(device, ft12.WithTimeout(50*time.Millisecond))
 	if err != nil {
 		return err
 	}
 	defer func() { _ = conn.Close() }()
-	return runWith(conn, baos.DatapointID(id), on)
+	return runWith(conn, baos.DatapointID(start), uint16(number))
 }
 
 func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
@@ -42,7 +36,7 @@ func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
 	}
 }
 
-func runWith(conn *ft12.Conn, id baos.DatapointID, on bool) error {
+func runWith(conn *ft12.Conn, start baos.DatapointID, number uint16) error {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
@@ -52,14 +46,19 @@ func runWith(conn *ft12.Conn, id baos.DatapointID, on bool) error {
 	wg.Add(1)
 	go runWorker(worker, &wg)
 
-	if err := worker.SetBool(id, on); err != nil {
+	descriptions, err := worker.Descriptions(start, number)
+	if err != nil {
 		return err
 	}
+	for _, d := range descriptions {
+		_, _ = fmt.Fprintf(os.Stdout, "datapoint %d: type %s\n", d.ID, d.DPT.String())
+	}
+
 	return nil
 }
 
 func usage(writer io.Writer) {
-	_, _ = fmt.Fprintf(writer, "usage: swtoggle -device <device> <id> <on|off>\n")
+	_, _ = fmt.Fprintf(writer, "usage: baos-check -device <device> <id>\n")
 	flag.CommandLine.SetOutput(writer)
 	flag.CommandLine.PrintDefaults()
 }
@@ -76,6 +75,7 @@ func main() {
 		usage(os.Stderr)
 		os.Exit(2)
 	}
+
 	args := flag.Args()
 	if len(args) != 2 {
 		usage(os.Stderr)

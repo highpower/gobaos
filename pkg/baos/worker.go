@@ -51,7 +51,7 @@ func (w *Worker) Stop() {
 
 func (w *Worker) Bool(id DatapointID) (bool, error) {
 	dpt := knxtypes.DPTBool{}
-	if err := w.getValue(id, &dpt); err != nil {
+	if err := w.GetValue(id, &dpt); err != nil {
 		return false, err
 	}
 	return dpt.Value, nil
@@ -59,7 +59,7 @@ func (w *Worker) Bool(id DatapointID) (bool, error) {
 
 func (w *Worker) SetBool(id DatapointID, value bool) error {
 	dpt := knxtypes.DPTBool{Value: value}
-	return w.setValue(id, &dpt)
+	return w.SetValue(id, &dpt)
 }
 
 func (w *Worker) handleCall(current *call) error {
@@ -110,11 +110,29 @@ func (w *Worker) handleIndication() error {
 	return nil
 }
 
-func (w *Worker) getValue(id DatapointID, dpt knxtypes.DPT) error {
-	req := GetDatapointValueReq{StartDatapoint: id, NumberOfDatapoints: 1}
-	resp := GetDatapointValueRes{}
+func (w *Worker) Descriptions(start DatapointID, number uint16) ([]DatapointDescription, error) {
+	req := GetDatapointDescriptionReq{StartDatapoint: start, NumberOfDatapoints: uint16(number)}
+	res := GetDatapointDescriptionRes{}
 
-	current := w.makeCall(&req, &resp)
+	current := w.makeCall(&req, &res)
+	w.calls <- current
+	current.waitForReady()
+	w.releaseCall(current)
+
+	switch {
+	case current.err != nil:
+		return nil, current.err
+	case res.ErrorCode != 0:
+		return nil, Error{Code: res.ErrorCode}
+	}
+	return res.Descriptions, nil
+}
+
+func (w *Worker) GetValue(id DatapointID, dpt knxtypes.DPT) error {
+	req := GetDatapointValueReq{StartDatapoint: id, NumberOfDatapoints: 1}
+	res := GetDatapointValueRes{}
+
+	current := w.makeCall(&req, &res)
 	w.calls <- current
 	current.waitForReady()
 	w.releaseCall(current)
@@ -122,26 +140,26 @@ func (w *Worker) getValue(id DatapointID, dpt knxtypes.DPT) error {
 	switch {
 	case current.err != nil:
 		return current.err
-	case resp.ErrorCode != 0:
-		return Error{resp.ErrorCode}
-	case len(resp.Values) == 0:
+	case res.ErrorCode != 0:
+		return Error{res.ErrorCode}
+	case len(res.Values) == 0:
 		return fmt.Errorf("%w response: 0 values for datapoint %d", ErrInvalid, id)
 	}
-	if err := dpt.UnmarshalBinary(resp.Values[0].Data); err != nil {
+	if err := dpt.UnmarshalBinary(res.Values[0].Data); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (w *Worker) setValue(id DatapointID, dpt knxtypes.DPT) error {
+func (w *Worker) SetValue(id DatapointID, dpt knxtypes.DPT) error {
 	data, err := dpt.MarshalBinary()
 	if err != nil {
 		return err
 	}
 	req := SetDatapointValueReq{Commands: []DatapointCommand{{ID: id, Command: SetAndSendOnBus, Data: data}}}
-	resp := SetDatapointValueRes{ErrorCode: ErrorCode(0xff)}
+	res := SetDatapointValueRes{ErrorCode: ErrorCode(0xff)}
 
-	current := w.makeCall(&req, &resp)
+	current := w.makeCall(&req, &res)
 	w.calls <- current
 	current.waitForReady()
 	w.releaseCall(current)
@@ -149,8 +167,8 @@ func (w *Worker) setValue(id DatapointID, dpt knxtypes.DPT) error {
 	switch {
 	case current.err != nil:
 		return current.err
-	case resp.ErrorCode != 0:
-		return Error{resp.ErrorCode}
+	case res.ErrorCode != 0:
+		return Error{res.ErrorCode}
 	}
 	return nil
 }

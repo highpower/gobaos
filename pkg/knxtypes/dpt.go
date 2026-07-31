@@ -161,3 +161,53 @@ func ParseTypeCode(s string) (TypeCode, error) {
 	}
 	return TypeCode(0), fmt.Errorf("%w: %s", ErrUnknownType, s)
 }
+
+func NewDPT(code TypeCode) (DPT, error) {
+	switch code {
+	case BoolCode:
+		return &DPTBool{}, nil
+	case ControlCode:
+		return &DPTControl{}, nil
+	case StepControlCode:
+		return &DPTStepControl{}, nil
+	case CharCode:
+		return &DPTChar{}, nil
+	case Uint8Code:
+		return &DPTUint8{}, nil
+	case Int8Code:
+		return &DPTInt8{}, nil
+	case Uint16Code:
+		return &DPTUint16{}, nil
+	case Int16Code:
+		return &DPTInt16{}, nil
+	case FloatCode:
+		return &DPTFloat{}, nil
+	case TimeOfDayCode:
+		return &DPTTimeOfDay{}, nil
+	case DateCode:
+		return &DPTDate{}, nil
+	case Uint32Code:
+		return &DPTUint32{}, nil
+	case Int32Code:
+		return &DPTInt32{}, nil
+	case Float4ByteCode:
+		return &DPTFloat4Byte{}, nil
+	case AccessCode:
+		return &DPTAccess{}, nil
+	case StringCode:
+		return &DPTString{}, nil
+	case SceneNumberCode:
+		return &DPTSceneNumber{}, nil
+	case SceneControlCode:
+		return &DPTSceneControl{}, nil
+	case DateTime8ByteCode:
+		return &DPTDateTime8Byte{}, nil
+	case EnumCode:
+		return &DPTEnum{}, nil
+	case RedGreenBlueCode:
+		return &DPTRedGreenBlue{}, nil
+	case RedGreenBlueWhiteCode:
+		return &DPTRedGreenBlueWhite{}, nil
+	}
+	return nil, fmt.Errorf("%w: %d", ErrUnknownType, code)
+}
