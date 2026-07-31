@@ -18,21 +18,12 @@ func run(device string, args []string) error {
 	if err != nil {
 		return err
 	}
-	t, err := knxtypes.ParseTypeCode(args[1])
-	if err != nil {
-		return err
-	}
-	dpt, err := knxtypes.NewDPT(t)
-	if err != nil {
-		return err
-	}
-
 	conn, err := ft12.NewConn(device, ft12.WithTimeout(50*time.Millisecond))
 	if err != nil {
 		return err
 	}
 	defer func() { _ = conn.Close() }()
-	return runWith(conn, baos.DatapointID(value), dpt)
+	return runWith(conn, baos.DatapointID(value))
 }
 
 func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
@@ -42,7 +33,7 @@ func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
 	}
 }
 
-func runWith(conn *ft12.Conn, id baos.DatapointID, dpt knxtypes.DPT) error {
+func runWith(conn *ft12.Conn, id baos.DatapointID) error {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
@@ -52,6 +43,10 @@ func runWith(conn *ft12.Conn, id baos.DatapointID, dpt knxtypes.DPT) error {
 	wg.Add(1)
 	go runWorker(worker, &wg)
 
+	dpt, err := createFor(worker, id)
+	if err != nil {
+		return err
+	}
 	if err := worker.Get(id, dpt); err != nil {
 		return err
 	}
@@ -59,8 +54,16 @@ func runWith(conn *ft12.Conn, id baos.DatapointID, dpt knxtypes.DPT) error {
 	return nil
 }
 
+func createFor(worker *baos.Worker, id baos.DatapointID) (knxtypes.DPT, error) {
+	description, err := worker.Description(id)
+	if err != nil {
+		return nil, err
+	}
+	return knxtypes.NewDPT(description.DPT)
+}
+
 func usage(writer io.Writer) {
-	_, _ = fmt.Fprintf(writer, "usage: baos-get -device <device> <id> <type>\n")
+	_, _ = fmt.Fprintf(writer, "usage: baos-get -device <device> <id>\n")
 	flag.CommandLine.SetOutput(writer)
 	flag.CommandLine.PrintDefaults()
 }
@@ -79,7 +82,7 @@ func main() {
 	}
 
 	args := flag.Args()
-	if len(args) == 2 {
+	if len(args) != 1 {
 		usage(os.Stderr)
 		os.Exit(2)
 	}
