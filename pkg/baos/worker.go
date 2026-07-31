@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gobaos/pkg/ft12"
 	"gobaos/pkg/knxtypes"
+	"os"
 )
 
 // Worker handles BAOS communication over an FT1.2 connection.
@@ -35,6 +36,7 @@ func (w *Worker) Run() error {
 			return nil
 		case c := <-w.calls:
 			current = c
+		default:
 		}
 		w.buffer = w.buffer[:0]
 		if err := w.writeCurrent(current); err != nil {
@@ -115,15 +117,21 @@ func (w *Worker) setValue(id DatapointID, dpt knxtypes.DPT) error {
 	if err != nil {
 		return err
 	}
+	_, _ = fmt.Fprintf(os.Stderr, "binary marshalled\n")
 	req := SetDatapointValueReq{Commands: []DatapointCommand{
 		{ID: id, Command: SetAndSendOnBus, Data: data},
 	}}
-	resp := SetDatapointValueRes{}
+	resp := SetDatapointValueRes{ErrorCode: ErrorCode(0xff)}
+	_, _ = fmt.Fprintf(os.Stderr, "request and response created\n")
 	current := w.makeCall(&req, &resp)
 	defer w.releaseCall(current)
+	_, _ = fmt.Fprintf(os.Stderr, "call created\n")
 
 	w.calls <- current
+	_, _ = fmt.Fprintf(os.Stderr, "call send to run goroutine\n")
 	<-current.ready
+	_, _ = fmt.Fprintf(os.Stderr, "got answer\n")
+
 	if current.err != nil {
 		return current.err
 	}
