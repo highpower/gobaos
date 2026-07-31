@@ -128,9 +128,10 @@ func (c *Conn) writeResetRequest() error {
 
 func (c *Conn) readFrameToBuffer(buffer []byte) (int, error) {
 	hd := header{}
-	if err := c.file.SetReadDeadline(time.Now().Add(100 * time.Millisecond)); err != nil {
+	if err := setTimeout(c.file, 100*time.Millisecond); err != nil {
 		return 0, err
 	}
+	defer func() { _ = clearTimeout(c.file) }()
 	n, err := io.ReadFull(c.file, hd[:])
 	var ne net.Error
 	switch {
@@ -145,6 +146,9 @@ func (c *Conn) readFrameToBuffer(buffer []byte) (int, error) {
 		return 0, nil
 	case hd.valid() != nil:
 		return 0, fmt.Errorf("%w header: %x", ErrInvalid, hd)
+	}
+	if err := clearTimeout(c.file); err != nil {
+		return 0, err
 	}
 	if _, err = io.ReadFull(c.file, buffer[:hd.len()+2]); err != nil {
 		return 0, err
@@ -229,6 +233,17 @@ func NewConn(ttyName string) (*Conn, error) {
 	}
 	return &Conn{needReset: true, file: f, incoming: bytes.Buffer{}, incomingEven: false,
 		outgoing: nil, outgoingEven: false}, nil
+}
+
+func setTimeout(f *os.File, d time.Duration) error {
+	if err := f.SetReadDeadline(time.Now().Add(d)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func clearTimeout(f *os.File) error {
+	return f.SetReadDeadline(time.Time{})
 }
 
 func checksum(data []byte) byte {
