@@ -127,28 +127,12 @@ func (c *Conn) writeResetRequest() error {
 }
 
 func (c *Conn) readFrameToBuffer(buffer []byte) (int, error) {
-	hd := header{}
-	if err := setTimeout(c.file, 100*time.Millisecond); err != nil {
-		return 0, err
-	}
-	defer func() { _ = clearTimeout(c.file) }()
-	n, err := io.ReadFull(c.file, hd[:])
-	var ne net.Error
+	hd, err := c.readHeader()
 	switch {
-	case errors.As(err, &ne):
-		return 0, nil
 	case err != nil:
 		return 0, err
-	case n == 0:
+	case hd.len() == 0:
 		return 0, nil
-	case hd.isResetIndication():
-		c.needReset = true
-		return 0, nil
-	case hd.valid() != nil:
-		return 0, fmt.Errorf("%w header: %x", ErrInvalid, hd)
-	}
-	if err := clearTimeout(c.file); err != nil {
-		return 0, err
 	}
 	if _, err = io.ReadFull(c.file, buffer[:hd.len()+2]); err != nil {
 		return 0, err
@@ -162,6 +146,30 @@ func (c *Conn) readFrameToBuffer(buffer []byte) (int, error) {
 	}
 	c.incoming.Write(data)
 	return 0, nil
+}
+
+func (c *Conn) readHeader() (header, error) {
+	hd := header{}
+	if err := setTimeout(c.file, 100*time.Millisecond); err != nil {
+		return header{}, err
+	}
+	defer func() { _ = clearTimeout(c.file) }()
+	n, err := io.ReadFull(c.file, hd[:])
+	var ne net.Error
+	switch {
+	case errors.As(err, &ne) && ne.Timeout():
+		return header{}, nil
+	case err != nil:
+		return header{}, err
+	case hd.valid() != nil:
+		return hd, fmt.Errorf("%w header: %x", ErrInvalid, hd)
+	case n == 0:
+		return header{}, nil
+	case hd.isResetIndication():
+		c.needReset = true
+		return header{}, nil
+	}
+	return hd, nil
 }
 
 func (c *Conn) unmarshalFrame(data []byte) ([]byte, error) {
