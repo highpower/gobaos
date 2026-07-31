@@ -32,13 +32,11 @@ const (
 )
 
 // Service returns the main service identifier.
-// Service returns the main service identifier.
 func (r *GetDatapointValueReq) Service() byte {
 	return MainService
 }
 
 // SubService returns the sub-service identifier for the request.
-// SubService returns the sub-service identifier.
 func (r *GetDatapointValueReq) SubService() byte {
 	return SubServiceGetDatapointValueReq
 }
@@ -92,13 +90,11 @@ func (r *GetDatapointValueReq) UnmarshalBinary(data []byte) error {
 }
 
 // Service returns the main service identifier.
-// Service returns the main service identifier.
 func (r *GetDatapointValueRes) Service() byte {
 	return MainService
 }
 
 // SubService returns the sub-service identifier for the response.
-// SubService returns the sub-service identifier.
 func (r *GetDatapointValueRes) SubService() byte {
 	return SubServiceGetDatapointValueRes
 }

@@ -20,13 +20,11 @@ type SetDatapointValueRes struct {
 }
 
 // Service returns the main service identifier.
-// Service returns the main service identifier.
 func (r *SetDatapointValueReq) Service() byte {
 	return MainService
 }
 
 // SubService returns the sub-service identifier for the request.
-// SubService returns the sub-service identifier.
 func (r *SetDatapointValueReq) SubService() byte {
 	return SubServiceSetDatapointValueReq
 }
@@ -97,13 +95,11 @@ func (r *SetDatapointValueReq) UnmarshalBinary(data []byte) error {
 }
 
 // Service returns the main service identifier.
-// Service returns the main service identifier.
 func (r *SetDatapointValueRes) Service() byte {
 	return MainService
 }
 
 // SubService returns the sub-service identifier for the response.
-// SubService returns the sub-service identifier.
 func (r *SetDatapointValueRes) SubService() byte {
 	return SubServiceSetDatapointValueRes
 }

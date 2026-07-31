@@ -13,13 +13,11 @@ type ServerItemInd struct {
 }
 
 // Service returns the main service identifier.
-// Service returns the main service identifier.
 func (r *ServerItemInd) Service() byte {
 	return MainService
 }
 
 // SubService returns the sub-service identifier for the indication.
-// SubService returns the sub-service identifier.
 func (r *ServerItemInd) SubService() byte {
 	return SubServiceServerItemInd
 }

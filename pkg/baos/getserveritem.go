@@ -24,13 +24,11 @@ type GetServerItemRes struct {
 }
 
 // Service returns the main service identifier.
-// Service returns the main service identifier.
 func (r *GetServerItemReq) Service() byte {
 	return MainService
 }
 
 // SubService returns the sub-service identifier for the request.
-// SubService returns the sub-service identifier.
 func (r *GetServerItemReq) SubService() byte {
 	return SubServiceGetServerItemReq
 }
@@ -76,13 +74,11 @@ func (r *GetServerItemReq) UnmarshalBinary(data []byte) error {
 }
 
 // Service returns the main service identifier.
-// Service returns the main service identifier.
 func (r *GetServerItemRes) Service() byte {
 	return MainService
 }
 
 // SubService returns the sub-service identifier for the response.
-// SubService returns the sub-service identifier.
 func (r *GetServerItemRes) SubService() byte {
 	return SubServiceGetServerItemRes
 }

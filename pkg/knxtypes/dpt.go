@@ -20,27 +20,28 @@ type DPT interface {
 
 // Supported KNX datapoint type codes.
 const (
-	BoolCode         TypeCode = 1
-	ControlCode      TypeCode = 2
-	StepControlCode  TypeCode = 3
-	CharCode         TypeCode = 4
-	Uint8Code        TypeCode = 5
-	Int8Code         TypeCode = 6
-	Uint16Code       TypeCode = 7
-	Int16Code        TypeCode = 8
-	FloatCode        TypeCode = 9
-	TimeOfDayCode    TypeCode = 10
-	DateCode         TypeCode = 11
-	Uint32Code       TypeCode = 12
-	Int32Code        TypeCode = 13
-	Float4ByteCode     TypeCode = 14
-	AccessCode         TypeCode = 15
-	StringCode         TypeCode = 16
-	SceneNumberCode    TypeCode = 17
-	SceneControlCode   TypeCode = 18
-	DateTime8ByteCode  TypeCode = 19
-	EnumCode           TypeCode = 20
-	RedGreenBlueCode   TypeCode = 232
+	BoolCode              TypeCode = 1
+	ControlCode           TypeCode = 2
+	StepControlCode       TypeCode = 3
+	CharCode              TypeCode = 4
+	Uint8Code             TypeCode = 5
+	Int8Code              TypeCode = 6
+	Uint16Code            TypeCode = 7
+	Int16Code             TypeCode = 8
+	FloatCode             TypeCode = 9
+	TimeOfDayCode         TypeCode = 10
+	DateCode              TypeCode = 11
+	Uint32Code            TypeCode = 12
+	Int32Code             TypeCode = 13
+	Float4ByteCode        TypeCode = 14
+	AccessCode            TypeCode = 15
+	StringCode            TypeCode = 16
+	SceneNumberCode       TypeCode = 17
+	SceneControlCode      TypeCode = 18
+	DateTime8ByteCode     TypeCode = 19
+	EnumCode              TypeCode = 20
+	RedGreenBlueCode      TypeCode = 232
+	RedGreenBlueWhiteCode TypeCode = 251
 )
 
 // String returns the textual name of the type code.
@@ -88,6 +89,8 @@ func (t TypeCode) String() string {
 		return "Enum"
 	case RedGreenBlueCode:
 		return "RedGreenBlue"
+	case RedGreenBlueWhiteCode:
+		return "RedGreenBlueWhite"
 	}
 	return "Unknown"
 }
@@ -137,6 +140,8 @@ func ParseTypeCode(s string) (TypeCode, error) {
 		return EnumCode, nil
 	case "rgb", "redgreenblue":
 		return RedGreenBlueCode, nil
+	case "rgbw", "redgreenbluewhite":
+		return RedGreenBlueWhiteCode, nil
 	}
 	return TypeCode(0), fmt.Errorf("%w: %s", ErrUnknownType, s)
 }

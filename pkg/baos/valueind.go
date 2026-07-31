@@ -14,13 +14,11 @@ type DatapointValueInd struct {
 }
 
 // Service returns the main service identifier.
-// Service returns the main service identifier.
 func (r *DatapointValueInd) Service() byte {
 	return MainService
 }
 
 // SubService returns the sub-service identifier for the indication.
-// SubService returns the sub-service identifier.
 func (r *DatapointValueInd) SubService() byte {
 	return SubServiceDatapointValueInd
 }
