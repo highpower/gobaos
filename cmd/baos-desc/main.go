@@ -13,20 +13,16 @@ import (
 )
 
 func run(device string, args []string) error {
-	start, err := strconv.ParseUint(args[0], 10, 16)
+	id, err := strconv.ParseUint(args[0], 10, 16)
 	if err != nil {
 		return err
-	}
-	number, err := strconv.ParseUint(args[1], 10, 16)
-	if err != nil {
-
 	}
 	conn, err := ft12.NewConn(device, ft12.WithTimeout(50*time.Millisecond))
 	if err != nil {
 		return err
 	}
 	defer func() { _ = conn.Close() }()
-	return runWith(conn, baos.DatapointID(start), uint16(number))
+	return runWith(conn, baos.DatapointID(id))
 }
 
 func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
@@ -36,7 +32,7 @@ func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
 	}
 }
 
-func runWith(conn *ft12.Conn, start baos.DatapointID, number uint16) error {
+func runWith(conn *ft12.Conn, id baos.DatapointID) error {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
@@ -46,14 +42,11 @@ func runWith(conn *ft12.Conn, start baos.DatapointID, number uint16) error {
 	wg.Add(1)
 	go runWorker(worker, &wg)
 
-	descriptions, err := worker.Descriptions(start, number)
+	d, err := worker.Description(id)
 	if err != nil {
 		return err
 	}
-	for _, d := range descriptions {
-		_, _ = fmt.Fprintf(os.Stdout, "datapoint %d: type %s\n", d.ID, d.DPT.String())
-	}
-
+	_, _ = fmt.Fprintf(os.Stdout, "datapoint %d: type %s\n", d.ID, d.DPT.String())
 	return nil
 }
 
@@ -77,7 +70,7 @@ func main() {
 	}
 
 	args := flag.Args()
-	if len(args) != 2 {
+	if len(args) != 1 {
 		usage(os.Stderr)
 		os.Exit(2)
 	}
