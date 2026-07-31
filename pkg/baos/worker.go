@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"gobaos/pkg/ft12"
 	"gobaos/pkg/knxtypes"
-	"os"
 )
 
 // Worker handles BAOS communication over an FT1.2 connection.
@@ -29,28 +28,69 @@ type call struct {
 }
 
 func (w *Worker) Run() error {
-
 	for {
-		current := (*call)(nil)
 		w.buffer = w.buffer[:0]
 		select {
 		case <-w.stop:
 			return nil
 		case c := <-w.calls:
-			current = c
+			if err := w.handleCall(c); err != nil {
+				return err
+			}
 		default:
+			if err := w.handleIndication(); err != nil {
+				return err
+			}
 		}
-		if err := w.writeСall(current); err != nil {
-			return err
-		}
+	}
+}
+
+func (w *Worker) handleCall(current *call) error {
+	data, err := current.request.MarshalBinary()
+	if err != nil {
+		return err
+	}
+	if _, err := w.conn.Write(data); err != nil {
+		return err
+	}
+	for w.conn.Available() == 0 {
 		if err := w.conn.Poll(); err != nil {
 			return err
 		}
-		err := w.readCall(current)
-		if err != nil {
-			return err
-		}
 	}
+	if cap(w.buffer) < w.conn.Available() {
+		w.buffer = make([]byte, 0, w.conn.Available())
+	}
+	w.buffer = w.buffer[:w.conn.Available()]
+	if _, err := w.conn.Read(w.buffer); err != nil {
+		return err
+	}
+	if err := current.response.UnmarshalBinary(w.buffer); err != nil {
+		current.err = err
+	}
+	current.ready <- true
+	return nil
+}
+
+func (w *Worker) handleIndication() error {
+	if err := w.conn.Poll(); err != nil {
+		return err
+	}
+	if cap(w.buffer) < w.conn.Available() {
+		w.buffer = make([]byte, 0, w.conn.Available())
+	}
+	w.buffer = w.buffer[:w.conn.Available()]
+	if _, err := w.conn.Read(w.buffer); err != nil {
+		return err
+	}
+	if !IsDatapointValueInd(w.buffer) {
+		return nil
+	}
+	indication := DatapointValueInd{}
+	if err := indication.UnmarshalBinary(w.buffer); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (w *Worker) Stop() {
@@ -85,7 +125,7 @@ func (w *Worker) getValue(id DatapointID, dpt knxtypes.DPT) error {
 	current := w.makeCall(&req, &resp)
 	defer w.releaseCall(current)
 	w.calls <- current
-	<-current.ready
+	current.waitForReady()
 	if current.err != nil {
 		return current.err
 	}
@@ -106,24 +146,19 @@ func (w *Worker) setValue(id DatapointID, dpt knxtypes.DPT) error {
 	if err != nil {
 		return err
 	}
-	req := SetDatapointValueReq{Commands: []DatapointCommand{
-		{ID: id, Command: SetAndSendOnBus, Data: data},
-	}}
-	resp := SetDatapointValueRes{ErrorCode: ErrorCode(0xff)}
-	current := w.makeCall(&req, &resp)
+	req := SetDatapointValueReq{Commands: []DatapointCommand{{ID: id, Command: SetAndSendOnBus, Data: data}}}
+	res := SetDatapointValueRes{ErrorCode: ErrorCode(0xff)}
+	current := w.makeCall(&req, &res)
 	defer w.releaseCall(current)
-	_, _ = fmt.Fprintf(os.Stderr, "call created\n")
 
 	w.calls <- current
-	_, _ = fmt.Fprintf(os.Stderr, "call send to run goroutine\n")
-	<-current.ready
-	_, _ = fmt.Fprintf(os.Stderr, "got answer\n")
+	current.waitForReady()
 
 	if current.err != nil {
 		return current.err
 	}
-	if resp.ErrorCode != NoError {
-		return Error{Code: resp.ErrorCode}
+	if res.ErrorCode != NoError {
+		return Error{Code: res.ErrorCode}
 	}
 	return nil
 }
@@ -157,6 +192,10 @@ func (w *Worker) writeСall(current *call) error {
 		return err
 	}
 	return nil
+}
+
+func (c *call) waitForReady() {
+	<-c.ready
 }
 
 // NewWorker creates a Worker backed by the given FT1.2 connection.
