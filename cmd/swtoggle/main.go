@@ -26,7 +26,12 @@ func run(device string, args []string) error {
 	default:
 		return fmt.Errorf("unknown command: %s", args[1])
 	}
-	return runWith(device, baos.DatapointID(id), on)
+	conn, err := ft12.NewConn(device)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = conn.Close() }()
+	return runWith(conn, baos.DatapointID(id), on)
 }
 
 func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
@@ -34,23 +39,19 @@ func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
 	if err := w.Run(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 	}
-
 }
 
-func runWith(device string, id baos.DatapointID, on bool) error {
+func runWith(conn *ft12.Conn, id baos.DatapointID, on bool) error {
 	var wg sync.WaitGroup
 	defer wg.Wait()
-	conn, err := ft12.NewConn(device)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = conn.Close() }()
+
 	worker := baos.NewWorker(conn)
 	defer worker.Stop()
+
 	wg.Add(1)
 	go runWorker(worker, &wg)
+
 	if err := worker.SetBool(id, on); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		return err
 	}
 	return nil

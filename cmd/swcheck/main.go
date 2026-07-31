@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"sync"
 )
 
 func run(device string, id string) error {
@@ -23,29 +24,28 @@ func run(device string, id string) error {
 	return runWith(conn, baos.DatapointID(value))
 }
 
+func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
+	defer wg.Done()
+	if err := w.Run(); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+	}
+}
+
 func runWith(conn *ft12.Conn, id baos.DatapointID) error {
-	req := baos.GetDatapointValueReq{StartDatapoint: id, NumberOfDatapoints: 1, Filter: baos.Filter(1)}
-	data, err := req.MarshalBinary()
+	var wg sync.WaitGroup
+	defer wg.Wait()
+
+	worker := baos.NewWorker(conn)
+	defer worker.Stop()
+
+	wg.Add(1)
+	go runWorker(worker, &wg)
+
+	result, err := worker.Bool(id)
 	if err != nil {
 		return err
 	}
-	if _, err := conn.Write(data); err != nil {
-		return err
-	}
-	for conn.Available() == 0 {
-		if err := conn.Poll(); err != nil {
-			return err
-		}
-	}
-	buffer := make([]byte, conn.Available())
-	if _, err := conn.Read(buffer); err != nil {
-		return err
-	}
-	resp := baos.GetDatapointValueRes{}
-	if err := resp.UnmarshalBinary(buffer); err != nil {
-		return err
-	}
-	_, _ = fmt.Fprintf(os.Stdout, "%s\n", resp.String())
+	_, _ = fmt.Fprintf(os.Stdout, "%t\n", result)
 	return nil
 }
 
