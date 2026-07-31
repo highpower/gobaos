@@ -47,8 +47,11 @@ func runWith(device string, id baos.DatapointID, on bool) error {
 	wg.Add(1)
 	go runWorker(worker, &wg)
 	if err := worker.SetBool(id, on); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+		worker.Stop()
 		return err
 	}
+	worker.Stop()
 	wg.Wait()
 	return nil
 }

@@ -53,6 +53,10 @@ func (w *Worker) Run() error {
 	}
 }
 
+func (w *Worker) Stop() {
+	w.stop <- true
+}
+
 func (w *Worker) makeCall(req encoding.BinaryMarshaler, resp encoding.BinaryUnmarshaler) *call {
 	result := call{request: req, response: resp, ready: make(chan bool, 1)}
 	return &result
