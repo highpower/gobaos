@@ -2,6 +2,7 @@ package baos
 
 import "gobaos/pkg/knxtypes"
 
+// Control represents a boolean control value with a separate control bit.
 type Control struct {
 	Control bool
 	Value   bool

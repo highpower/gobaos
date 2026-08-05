@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"gobaos/pkg/ft12"
 	"gobaos/pkg/knxtypes"
+	"sync/atomic"
 )
 
 // Worker handles BAOS communication over an FT1.2 connection.
@@ -17,15 +18,18 @@ type Worker struct {
 	indications chan DatapointValueInd
 	calls       chan *call
 	handler     valueIndicationHandler
-	count       int
+	stopper     atomic.Value
+	goroutines  int
 }
 
+// ValueIndicationFunc is called when an unsolicited datapoint value indication arrives.
 type ValueIndicationFunc func(id DatapointID, data []byte) error
 
 type valueIndicationHandler interface {
 	handleValueIndication(id DatapointID, data []byte) error
 }
 
+// WorkerOption configures a Worker during construction.
 type WorkerOption interface {
 	apply(w *Worker)
 }
@@ -44,15 +48,20 @@ type errorOrStop struct {
 
 type defaultHandler struct{}
 
+type goroutineCountOption int
+
 type valueIndicationOption struct {
 	f ValueIndicationFunc
 }
+
+type stopperFunc func()
 
 // Run starts the worker's event loop. It blocks until Stop is called or an error occurs.
 func (w *Worker) Run() error {
 	defer close(w.errorOrStop)
 	defer close(w.indications)
 	defer close(w.calls)
+	defer w.stopper.Store(w.alreadyStopped)
 	for {
 		w.buffer = w.buffer[:0]
 		select {
@@ -72,7 +81,8 @@ func (w *Worker) Run() error {
 
 // Stop signals the worker to shut down.
 func (w *Worker) Stop() {
-	w.errorOrStop <- errorOrStop{stop: true}
+	stopper := w.stopper.Load().(stopperFunc)
+	stopper()
 }
 
 // Get reads the current value of the given datapoint into dpt.
@@ -134,6 +144,7 @@ func (w *Worker) Description(id DatapointID) (DatapointDescription, error) {
 	return result[0], nil
 }
 
+// AllDescriptions reads descriptions for all configured datapoints.
 func (w *Worker) AllDescriptions() ([]DatapointDescription, error) {
 	item, err := w.ServerItem(ItemIDConfiguredDatapoints)
 	if err != nil {
@@ -144,6 +155,7 @@ func (w *Worker) AllDescriptions() ([]DatapointDescription, error) {
 	return w.descriptions(1, maxId)
 }
 
+// DescriptionString reads the description string of the given datapoint.
 func (w *Worker) DescriptionString(id DatapointID) (string, error) {
 	req := GetDescriptionStringReq{StartDatapoint: id, NumberOfStrings: 1}
 	res := GetDescriptionStringRes{}
@@ -164,6 +176,7 @@ func (w *Worker) DescriptionString(id DatapointID) (string, error) {
 	return res.Strings[0], nil
 }
 
+// ServerItem reads a single server item by its ID.
 func (w *Worker) ServerItem(id ItemID) (ServerItem, error) {
 	req := GetServerItemReq{StartItem: id, NumberOfItems: 1}
 	res := GetServerItemRes{}
@@ -184,6 +197,7 @@ func (w *Worker) ServerItem(id ItemID) (ServerItem, error) {
 	return res.Items[0], nil
 }
 
+// SetServerItem writes data to a single server item by its ID.
 func (w *Worker) SetServerItem(id ItemID, data []byte) error {
 	req := SetServerItemReq{Items: []ServerItem{{ID: id, Data: data}}}
 	res := SetServerItemRes{}
@@ -298,12 +312,23 @@ func (w *Worker) releaseCall(call *call) {
 	close(call.ready)
 }
 
+func (w *Worker) stop() {
+	w.errorOrStop <- errorOrStop{stop: true}
+}
+
+func (w *Worker) alreadyStopped() {
+}
+
 func (c *call) waitForReady() {
 	<-c.ready
 }
 
 func (d defaultHandler) handleValueIndication(_ DatapointID, _ []byte) error {
 	return nil
+}
+
+func (g goroutineCountOption) apply(w *Worker) {
+	w.goroutines = int(g)
 }
 
 func (o valueIndicationOption) apply(w *Worker) {
@@ -324,19 +349,25 @@ func NewWorker(conn *ft12.Conn, options ...WorkerOption) *Worker {
 		indications: make(chan DatapointValueInd),
 		calls:       make(chan *call),
 		handler:     defaultHandler{},
-		count:       5,
+		goroutines:  5,
 	}
+	result.stopper.Store(stopperFunc(result.stop))
 	for _, option := range options {
 		option.apply(&result)
 	}
-	for i := 0; i < result.count; i++ {
+	for i := 0; i < result.goroutines; i++ {
 		go result.runIndication(result.indications)
 	}
 	return &result
 }
 
+// WithHandler returns a WorkerOption that registers a raw value indication handler.
 func WithHandler(f ValueIndicationFunc) WorkerOption {
 	return valueIndicationOption{f: f}
+}
+
+func WithGoroutineCount(n int) WorkerOption {
+	return goroutineCountOption(n)
 }
 
 func nextDatapointID(desc []DatapointDescription) DatapointID {

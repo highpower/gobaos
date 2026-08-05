@@ -1,7 +1,9 @@
 package baos
 
+// ValueType describes the size and format of a datapoint value.
 type ValueType byte
 
+// SizeInBits returns the size of the value type in bits, or -1 for unknown types.
 func (t ValueType) SizeInBits() int {
 	switch t {
 	case 0, 1, 2, 3, 4, 5, 6:
