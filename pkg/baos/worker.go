@@ -177,6 +177,8 @@ func (w *Worker) descriptions(start DatapointID, number uint16) ([]DatapointDesc
 		switch {
 		case current.err != nil:
 			return nil, current.err
+		case res.ErrorCode == NoElementFound:
+			return result, nil
 		case res.ErrorCode != 0:
 			return nil, Error{Code: res.ErrorCode}
 		}
