@@ -11,7 +11,7 @@ import (
 // DatapointDescription holds the static description of a single BAOS datapoint.
 type DatapointDescription struct {
 	ID          DatapointID
-	ValueType   byte
+	ValueType   ValueType
 	ConfigFlags byte
 	DPT         knxtypes.TypeCode
 }
@@ -186,7 +186,7 @@ func marshalDescriptionsTo(data []byte, descriptions []DatapointDescription) err
 			return fmt.Errorf("%w buffer has no capacity: %d while %d needed", ErrInvalid, len(data), datapointDescriptionSize)
 		}
 		binary.BigEndian.PutUint16(data[0:2], uint16(descriptions[i].ID))
-		data[2] = descriptions[i].ValueType
+		data[2] = byte(descriptions[i].ValueType)
 		data[3] = descriptions[i].ConfigFlags
 		data[4] = byte(descriptions[i].DPT)
 		data = data[datapointDescriptionSize:]
@@ -206,7 +206,7 @@ func unmarshalDescriptionsFrom(data []byte, n int) ([]DatapointDescription, erro
 		}
 		result = append(result, DatapointDescription{
 			ID:          DatapointID(binary.BigEndian.Uint16(data[0:2])),
-			ValueType:   data[2],
+			ValueType:   ValueType(data[2]),
 			ConfigFlags: data[3],
 			DPT:         knxtypes.TypeCode(data[4]),
 		})

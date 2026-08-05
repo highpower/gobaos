@@ -15,42 +15,36 @@ func run(name string) error {
 	if err != nil {
 		return err
 	}
-	dm := datapointMap{}
-	for _, d := range c.Datapoints {
-		for _, id := range d.IDs {
-			if err := dm.add(id, d.Type); err != nil {
-				return err
-			}
-		}
-	}
 	conn, err := ft12.NewConn(c.Device, ft12.WithTimeout(50*time.Millisecond))
 	if err != nil {
 		return err
 	}
 	defer func() { _ = conn.Close() }()
-	return runWith(conn, dm)
+
+	handlers := make(baos.Handlers)
+	for _, sw := range c.Switches {
+		handlers.Bool([]baos.DatapointID{sw}, func(id baos.DatapointID, value bool) error {
+			_, _ = fmt.Fprintf(os.Stdout, "switch[datapoint=%d,value=%t]\n", id, value)
+			return nil
+		})
+	}
+	for _, th := range c.Thermostats {
+		handlers.Float([]baos.DatapointID{th}, func(id baos.DatapointID, value float64) error {
+			_, _ = fmt.Fprintf(os.Stdout, "thermostat[datapoint=%d,value=%0.1f\n", id, value)
+			return nil
+		})
+	}
+	return runWith(conn, handlers)
 }
 
-func runWith(conn *ft12.Conn, dm datapointMap) error {
-	for {
-		if err := conn.Poll(); err != nil {
-			return err
-		}
-		buffer := make([]byte, conn.Available())
-		if _, err := conn.Read(buffer); err != nil {
-			return err
-		}
-		if !baos.IsDatapointValueInd(buffer) {
-			continue
-		}
-		indication := baos.DatapointValueInd{}
-		if err := indication.UnmarshalBinary(buffer); err != nil {
-			return err
-		}
-		if err := dm.handleIndication(&indication); err != nil {
-			return err
-		}
+func runWith(conn *ft12.Conn, handlers baos.Handlers) error {
+	worker := baos.NewWorker(conn, baos.WithHandlers(handlers))
+	defer worker.Stop()
+	if err := worker.Run(); err != nil {
+		return err
 	}
+	return nil
+
 }
 
 func usage(writer io.Writer) {

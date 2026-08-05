@@ -10,11 +10,18 @@ import (
 
 // Worker handles BAOS communication over an FT1.2 connection.
 type Worker struct {
-	conn    *ft12.Conn
-	current *call
-	buffer  []byte
-	stop    chan bool
-	calls   chan *call
+	conn        *ft12.Conn
+	current     *call
+	buffer      []byte
+	errorOrStop chan errorOrStop
+	indications chan DatapointValueInd
+	calls       chan *call
+	handler     ValueIndicationHandler
+	count       int
+}
+
+type ValueIndicationHandler interface {
+	Handle(id DatapointID, data []byte) error
 }
 
 type WorkerOption interface {
@@ -28,13 +35,27 @@ type call struct {
 	ready    chan bool
 }
 
+type errorOrStop struct {
+	stop bool
+	err  error
+}
+
+type defaultHandler struct{}
+
+type valueIndicationOption struct {
+	handler ValueIndicationHandler
+}
+
 // Run starts the worker's event loop. It blocks until Stop is called or an error occurs.
 func (w *Worker) Run() error {
+	defer close(w.errorOrStop)
+	defer close(w.indications)
+	defer close(w.calls)
 	for {
 		w.buffer = w.buffer[:0]
 		select {
-		case <-w.stop:
-			return nil
+		case eos := <-w.errorOrStop:
+			return eos.err
 		case c := <-w.calls:
 			if err := w.handleCall(c); err != nil {
 				return err
@@ -49,27 +70,7 @@ func (w *Worker) Run() error {
 
 // Stop signals the worker to shut down.
 func (w *Worker) Stop() {
-	w.stop <- true
-}
-
-func (w *Worker) ServerItem(id ItemID) (ServerItem, error) {
-	req := GetServerItemReq{StartItem: id, NumberOfItems: 1}
-	res := GetServerItemRes{}
-
-	current := w.makeCall(&req, &res)
-	w.calls <- current
-	current.waitForReady()
-	w.releaseCall(current)
-
-	switch {
-	case current.err != nil:
-		return ServerItem{}, current.err
-	case res.ErrorCode != 0:
-		return ServerItem{}, Error{res.ErrorCode}
-	case len(res.Items) == 0:
-		return ServerItem{}, fmt.Errorf("%w response: 0 values for item %d", ErrInvalid, id)
-	}
-	return res.Items[0], nil
+	w.errorOrStop <- errorOrStop{stop: true}
 }
 
 // Get reads the current value of the given datapoint into dpt.
@@ -161,6 +162,44 @@ func (w *Worker) DescriptionString(id DatapointID) (string, error) {
 	return res.Strings[0], nil
 }
 
+func (w *Worker) ServerItem(id ItemID) (ServerItem, error) {
+	req := GetServerItemReq{StartItem: id, NumberOfItems: 1}
+	res := GetServerItemRes{}
+
+	current := w.makeCall(&req, &res)
+	w.calls <- current
+	current.waitForReady()
+	w.releaseCall(current)
+
+	switch {
+	case current.err != nil:
+		return ServerItem{}, current.err
+	case res.ErrorCode != 0:
+		return ServerItem{}, Error{res.ErrorCode}
+	case len(res.Items) == 0:
+		return ServerItem{}, fmt.Errorf("%w response: 0 values for item %d", ErrInvalid, id)
+	}
+	return res.Items[0], nil
+}
+
+func (w *Worker) SetServerItem(id ItemID, data []byte) error {
+	req := SetServerItemReq{Items: []ServerItem{ServerItem{ID: id, Data: data}}}
+	res := SetServerItemRes{}
+
+	current := w.makeCall(&req, &res)
+	w.calls <- current
+	current.waitForReady()
+	w.releaseCall(current)
+
+	switch {
+	case current.err != nil:
+		return current.err
+	case res.ErrorCode != 0:
+		return Error{res.ErrorCode}
+	}
+	return nil
+}
+
 func (w *Worker) descriptions(start DatapointID, number uint16) ([]DatapointDescription, error) {
 	result := []DatapointDescription(nil)
 	descInResponse := (ft12.MaxMessageLength - getDescriptionResHeaderSize) / datapointDescriptionSize
@@ -234,7 +273,18 @@ func (w *Worker) handleIndication() error {
 	if err := indication.UnmarshalBinary(w.buffer); err != nil {
 		return err
 	}
+	w.indications <- indication
 	return nil
+}
+
+func (w *Worker) runIndication(indications <-chan DatapointValueInd) {
+	for indication := range indications {
+		for _, value := range indication.Values {
+			if err := w.handler.Handle(value.ID, value.Data); err != nil {
+				w.errorOrStop <- errorOrStop{err: err}
+			}
+		}
+	}
 }
 
 func (w *Worker) makeCall(req encoding.BinaryMarshaler, resp encoding.BinaryUnmarshaler) *call {
@@ -250,19 +300,37 @@ func (c *call) waitForReady() {
 	<-c.ready
 }
 
+func (d defaultHandler) Handle(_ DatapointID, _ []byte) error {
+	return nil
+}
+
+func (o valueIndicationOption) apply(w *Worker) {
+	w.handler = o.handler
+}
+
 // NewWorker creates a Worker backed by the given FT1.2 connection.
 func NewWorker(conn *ft12.Conn, options ...WorkerOption) *Worker {
 	result := Worker{
-		conn:    conn,
-		current: nil,
-		buffer:  nil,
-		stop:    make(chan bool),
-		calls:   make(chan *call),
+		conn:        conn,
+		current:     nil,
+		buffer:      nil,
+		errorOrStop: make(chan errorOrStop),
+		indications: make(chan DatapointValueInd),
+		calls:       make(chan *call),
+		handler:     defaultHandler{},
+		count:       5,
 	}
 	for _, option := range options {
 		option.apply(&result)
 	}
+	for i := 0; i < result.count; i++ {
+		go result.runIndication(result.indications)
+	}
 	return &result
+}
+
+func WithHandler(handler ValueIndicationHandler) WorkerOption {
+	return valueIndicationOption{handler: handler}
 }
 
 func nextDatapointID(desc []DatapointDescription) DatapointID {

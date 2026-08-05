@@ -12,8 +12,9 @@ type datapoint struct {
 }
 
 type config struct {
-	Device     string      `yaml:"device"`
-	Datapoints []datapoint `yaml:"datapoints"`
+	Device      string             `yaml:"device"`
+	Switches    []baos.DatapointID `yaml:"switches"`
+	Thermostats []baos.DatapointID `yaml:"thermostats"`
 }
 
 func newConfig(name string) (config, error) {
