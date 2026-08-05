@@ -2,6 +2,7 @@ package baos
 
 import (
 	"encoding"
+	"encoding/binary"
 	"fmt"
 	"gobaos/pkg/ft12"
 	"gobaos/pkg/knxtypes"
@@ -49,6 +50,26 @@ func (w *Worker) Run() error {
 // Stop signals the worker to shut down.
 func (w *Worker) Stop() {
 	w.stop <- true
+}
+
+func (w *Worker) ServerItem(id ItemID) (ServerItem, error) {
+	req := GetServerItemReq{StartItem: id, NumberOfItems: 1}
+	res := GetServerItemRes{}
+
+	current := w.makeCall(&req, &res)
+	w.calls <- current
+	current.waitForReady()
+	w.releaseCall(current)
+
+	switch {
+	case current.err != nil:
+		return ServerItem{}, current.err
+	case res.ErrorCode != 0:
+		return ServerItem{}, Error{res.ErrorCode}
+	case len(res.Items) == 0:
+		return ServerItem{}, fmt.Errorf("%w response: 0 values for item %d", ErrInvalid, id)
+	}
+	return res.Items[0], nil
 }
 
 // Get reads the current value of the given datapoint into dpt.
@@ -100,7 +121,7 @@ func (w *Worker) Set(id DatapointID, dpt knxtypes.DPT) error {
 
 // Description reads datapoint description of  the given datapoint
 func (w *Worker) Description(id DatapointID) (DatapointDescription, error) {
-	result, err := w.description(id, 1)
+	result, err := w.descriptions(id, 1)
 	switch {
 	case err != nil:
 		return DatapointDescription{}, err
@@ -108,6 +129,16 @@ func (w *Worker) Description(id DatapointID) (DatapointDescription, error) {
 		return DatapointDescription{}, fmt.Errorf("%w response: 0 values for datapoint %d", ErrInvalid, id)
 	}
 	return result[0], nil
+}
+
+func (w *Worker) AllDescriptions() ([]DatapointDescription, error) {
+	item, err := w.ServerItem(ItemIDConfiguredDatapoints)
+	if err != nil {
+		return nil, err
+	}
+	//TODO: add fetching functions instead of direct read
+	maxId := binary.BigEndian.Uint16(item.Data)
+	return w.descriptions(1, maxId)
 }
 
 func (w *Worker) DescriptionString(id DatapointID) (string, error) {
@@ -130,22 +161,29 @@ func (w *Worker) DescriptionString(id DatapointID) (string, error) {
 	return res.Strings[0], nil
 }
 
-func (w *Worker) description(start DatapointID, number uint16) ([]DatapointDescription, error) {
-	req := GetDatapointDescriptionReq{StartDatapoint: start, NumberOfDatapoints: uint16(number)}
-	res := GetDatapointDescriptionRes{}
+func (w *Worker) descriptions(start DatapointID, number uint16) ([]DatapointDescription, error) {
+	result := []DatapointDescription(nil)
+	descInResponse := uint16((ft12.MaxMessageLength - getDescriptionResHeaderSize) / datapointDescriptionSize)
+	for number > 0 {
+		req := GetDatapointDescriptionReq{StartDatapoint: start, NumberOfDatapoints: min(descInResponse, number)}
+		res := GetDatapointDescriptionRes{}
 
-	current := w.makeCall(&req, &res)
-	w.calls <- current
-	current.waitForReady()
-	w.releaseCall(current)
+		current := w.makeCall(&req, &res)
+		w.calls <- current
+		current.waitForReady()
+		w.releaseCall(current)
 
-	switch {
-	case current.err != nil:
-		return nil, current.err
-	case res.ErrorCode != 0:
-		return nil, Error{Code: res.ErrorCode}
+		switch {
+		case current.err != nil:
+			return nil, current.err
+		case res.ErrorCode != 0:
+			return nil, Error{Code: res.ErrorCode}
+		}
+		result = append(result, res.Descriptions...)
+		number -= uint16(len(res.Descriptions))
+		start = nextDatapointID(res.Descriptions)
 	}
-	return res.Descriptions, nil
+	return result, nil
 }
 
 func (w *Worker) handleCall(current *call) error {
@@ -222,4 +260,14 @@ func NewWorker(conn *ft12.Conn, options ...WorkerOption) *Worker {
 		option.apply(&result)
 	}
 	return &result
+}
+
+func nextDatapointID(desc []DatapointDescription) DatapointID {
+	result := DatapointID(0)
+	for _, d := range desc {
+		if d.ID > result {
+			result = d.ID
+		}
+	}
+	return result + 1
 }

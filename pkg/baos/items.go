@@ -1,0 +1,61 @@
+package baos
+
+// Server Item IDs as defined in Appendix A of the BAOS protocol specification.
+const (
+	ItemIDHardwareType               ItemID = 1  // 6 bytes, read-only, no indication
+	ItemIDHardwareVersion            ItemID = 2  // 1 byte, read-only, no indication
+	ItemIDFirmwareVersion            ItemID = 3  // 1 byte, read-only, no indication
+	ItemIDManufacturerCodeDev        ItemID = 4  // 2 bytes, read-only, no indication
+	ItemIDManufacturerCodeApp        ItemID = 5  // 2 bytes, read-only, no indication
+	ItemIDApplicationID              ItemID = 6  // 2 bytes, read-only, no indication
+	ItemIDApplicationVersion         ItemID = 7  // 1 byte, read-only, no indication
+	ItemIDSerialNumber               ItemID = 8  // 6 bytes, read-only, no indication
+	ItemIDTimeSinceReset             ItemID = 9  // 4 bytes, read-only, no indication
+	ItemIDBusConnectionState         ItemID = 10 // 1 byte, read-only, indication
+	ItemIDMaxBufferSize              ItemID = 11 // 2 bytes, read-only, no indication
+	ItemIDLengthOfDescriptionStr     ItemID = 12 // 2 bytes, read-only, no indication
+	ItemIDBaudRate                   ItemID = 13 // 1 byte, read-write, no indication
+	ItemIDCurrentBufferSize          ItemID = 14 // 2 bytes, read-write, no indication
+	ItemIDProgrammingMode            ItemID = 15 // 1 byte, read-write, indication
+	ItemIDProtocolVersionBinary      ItemID = 16 // 1 byte, read-only, no indication
+	ItemIDIndicationSending          ItemID = 17 // 1 byte, read-write, no indication
+	ItemIDProtocolVersionWeb         ItemID = 18 // 1 byte, read-only, no indication
+	ItemIDProtocolVersionRest        ItemID = 19 // 1 byte, read-only, no indication
+	ItemIDIndividualAddress          ItemID = 20 // 2 bytes, read-write, no indication
+	ItemIDMACAddress                 ItemID = 21 // 6 bytes, read-only, no indication
+	ItemIDTunnelingEnabled           ItemID = 22 // 1 byte, read-write, indication
+	ItemIDBaosBinaryEnabled          ItemID = 23 // 1 byte, read-write, indication
+	ItemIDBaosWebEnabled             ItemID = 24 // 1 byte, read-write, indication
+	ItemIDBaosRestEnabled            ItemID = 25 // 1 byte, read-write, indication
+	ItemIDHTTPFileEnabled            ItemID = 26 // 1 byte, read-write, indication
+	ItemIDSearchRequestEnabled       ItemID = 27 // 1 byte, read-write, indication
+	ItemIDIsStructured               ItemID = 28 // 1 byte, read-only, no indication
+	ItemIDMaxManagementClients       ItemID = 29 // 1 byte, read-only, no indication
+	ItemIDConnectedManagementClients ItemID = 30 // 1 byte, read-only, no indication
+	ItemIDMaxTunnelingClients        ItemID = 31 // 1 byte, read-only, no indication
+	ItemIDConnectedTunnelingClients  ItemID = 32 // 1 byte, read-only, no indication
+	ItemIDMaxBaosUDPClients          ItemID = 33 // 1 byte, read-only, no indication
+	ItemIDConnectedBaosUDPClients    ItemID = 34 // 1 byte, read-only, no indication
+	ItemIDMaxBaosTCPClients          ItemID = 35 // 1 byte, read-only, no indication
+	ItemIDConnectedBaosTCPClients    ItemID = 36 // 1 byte, read-only, no indication
+	ItemIDDeviceFriendlyName         ItemID = 37 // 30 bytes, read-write, no indication
+	ItemIDMaxDatapoints              ItemID = 38 // 2 bytes, read-only, no indication
+	ItemIDConfiguredDatapoints       ItemID = 39 // 2 bytes, read-only, no indication
+	ItemIDMaxParameterBytes          ItemID = 40 // 2 bytes, read-only, no indication
+	ItemIDDownloadCounter            ItemID = 41 // 2 bytes, read-only, no indication
+	ItemIDIPAssignment               ItemID = 42 // 1 byte, read-write, indication
+	ItemIDIPAddress                  ItemID = 43 // 4 bytes, read-write, indication
+	ItemIDSubnetMask                 ItemID = 44 // 4 bytes, read-write, indication
+	ItemIDDefaultGateway             ItemID = 45 // 4 bytes, read-write, indication
+	ItemIDTimeSinceResetUnit         ItemID = 46 // 1 byte, read-write, indication
+	ItemIDSystemTime                 ItemID = 47 // variable, read-write, indication
+	ItemIDSystemTimezoneOffset       ItemID = 48 // 1 byte, read-write, indication
+	ItemIDMenuEnabled                ItemID = 49 // 1 byte, read-write, indication
+	ItemIDEnableSuspend              ItemID = 50 // 1 byte, read-write, no indication
+	ItemIDRFDomainAddress            ItemID = 51 // 6 bytes, read-write, no indication
+	ItemIDSupportedStatusFlags       ItemID = 52 // 2 bytes, read-only, no indication
+	ItemIDStatusFlags                ItemID = 53 // 2 bytes, read-only, no indication
+	ItemIDClientKey                  ItemID = 54 // 16 bytes, write-only, no indication
+	ItemIDReceiveCounter             ItemID = 55 // 6 bytes, read-write, no indication
+	ItemIDSendCounter                ItemID = 56 // 6 bytes, read-write, no indication
+)

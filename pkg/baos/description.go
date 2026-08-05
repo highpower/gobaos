@@ -29,7 +29,10 @@ type GetDatapointDescriptionRes struct {
 	ErrorCode      ErrorCode
 }
 
-const datapointDescriptionSize = 5
+const (
+	datapointDescriptionSize    = 5
+	getDescriptionResHeaderSize = 6
+)
 
 // Equal reports whether d and other represent the same datapoint description.
 func (d *DatapointDescription) Equal(other *DatapointDescription) bool {
@@ -134,7 +137,7 @@ func (r *GetDatapointDescriptionRes) Equal(other *GetDatapointDescriptionRes) bo
 // MarshalBinary encodes the response into its BAOS wire format.
 func (r *GetDatapointDescriptionRes) MarshalBinary() ([]byte, error) {
 	if r.ErrorCode != 0 {
-		result := make([]byte, 7)
+		result := make([]byte, getDescriptionResHeaderSize+1)
 		result[0] = MainService
 		result[1] = SubServiceGetDatapointDescriptionRes
 		binary.BigEndian.PutUint16(result[2:4], uint16(r.StartDatapoint))
@@ -142,7 +145,7 @@ func (r *GetDatapointDescriptionRes) MarshalBinary() ([]byte, error) {
 		result[6] = byte(r.ErrorCode)
 		return result, nil
 	}
-	result := make([]byte, 6+len(r.Descriptions)*datapointDescriptionSize)
+	result := make([]byte, getDescriptionResHeaderSize+len(r.Descriptions)*datapointDescriptionSize)
 	result[0] = MainService
 	result[1] = SubServiceGetDatapointDescriptionRes
 	binary.BigEndian.PutUint16(result[2:4], uint16(r.StartDatapoint))
@@ -156,7 +159,7 @@ func (r *GetDatapointDescriptionRes) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary decodes the response from its BAOS wire format.
 func (r *GetDatapointDescriptionRes) UnmarshalBinary(data []byte) error {
 	switch {
-	case len(data) < 6:
+	case len(data) < getDescriptionResHeaderSize:
 		return fmt.Errorf("%w data length %d, expected at least %d", ErrInvalid, len(data), 6)
 	case data[0] != MainService:
 		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], MainService)

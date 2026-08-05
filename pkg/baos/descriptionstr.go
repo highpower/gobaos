@@ -12,7 +12,7 @@ type GetDescriptionStringReq struct {
 	NumberOfStrings uint16
 }
 
-// GetDescriptionStringRes is a response containing datapoint description strings or an error.
+// GetDescriptionStringRes is a response containing datapoint descriptions strings or an error.
 type GetDescriptionStringRes struct {
 	StartDatapoint DatapointID
 	Strings        []string

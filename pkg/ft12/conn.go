@@ -242,11 +242,11 @@ func NewConn(ttyName string, options ...ConnOption) (*Conn, error) {
 		return nil, err
 	}
 	fd := int(f.Fd())
-	if err := syscall.SetNonblock(fd, true); err != nil {
+	if err := flush(fd); err != nil {
 		_ = f.Close()
 		return nil, err
 	}
-	if err := flush(fd); err != nil {
+	if err := syscall.SetNonblock(fd, true); err != nil {
 		_ = f.Close()
 		return nil, err
 	}
