@@ -185,7 +185,7 @@ func (w *Worker) ServerItem(id ItemID) (ServerItem, error) {
 }
 
 func (w *Worker) SetServerItem(id ItemID, data []byte) error {
-	req := SetServerItemReq{Items: []ServerItem{ServerItem{ID: id, Data: data}}}
+	req := SetServerItemReq{Items: []ServerItem{{ID: id, Data: data}}}
 	res := SetServerItemRes{}
 
 	current := w.makeCall(&req, &res)
