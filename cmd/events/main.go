@@ -30,7 +30,7 @@ func run(name string) error {
 	}
 	for _, th := range c.Thermostats {
 		handlers.Float([]baos.DatapointID{th}, func(id baos.DatapointID, value float64) error {
-			_, _ = fmt.Fprintf(os.Stdout, "thermostat[datapoint=%d,value=%0.1f\n", id, value)
+			_, _ = fmt.Fprintf(os.Stdout, "thermostat[datapoint=%d,value=%0.1f]\n", id, value)
 			return nil
 		})
 	}
@@ -44,7 +44,6 @@ func runWith(conn *ft12.Conn, handlers baos.Handlers) error {
 		return err
 	}
 	return nil
-
 }
 
 func usage(writer io.Writer) {

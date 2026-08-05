@@ -4,9 +4,7 @@ import (
 	"gobaos/pkg/knxtypes"
 )
 
-type Handlers map[DatapointID]valueIndicationFunc
-
-type valueIndicationFunc func(id DatapointID, data []byte) error
+type Handlers map[DatapointID]ValueIndicationFunc
 
 type dptWrapper[G any] interface {
 	*G
@@ -155,7 +153,7 @@ func (h Handlers) RGBW(ids []DatapointID, f func(value RGBW) error) {
 	})
 }
 
-func (h Handlers) Handle(id DatapointID, data []byte) error {
+func (h Handlers) handleValueIndication(id DatapointID, data []byte) error {
 	handler, ok := h[id]
 	if ok {
 		return handler(id, data)
@@ -181,7 +179,7 @@ func handle[G any, W dptWrapper[G]](id DatapointID, data []byte, f func(id Datap
 	return f(id, dpt)
 }
 
-func makeHandler[G any, W dptWrapper[G]](f func(id DatapointID, dpt G) error) valueIndicationFunc {
+func makeHandler[G any, W dptWrapper[G]](f func(id DatapointID, dpt G) error) ValueIndicationFunc {
 	return func(id DatapointID, data []byte) error {
 		return handle[G, W](id, data, f)
 	}

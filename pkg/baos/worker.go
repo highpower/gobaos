@@ -16,12 +16,14 @@ type Worker struct {
 	errorOrStop chan errorOrStop
 	indications chan DatapointValueInd
 	calls       chan *call
-	handler     ValueIndicationHandler
+	handler     valueIndicationHandler
 	count       int
 }
 
-type ValueIndicationHandler interface {
-	Handle(id DatapointID, data []byte) error
+type ValueIndicationFunc func(id DatapointID, data []byte) error
+
+type valueIndicationHandler interface {
+	handleValueIndication(id DatapointID, data []byte) error
 }
 
 type WorkerOption interface {
@@ -43,7 +45,7 @@ type errorOrStop struct {
 type defaultHandler struct{}
 
 type valueIndicationOption struct {
-	handler ValueIndicationHandler
+	f ValueIndicationFunc
 }
 
 // Run starts the worker's event loop. It blocks until Stop is called or an error occurs.
@@ -280,7 +282,7 @@ func (w *Worker) handleIndication() error {
 func (w *Worker) runIndication(indications <-chan DatapointValueInd) {
 	for indication := range indications {
 		for _, value := range indication.Values {
-			if err := w.handler.Handle(value.ID, value.Data); err != nil {
+			if err := w.handler.handleValueIndication(value.ID, value.Data); err != nil {
 				w.errorOrStop <- errorOrStop{err: err}
 			}
 		}
@@ -300,12 +302,16 @@ func (c *call) waitForReady() {
 	<-c.ready
 }
 
-func (d defaultHandler) Handle(_ DatapointID, _ []byte) error {
+func (d defaultHandler) handleValueIndication(_ DatapointID, _ []byte) error {
 	return nil
 }
 
 func (o valueIndicationOption) apply(w *Worker) {
-	w.handler = o.handler
+	w.handler = valueIndicationHandler(o)
+}
+
+func (o valueIndicationOption) handleValueIndication(id DatapointID, data []byte) error {
+	return o.f(id, data)
 }
 
 // NewWorker creates a Worker backed by the given FT1.2 connection.
@@ -329,8 +335,8 @@ func NewWorker(conn *ft12.Conn, options ...WorkerOption) *Worker {
 	return &result
 }
 
-func WithHandler(handler ValueIndicationHandler) WorkerOption {
-	return valueIndicationOption{handler: handler}
+func WithHandler(f ValueIndicationFunc) WorkerOption {
+	return valueIndicationOption{f: f}
 }
 
 func nextDatapointID(desc []DatapointDescription) DatapointID {

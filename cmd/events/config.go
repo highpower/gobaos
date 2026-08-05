@@ -6,11 +6,6 @@ import (
 	"os"
 )
 
-type datapoint struct {
-	IDs  []baos.DatapointID `yaml:"ids"`
-	Type string             `yaml:"type"`
-}
-
 type config struct {
 	Device      string             `yaml:"device"`
 	Switches    []baos.DatapointID `yaml:"switches"`
