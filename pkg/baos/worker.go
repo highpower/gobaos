@@ -163,9 +163,10 @@ func (w *Worker) DescriptionString(id DatapointID) (string, error) {
 
 func (w *Worker) descriptions(start DatapointID, number uint16) ([]DatapointDescription, error) {
 	result := []DatapointDescription(nil)
-	descInResponse := uint16((ft12.MaxMessageLength - getDescriptionResHeaderSize) / datapointDescriptionSize)
-	for number > 0 {
-		req := GetDatapointDescriptionReq{StartDatapoint: start, NumberOfDatapoints: min(descInResponse, number)}
+	descInResponse := (ft12.MaxMessageLength - getDescriptionResHeaderSize) / datapointDescriptionSize
+	i := int(number)
+	for i > 0 {
+		req := GetDatapointDescriptionReq{StartDatapoint: start, NumberOfDatapoints: uint16(min(descInResponse, i))}
 		res := GetDatapointDescriptionRes{}
 
 		current := w.makeCall(&req, &res)
@@ -180,7 +181,7 @@ func (w *Worker) descriptions(start DatapointID, number uint16) ([]DatapointDesc
 			return nil, Error{Code: res.ErrorCode}
 		}
 		result = append(result, res.Descriptions...)
-		number -= uint16(len(res.Descriptions))
+		i -= len(res.Descriptions)
 		start = nextDatapointID(res.Descriptions)
 	}
 	return result, nil
