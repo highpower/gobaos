@@ -47,7 +47,7 @@ func runWith(conn *ft12.Conn, handlers baos.Handlers) error {
 }
 
 func usage(writer io.Writer) {
-	_, _ = fmt.Fprintf(writer, "usage: events -config <config file>\n")
+	_, _ = fmt.Fprintf(writer, "usage: baos-events -config <config file>\n")
 	flag.CommandLine.SetOutput(writer)
 	flag.CommandLine.PrintDefaults()
 }
