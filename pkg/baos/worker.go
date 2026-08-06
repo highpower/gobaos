@@ -61,7 +61,7 @@ func (w *Worker) Run() error {
 	defer close(w.errorOrStop)
 	defer close(w.indications)
 	defer close(w.calls)
-	defer w.stopper.Store(w.alreadyStopped)
+	defer w.stopper.Store(stopperFunc(w.alreadyStopped))
 	for {
 		w.buffer = w.buffer[:0]
 		select {
