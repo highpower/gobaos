@@ -42,7 +42,7 @@ func runWith(conn *ft12.Conn) error {
 		return err
 	}
 	for _, d := range descriptions {
-		_, _ = fmt.Fprintf(os.Stdout, "datapoint %d: type %s, (%s)\n", d.ID, d.DPT.String(),
+		_, _ = fmt.Fprintf(os.Stdout, "datapoint %d: type %d - %s, (%s)\n", d.ID, d.DPT, d.DPT.String(),
 			baos.SizeString(d.ValueType))
 	}
 	return nil

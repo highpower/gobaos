@@ -46,7 +46,7 @@ func runWith(conn *ft12.Conn, id baos.DatapointID) error {
 	if err != nil {
 		return err
 	}
-	_, _ = fmt.Fprintf(os.Stdout, "datapoint %d: type %s (%s)\n", d.ID, d.DPT.String(),
+	_, _ = fmt.Fprintf(os.Stdout, "datapoint %d: type %d - %s (%s)\n", d.ID, d.DPT, d.DPT.String(),
 		baos.SizeString(d.ValueType))
 	return nil
 }
