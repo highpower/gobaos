@@ -4,6 +4,9 @@ import (
 	"math"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDPTUint32Marshal(t *testing.T) {
@@ -22,16 +25,11 @@ func TestDPTUint32Marshal(t *testing.T) {
 			t.Parallel()
 			dpt := DPTUint32{Value: tc.value}
 			data, err := dpt.MarshalBinary()
-			if err != nil {
-				t.Fatalf("%s", err.Error())
-			}
+			require.NoError(t, err)
+
 			other := DPTUint32{}
-			if err = other.UnmarshalBinary(data); err != nil {
-				t.Fatalf("%s", err.Error())
-			}
-			if other.Value != dpt.Value {
-				t.Errorf("got value=%d, want value=%d", other.Value, dpt.Value)
-			}
+			require.NoError(t, other.UnmarshalBinary(data))
+			assert.Equal(t, dpt.Value, other.Value)
 		})
 	}
 }
@@ -49,9 +47,8 @@ func TestDPTUint32Set(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		{name: "Zero", input: "0", expected: DPTUint32{Value: 0}, errorExpected: false},
-		{name: "Max", input: strconv.FormatUint(math.MaxUint32, 10), expected: DPTUint32{Value: math.MaxUint32},
-			errorExpected: false},
+		{name: "Zero", input: "0", expected: DPTUint32{Value: 0}},
+		{name: "Max", input: strconv.FormatUint(math.MaxUint32, 10), expected: DPTUint32{Value: math.MaxUint32}},
 		{name: "Bad", input: "abc", errorExpected: true},
 		{name: "Negative", input: "-1", errorExpected: true},
 		{name: "Overflow", input: strconv.FormatInt(int64(math.MaxUint32)+1, 10), errorExpected: true},
@@ -62,17 +59,12 @@ func TestDPTUint32Set(t *testing.T) {
 			t.Parallel()
 			dpt := DPTUint32{}
 			err := dpt.Set(tc.input)
-			switch {
-			case err == nil && tc.errorExpected:
-				t.Fatalf("error expected but did not happen")
-			case err != nil && !tc.errorExpected:
-				t.Fatalf("%s", err.Error())
-			case err != nil:
+			if tc.errorExpected {
+				assert.Error(t, err)
 				return
 			}
-			if dpt != tc.expected {
-				t.Errorf("got dpt=%s, expected %s", dpt.String(), tc.expected.String())
-			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, dpt)
 		})
 	}
 }

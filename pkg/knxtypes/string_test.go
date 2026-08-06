@@ -1,6 +1,11 @@
 package knxtypes
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
 func TestDPTStringMarshal(t *testing.T) {
 	type testCase struct {
@@ -19,16 +24,11 @@ func TestDPTStringMarshal(t *testing.T) {
 			t.Parallel()
 			dpt := DPTString{Value: tc.value}
 			data, err := dpt.MarshalBinary()
-			if err != nil {
-				t.Fatalf("%s", err.Error())
-			}
+			require.NoError(t, err)
+
 			other := DPTString{}
-			if err = other.UnmarshalBinary(data); err != nil {
-				t.Fatalf("%s", err.Error())
-			}
-			if other.Value != dpt.Value {
-				t.Errorf("got value=%q, want value=%q", other.Value, dpt.Value)
-			}
+			require.NoError(t, other.UnmarshalBinary(data))
+			assert.Equal(t, dpt.Value, other.Value)
 		})
 	}
 }
@@ -46,9 +46,9 @@ func TestDPTStringSet(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		{name: "Empty", input: "", expected: DPTString{Value: ""}, errorExpected: false},
-		{name: "Short", input: "hello", expected: DPTString{Value: "hello"}, errorExpected: false},
-		{name: "Max", input: "12345678901234", expected: DPTString{Value: "12345678901234"}, errorExpected: false},
+		{name: "Empty", input: "", expected: DPTString{Value: ""}},
+		{name: "Short", input: "hello", expected: DPTString{Value: "hello"}},
+		{name: "Max", input: "12345678901234", expected: DPTString{Value: "12345678901234"}},
 		{name: "TooLong", input: "123456789012345", errorExpected: true},
 	}
 
@@ -57,17 +57,12 @@ func TestDPTStringSet(t *testing.T) {
 			t.Parallel()
 			dpt := DPTString{}
 			err := dpt.Set(tc.input)
-			switch {
-			case err == nil && tc.errorExpected:
-				t.Fatalf("error expected but did not happen")
-			case err != nil && !tc.errorExpected:
-				t.Fatalf("%s", err.Error())
-			case err != nil:
+			if tc.errorExpected {
+				assert.Error(t, err)
 				return
 			}
-			if dpt != tc.expected {
-				t.Errorf("got dpt=%s, expected %s", dpt.String(), tc.expected.String())
-			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, dpt)
 		})
 	}
 }

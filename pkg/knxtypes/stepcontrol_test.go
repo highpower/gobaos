@@ -1,9 +1,13 @@
 package knxtypes
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
 func TestDPTStepControlMarshal(t *testing.T) {
-
 	type testCase struct {
 		name     string
 		control  bool
@@ -20,16 +24,12 @@ func TestDPTStepControlMarshal(t *testing.T) {
 			t.Parallel()
 			dpt := DPTStepControl{Control: tc.control, StepCode: tc.stepCode}
 			data, err := dpt.MarshalBinary()
-			if err != nil {
-				t.Fatalf("%s", err.Error())
-			}
+			require.NoError(t, err)
+
 			other := DPTStepControl{}
-			if err = other.UnmarshalBinary(data); err != nil {
-				t.Fatalf("%s", err.Error())
-			}
-			if other.Control != dpt.Control || other.StepCode != dpt.StepCode {
-				t.Errorf("got control=%t stepCode=%d, want control=%t stepCode=%d", other.Control, other.StepCode, dpt.Control, dpt.StepCode)
-			}
+			require.NoError(t, other.UnmarshalBinary(data))
+			assert.Equal(t, dpt.Control, other.Control)
+			assert.Equal(t, dpt.StepCode, other.StepCode)
 		})
 	}
 }
@@ -39,7 +39,6 @@ func TestDPTStepControlUnmarshal(t *testing.T) {
 }
 
 func TestDPTStepControlSet(t *testing.T) {
-
 	type testCase struct {
 		name          string
 		input         string
@@ -48,7 +47,7 @@ func TestDPTStepControlSet(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		{name: "Valid", input: "true:3", expected: DPTStepControl{true, 3}, errorExpected: false},
+		{name: "Valid", input: "true:3", expected: DPTStepControl{true, 3}},
 		{name: "WrongParts", input: "true:1:*", errorExpected: true},
 		{name: "BadBool", input: "maybe:1", errorExpected: true},
 		{name: "BadNumber", input: "true:abc", errorExpected: true},
@@ -60,17 +59,12 @@ func TestDPTStepControlSet(t *testing.T) {
 			t.Parallel()
 			dpt := DPTStepControl{}
 			err := dpt.Set(tc.input)
-			switch {
-			case err == nil && tc.errorExpected:
-				t.Fatalf("error expected but did not happen")
-			case err != nil && !tc.errorExpected:
-				t.Fatalf("%s", err.Error())
-			case err != nil:
+			if tc.errorExpected {
+				assert.Error(t, err)
 				return
 			}
-			if dpt != tc.expected {
-				t.Errorf("got dpt=%s, expected %s", dpt.String(), tc.expected.String())
-			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, dpt)
 		})
 	}
 }

@@ -1,0 +1,8 @@
+device: /dev/ttyAMA0
+sensors:
+  - ids: [ 1-7 ]
+    state-topic: thermo/+
+controllers:
+  - ids: [ 10-55 ]
+    state-topic: switches/+
+    command-topic: switches/+/set

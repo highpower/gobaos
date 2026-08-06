@@ -1,6 +1,11 @@
 package knxtypes
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
 func TestDPTBoolMarshal(t *testing.T) {
 	type testCase struct {
@@ -18,16 +23,11 @@ func TestDPTBoolMarshal(t *testing.T) {
 			t.Parallel()
 			dpt := DPTBool{Value: tc.value}
 			data, err := dpt.MarshalBinary()
-			if err != nil {
-				t.Fatalf("%s", err.Error())
-			}
+			require.NoError(t, err)
+
 			other := DPTBool{}
-			if err = other.UnmarshalBinary(data); err != nil {
-				t.Fatalf("%s", err.Error())
-			}
-			if other.Value != dpt.Value {
-				t.Errorf("got value=%t, want value=%t", other.Value, dpt.Value)
-			}
+			require.NoError(t, other.UnmarshalBinary(data))
+			assert.Equal(t, dpt.Value, other.Value)
 		})
 	}
 }
@@ -45,10 +45,10 @@ func TestDPTBoolSet(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		{name: "True", input: "true", expected: DPTBool{Value: true}, errorExpected: false},
-		{name: "False", input: "false", expected: DPTBool{Value: false}, errorExpected: false},
-		{name: "One", input: "1", expected: DPTBool{Value: true}, errorExpected: false},
-		{name: "Zero", input: "0", expected: DPTBool{Value: false}, errorExpected: false},
+		{name: "True", input: "true", expected: DPTBool{Value: true}},
+		{name: "False", input: "false", expected: DPTBool{Value: false}},
+		{name: "One", input: "1", expected: DPTBool{Value: true}},
+		{name: "Zero", input: "0", expected: DPTBool{Value: false}},
 		{name: "Bad", input: "maybe", errorExpected: true},
 	}
 
@@ -57,17 +57,12 @@ func TestDPTBoolSet(t *testing.T) {
 			t.Parallel()
 			dpt := DPTBool{}
 			err := dpt.Set(tc.input)
-			switch {
-			case err == nil && tc.errorExpected:
-				t.Fatalf("error expected but did not happen")
-			case err != nil && !tc.errorExpected:
-				t.Fatalf("%s", err.Error())
-			case err != nil:
+			if tc.errorExpected {
+				assert.Error(t, err)
 				return
 			}
-			if dpt != tc.expected {
-				t.Errorf("got dpt=%s, expected %s", dpt.String(), tc.expected.String())
-			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, dpt)
 		})
 	}
 }
@@ -80,5 +75,4 @@ func FuzzDPTBool(f *testing.F) {
 		other := DPTBool{}
 		_ = other.UnmarshalBinary(data)
 	})
-
 }

@@ -2,6 +2,9 @@ package baos
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetDatapointDescriptionReqValid(t *testing.T) {
@@ -18,12 +21,11 @@ func TestGetDatapointDescriptionReqValid(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			err := tc.value.Valid()
-			switch {
-			case err == nil && tc.errorExpected:
-				t.Errorf("error expected but did not happen")
-			case err != nil && !tc.errorExpected:
-				t.Errorf("%s", err.Error())
+			if tc.errorExpected {
+				assert.Error(t, err)
+				return
 			}
+			require.NoError(t, err)
 		})
 	}
 }
@@ -47,10 +49,7 @@ func TestGetDatapointDescriptionReqEqual(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			if res := tc.value.Equal(&tc.other); res != tc.resultExpected {
-				t.Errorf("incorrect result: %s=%s is %t, expected %t", tc.value.String(), tc.other.String(),
-					res, tc.resultExpected)
-			}
+			assert.Equal(t, tc.resultExpected, tc.value.Equal(&tc.other))
 		})
 	}
 }
@@ -69,16 +68,11 @@ func TestGetDatapointDescriptionReqMarshal(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			data, err := tc.value.MarshalBinary()
-			if err != nil {
-				t.Fatalf("%s", err.Error())
-			}
+			require.NoError(t, err)
+
 			other := GetDatapointDescriptionReq{}
-			if err := other.UnmarshalBinary(data); err != nil {
-				t.Fatalf("%s", err.Error())
-			}
-			if !tc.value.Equal(&other) {
-				t.Errorf("incorrect result: %s=%s expected to be equal", tc.value.String(), other.String())
-			}
+			require.NoError(t, other.UnmarshalBinary(data))
+			assert.True(t, tc.value.Equal(&other))
 		})
 	}
 }
@@ -101,12 +95,11 @@ func TestGetDatapointDescriptionReqUnmarshalErrors(t *testing.T) {
 			t.Parallel()
 			r := GetDatapointDescriptionReq{}
 			err := r.UnmarshalBinary(tc.data)
-			switch {
-			case err == nil && tc.errExpected:
-				t.Errorf("error expected but did not happen")
-			case err != nil && !tc.errExpected:
-				t.Errorf("unexpected error: %s", err.Error())
+			if tc.errExpected {
+				assert.Error(t, err)
+				return
 			}
+			require.NoError(t, err)
 		})
 	}
 }
@@ -114,15 +107,9 @@ func TestGetDatapointDescriptionReqUnmarshalErrors(t *testing.T) {
 func TestGetDatapointDescriptionReqUnmarshalFields(t *testing.T) {
 	r := GetDatapointDescriptionReq{}
 	data := []byte{0xF0, 0x03, 0x00, 0x05, 0x00, 0x0A}
-	if err := r.UnmarshalBinary(data); err != nil {
-		t.Fatalf("unexpected error: %s", err.Error())
-	}
-	if r.StartDatapoint != 5 {
-		t.Errorf("StartDatapoint: got %d, want 5", r.StartDatapoint)
-	}
-	if r.NumberOfDatapoints != 10 {
-		t.Errorf("NumberOfDatapoints: got %d, want 10", r.NumberOfDatapoints)
-	}
+	require.NoError(t, r.UnmarshalBinary(data))
+	assert.Equal(t, DatapointID(5), r.StartDatapoint)
+	assert.Equal(t, uint16(10), r.NumberOfDatapoints)
 }
 
 func TestGetDatapointDescriptionResValid(t *testing.T) {
@@ -144,12 +131,11 @@ func TestGetDatapointDescriptionResValid(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			err := tc.value.Valid()
-			switch {
-			case err == nil && tc.errorExpected:
-				t.Errorf("error expected but did not happen")
-			case err != nil && !tc.errorExpected:
-				t.Errorf("%s", err.Error())
+			if tc.errorExpected {
+				assert.Error(t, err)
+				return
 			}
+			require.NoError(t, err)
 		})
 	}
 }
@@ -172,9 +158,7 @@ func TestGetDatapointDescriptionResEqual(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			if res := tc.value.Equal(&tc.other); res != tc.resultExpected {
-				t.Errorf("incorrect result: expected %t, got %t", tc.resultExpected, res)
-			}
+			assert.Equal(t, tc.resultExpected, tc.value.Equal(&tc.other))
 		})
 	}
 }
@@ -194,16 +178,11 @@ func TestGetDatapointDescriptionResMarshal(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			data, err := tc.value.MarshalBinary()
-			if err != nil {
-				t.Fatalf("marshal: %s", err.Error())
-			}
+			require.NoError(t, err)
+
 			other := GetDatapointDescriptionRes{}
-			if err := other.UnmarshalBinary(data); err != nil {
-				t.Fatalf("unmarshal: %s", err.Error())
-			}
-			if !tc.value.Equal(&other) {
-				t.Errorf("round-trip failed: expected equal values")
-			}
+			require.NoError(t, other.UnmarshalBinary(data))
+			assert.True(t, tc.value.Equal(&other))
 		})
 	}
 }
@@ -228,12 +207,11 @@ func TestGetDatapointDescriptionResUnmarshalErrors(t *testing.T) {
 			t.Parallel()
 			r := GetDatapointDescriptionRes{}
 			err := r.UnmarshalBinary(tc.data)
-			switch {
-			case err == nil && tc.errExpected:
-				t.Errorf("error expected but did not happen")
-			case err != nil && !tc.errExpected:
-				t.Errorf("unexpected error: %s", err.Error())
+			if tc.errExpected {
+				assert.Error(t, err)
+				return
 			}
+			require.NoError(t, err)
 		})
 	}
 }

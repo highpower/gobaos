@@ -3,6 +3,9 @@ package knxtypes
 import (
 	"math"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDPTFloat4ByteMarshal(t *testing.T) {
@@ -24,16 +27,11 @@ func TestDPTFloat4ByteMarshal(t *testing.T) {
 			t.Parallel()
 			dpt := DPTFloat4Byte{Value: tc.value}
 			data, err := dpt.MarshalBinary()
-			if err != nil {
-				t.Fatalf("%s", err.Error())
-			}
+			require.NoError(t, err)
+
 			other := DPTFloat4Byte{}
-			if err = other.UnmarshalBinary(data); err != nil {
-				t.Fatalf("%s", err.Error())
-			}
-			if float32(other.Value) != float32(dpt.Value) {
-				t.Errorf("got value=%f, want value=%f", other.Value, dpt.Value)
-			}
+			require.NoError(t, other.UnmarshalBinary(data))
+			assert.InDelta(t, dpt.Value, other.Value, math.SmallestNonzeroFloat64)
 		})
 	}
 }
@@ -51,9 +49,9 @@ func TestDPTFloat4ByteSet(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		{name: "Zero", input: "0", expected: DPTFloat4Byte{Value: 0}, errorExpected: false},
-		{name: "Positive", input: "22.0", expected: DPTFloat4Byte{Value: 22.0}, errorExpected: false},
-		{name: "Negative", input: "-3.5", expected: DPTFloat4Byte{Value: -3.5}, errorExpected: false},
+		{name: "Zero", input: "0", expected: DPTFloat4Byte{Value: 0}},
+		{name: "Positive", input: "22.0", expected: DPTFloat4Byte{Value: 22.0}},
+		{name: "Negative", input: "-3.5", expected: DPTFloat4Byte{Value: -3.5}},
 		{name: "Bad", input: "abc", errorExpected: true},
 	}
 
@@ -62,17 +60,12 @@ func TestDPTFloat4ByteSet(t *testing.T) {
 			t.Parallel()
 			dpt := DPTFloat4Byte{}
 			err := dpt.Set(tc.input)
-			switch {
-			case err == nil && tc.errorExpected:
-				t.Fatalf("error expected but did not happen")
-			case err != nil && !tc.errorExpected:
-				t.Fatalf("%s", err.Error())
-			case err != nil:
+			if tc.errorExpected {
+				assert.Error(t, err)
 				return
 			}
-			if dpt != tc.expected {
-				t.Errorf("got dpt=%s, expected %s", dpt.String(), tc.expected.String())
-			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, dpt)
 		})
 	}
 }

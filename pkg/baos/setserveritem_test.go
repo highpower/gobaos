@@ -2,6 +2,9 @@ package baos
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSetServerItemReqValid(t *testing.T) {
@@ -20,12 +23,11 @@ func TestSetServerItemReqValid(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			err := tc.value.Valid()
-			switch {
-			case err == nil && tc.errorExpected:
-				t.Errorf("error expected but did not happen")
-			case err != nil && !tc.errorExpected:
-				t.Errorf("%s", err.Error())
+			if tc.errorExpected {
+				assert.Error(t, err)
+				return
 			}
+			require.NoError(t, err)
 		})
 	}
 }
@@ -48,9 +50,7 @@ func TestSetServerItemReqEqual(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			if res := tc.value.Equal(&tc.other); res != tc.resultExpected {
-				t.Errorf("incorrect result: expected %t, got %t", tc.resultExpected, res)
-			}
+			assert.Equal(t, tc.resultExpected, tc.value.Equal(&tc.other))
 		})
 	}
 }
@@ -70,16 +70,11 @@ func TestSetServerItemReqMarshal(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			data, err := tc.value.MarshalBinary()
-			if err != nil {
-				t.Fatalf("marshal: %s", err.Error())
-			}
+			require.NoError(t, err)
+
 			other := SetServerItemReq{}
-			if err := other.UnmarshalBinary(data); err != nil {
-				t.Fatalf("unmarshal: %s", err.Error())
-			}
-			if !tc.value.Equal(&other) {
-				t.Errorf("round-trip failed: expected equal values")
-			}
+			require.NoError(t, other.UnmarshalBinary(data))
+			assert.True(t, tc.value.Equal(&other))
 		})
 	}
 }
@@ -104,12 +99,11 @@ func TestSetServerItemReqUnmarshalErrors(t *testing.T) {
 			t.Parallel()
 			r := SetServerItemReq{}
 			err := r.UnmarshalBinary(tc.data)
-			switch {
-			case err == nil && tc.errExpected:
-				t.Errorf("error expected but did not happen")
-			case err != nil && !tc.errExpected:
-				t.Errorf("unexpected error: %s", err.Error())
+			if tc.errExpected {
+				assert.Error(t, err)
+				return
 			}
+			require.NoError(t, err)
 		})
 	}
 }
@@ -132,12 +126,11 @@ func TestSetServerItemResValid(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			err := tc.value.Valid()
-			switch {
-			case err == nil && tc.errorExpected:
-				t.Errorf("error expected but did not happen")
-			case err != nil && !tc.errorExpected:
-				t.Errorf("%s", err.Error())
+			if tc.errorExpected {
+				assert.Error(t, err)
+				return
 			}
+			require.NoError(t, err)
 		})
 	}
 }
@@ -160,9 +153,7 @@ func TestSetServerItemResEqual(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			if res := tc.value.Equal(&tc.other); res != tc.resultExpected {
-				t.Errorf("incorrect result: expected %t, got %t", tc.resultExpected, res)
-			}
+			assert.Equal(t, tc.resultExpected, tc.value.Equal(&tc.other))
 		})
 	}
 }
@@ -182,16 +173,11 @@ func TestSetServerItemResMarshal(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			data, err := tc.value.MarshalBinary()
-			if err != nil {
-				t.Fatalf("marshal: %s", err.Error())
-			}
+			require.NoError(t, err)
+
 			other := SetServerItemRes{}
-			if err := other.UnmarshalBinary(data); err != nil {
-				t.Fatalf("unmarshal: %s", err.Error())
-			}
-			if !tc.value.Equal(&other) {
-				t.Errorf("round-trip failed: expected equal values")
-			}
+			require.NoError(t, other.UnmarshalBinary(data))
+			assert.True(t, tc.value.Equal(&other))
 		})
 	}
 }
@@ -214,12 +200,11 @@ func TestSetServerItemResUnmarshalErrors(t *testing.T) {
 			t.Parallel()
 			r := SetServerItemRes{}
 			err := r.UnmarshalBinary(tc.data)
-			switch {
-			case err == nil && tc.errExpected:
-				t.Errorf("error expected but did not happen")
-			case err != nil && !tc.errExpected:
-				t.Errorf("unexpected error: %s", err.Error())
+			if tc.errExpected {
+				assert.Error(t, err)
+				return
 			}
+			require.NoError(t, err)
 		})
 	}
 }

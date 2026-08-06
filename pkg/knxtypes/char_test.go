@@ -1,6 +1,11 @@
 package knxtypes
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
 func TestDPTCharMarshal(t *testing.T) {
 	type testCase struct {
@@ -19,16 +24,11 @@ func TestDPTCharMarshal(t *testing.T) {
 			t.Parallel()
 			dpt := DPTChar{Value: tc.value}
 			data, err := dpt.MarshalBinary()
-			if err != nil {
-				t.Fatalf("%s", err.Error())
-			}
+			require.NoError(t, err)
+
 			other := DPTChar{}
-			if err = other.UnmarshalBinary(data); err != nil {
-				t.Fatalf("%s", err.Error())
-			}
-			if other.Value != dpt.Value {
-				t.Errorf("got value=%c, want value=%c", other.Value, dpt.Value)
-			}
+			require.NoError(t, other.UnmarshalBinary(data))
+			assert.Equal(t, dpt.Value, other.Value)
 		})
 	}
 }
@@ -46,7 +46,7 @@ func TestDPTCharSet(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		{name: "A", input: "A", expected: DPTChar{Value: 'A'}, errorExpected: false},
+		{name: "A", input: "A", expected: DPTChar{Value: 'A'}},
 		{name: "Empty", input: "", errorExpected: true},
 		{name: "TooLong", input: "AB", errorExpected: true},
 		{name: "MultiByte", input: "世", errorExpected: true},
@@ -57,17 +57,12 @@ func TestDPTCharSet(t *testing.T) {
 			t.Parallel()
 			dpt := DPTChar{}
 			err := dpt.Set(tc.input)
-			switch {
-			case err == nil && tc.errorExpected:
-				t.Fatalf("error expected but did not happen")
-			case err != nil && !tc.errorExpected:
-				t.Fatalf("%s", err.Error())
-			case err != nil:
+			if tc.errorExpected {
+				assert.Error(t, err)
 				return
 			}
-			if dpt != tc.expected {
-				t.Errorf("got dpt=%s, expected %s", dpt.String(), tc.expected.String())
-			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, dpt)
 		})
 	}
 }

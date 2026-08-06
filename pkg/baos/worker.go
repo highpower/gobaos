@@ -151,8 +151,8 @@ func (w *Worker) AllDescriptions() ([]DatapointDescription, error) {
 		return nil, err
 	}
 	//TODO: add fetching functions instead of direct read
-	maxId := binary.BigEndian.Uint16(item.Data)
-	return w.descriptions(1, maxId)
+	maxID := binary.BigEndian.Uint16(item.Data)
+	return w.descriptions(1, maxID)
 }
 
 // DescriptionString reads the description string of the given datapoint.

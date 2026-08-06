@@ -2,6 +2,9 @@ package baos
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDatapointValueIndValid(t *testing.T) {
@@ -21,12 +24,11 @@ func TestDatapointValueIndValid(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			err := tc.value.Valid()
-			switch {
-			case err == nil && tc.errorExpected:
-				t.Errorf("error expected but did not happen")
-			case err != nil && !tc.errorExpected:
-				t.Errorf("%s", err.Error())
+			if tc.errorExpected {
+				assert.Error(t, err)
+				return
 			}
+			require.NoError(t, err)
 		})
 	}
 }
@@ -53,9 +55,7 @@ func TestDatapointValueIndEqual(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			if res := tc.value.Equal(&tc.other); res != tc.resultExpected {
-				t.Errorf("incorrect result: expected %t, got %t", tc.resultExpected, res)
-			}
+			assert.Equal(t, tc.resultExpected, tc.value.Equal(&tc.other))
 		})
 	}
 }
@@ -76,16 +76,11 @@ func TestDatapointValueIndMarshal(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			data, err := tc.value.MarshalBinary()
-			if err != nil {
-				t.Fatalf("marshal: %s", err.Error())
-			}
+			require.NoError(t, err)
+
 			other := DatapointValueInd{}
-			if err := other.UnmarshalBinary(data); err != nil {
-				t.Fatalf("unmarshal: %s", err.Error())
-			}
-			if !tc.value.Equal(&other) {
-				t.Errorf("round-trip failed: expected equal values")
-			}
+			require.NoError(t, other.UnmarshalBinary(data))
+			assert.True(t, tc.value.Equal(&other))
 		})
 	}
 }
@@ -109,18 +104,16 @@ func TestDatapointValueIndUnmarshalErrors(t *testing.T) {
 			t.Parallel()
 			r := DatapointValueInd{}
 			err := r.UnmarshalBinary(tc.data)
-			switch {
-			case err == nil && tc.errExpected:
-				t.Errorf("error expected but did not happen")
-			case err != nil && !tc.errExpected:
-				t.Errorf("unexpected error: %s", err.Error())
+			if tc.errExpected {
+				assert.Error(t, err)
+				return
 			}
+			require.NoError(t, err)
 		})
 	}
 }
 
 func FuzzDatapointValueInd(f *testing.F) {
-
 	ind := DatapointValueInd{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}
 	data, _ := ind.MarshalBinary()
 	f.Add(data)

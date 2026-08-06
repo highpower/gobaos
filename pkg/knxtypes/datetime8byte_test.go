@@ -2,6 +2,9 @@ package knxtypes
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDPTDateTime8ByteMarshal(t *testing.T) {
@@ -23,16 +26,11 @@ func TestDPTDateTime8ByteMarshal(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			data, err := tc.value.MarshalBinary()
-			if err != nil {
-				t.Fatalf("marshal: %s", err.Error())
-			}
+			require.NoError(t, err)
+
 			other := DPTDateTime8Byte{}
-			if err := other.UnmarshalBinary(data); err != nil {
-				t.Fatalf("unmarshal: %s", err.Error())
-			}
-			if other != tc.value {
-				t.Errorf("round-trip failed: got %v, want %v", other, tc.value)
-			}
+			require.NoError(t, other.UnmarshalBinary(data))
+			assert.Equal(t, tc.value, other)
 		})
 	}
 }
@@ -42,7 +40,6 @@ func TestDPTDateTime8BadUnmarshal(t *testing.T) {
 }
 
 func TestDPTDateTime8ByteSet(t *testing.T) {
-
 	type testCase struct {
 		name          string
 		value         string
@@ -52,17 +49,13 @@ func TestDPTDateTime8ByteSet(t *testing.T) {
 
 	testCases := []testCase{
 		{name: "Valid", value: "15/03/2024 14:30:45",
-			result:        DPTDateTime8Byte{Year: 124, Month: 3, Day: 15, Hour: 14, Minute: 30, Second: 45},
-			errorExpected: false},
+			result: DPTDateTime8Byte{Year: 124, Month: 3, Day: 15, Hour: 14, Minute: 30, Second: 45}},
 		{name: "MinYear", value: "01/01/1900 00:00:00",
-			result:        DPTDateTime8Byte{Year: 0, Month: 1, Day: 1, Hour: 0, Minute: 0, Second: 0},
-			errorExpected: false},
+			result: DPTDateTime8Byte{Year: 0, Month: 1, Day: 1, Hour: 0, Minute: 0, Second: 0}},
 		{name: "MaxYear", value: "31/12/2155 23:59:59",
-			result:        DPTDateTime8Byte{Year: 255, Month: 12, Day: 31, Hour: 23, Minute: 59, Second: 59},
-			errorExpected: false},
+			result: DPTDateTime8Byte{Year: 255, Month: 12, Day: 31, Hour: 23, Minute: 59, Second: 59}},
 		{name: "Weekday", value: "31/12/2155,Wed 23:59:59",
-			result:        DPTDateTime8Byte{Year: 255, Month: 12, Day: 31, Weekday: 3, Hour: 23, Minute: 59, Second: 59},
-			errorExpected: false},
+			result: DPTDateTime8Byte{Year: 255, Month: 12, Day: 31, Weekday: 3, Hour: 23, Minute: 59, Second: 59}},
 		{name: "DayTooLarge", value: "32/01/2024 12:00:00", errorExpected: true},
 		{name: "MonthTooLarge", value: "01/13/2024 12:00:00", errorExpected: true},
 		{name: "HourTooLarge", value: "01/01/2024 24:00:00", errorExpected: true},
@@ -78,16 +71,12 @@ func TestDPTDateTime8ByteSet(t *testing.T) {
 			t.Parallel()
 			res := DPTDateTime8Byte{}
 			err := res.Set(tc.value)
-			switch {
-			case err != nil && !tc.errorExpected:
-				t.Errorf("error %s", err.Error())
-			case err == nil && tc.errorExpected:
-				t.Errorf("error expected")
-			case err == nil && !tc.errorExpected:
-				if res != tc.result {
-					t.Errorf("incorrect result %v, expected %v", res, tc.result)
-				}
+			if tc.errorExpected {
+				assert.Error(t, err)
+				return
 			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.result, res)
 		})
 	}
 }

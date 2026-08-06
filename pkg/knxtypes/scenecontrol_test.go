@@ -1,6 +1,11 @@
 package knxtypes
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
 func TestDPTSceneControlMarshal(t *testing.T) {
 	type testCase struct {
@@ -19,16 +24,12 @@ func TestDPTSceneControlMarshal(t *testing.T) {
 			t.Parallel()
 			dpt := DPTSceneControl{Scene: tc.scene, Save: tc.save}
 			data, err := dpt.MarshalBinary()
-			if err != nil {
-				t.Fatalf("%s", err.Error())
-			}
+			require.NoError(t, err)
+
 			other := DPTSceneControl{}
-			if err = other.UnmarshalBinary(data); err != nil {
-				t.Fatalf("%s", err.Error())
-			}
-			if other.Scene != dpt.Scene || other.Save != dpt.Save {
-				t.Errorf("got scene=%d save=%t, want scene=%d save=%t", other.Scene, other.Save, dpt.Scene, dpt.Save)
-			}
+			require.NoError(t, other.UnmarshalBinary(data))
+			assert.Equal(t, dpt.Scene, other.Scene)
+			assert.Equal(t, dpt.Save, other.Save)
 		})
 	}
 }
@@ -46,9 +47,9 @@ func TestDPTSceneControlSet(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		{name: "ExecuteMin", input: "1,false", expected: DPTSceneControl{Scene: 1, Save: false}, errorExpected: false},
-		{name: "SaveMax", input: "64,true", expected: DPTSceneControl{Scene: 64, Save: true}, errorExpected: false},
-		{name: "ExecuteMid", input: "32,false", expected: DPTSceneControl{Scene: 32, Save: false}, errorExpected: false},
+		{name: "ExecuteMin", input: "1,false", expected: DPTSceneControl{Scene: 1, Save: false}},
+		{name: "SaveMax", input: "64,true", expected: DPTSceneControl{Scene: 64, Save: true}},
+		{name: "ExecuteMid", input: "32,false", expected: DPTSceneControl{Scene: 32, Save: false}},
 		{name: "Zero", input: "0,false", errorExpected: true},
 		{name: "Overflow", input: "65,true", errorExpected: true},
 		{name: "WrongParts", input: "1", errorExpected: true},
@@ -61,17 +62,12 @@ func TestDPTSceneControlSet(t *testing.T) {
 			t.Parallel()
 			dpt := DPTSceneControl{}
 			err := dpt.Set(tc.input)
-			switch {
-			case err == nil && tc.errorExpected:
-				t.Fatalf("error expected but did not happen")
-			case err != nil && !tc.errorExpected:
-				t.Fatalf("%s", err.Error())
-			case err != nil:
+			if tc.errorExpected {
+				assert.Error(t, err)
 				return
 			}
-			if dpt != tc.expected {
-				t.Errorf("got dpt=%s, expected %s", dpt.String(), tc.expected.String())
-			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, dpt)
 		})
 	}
 }

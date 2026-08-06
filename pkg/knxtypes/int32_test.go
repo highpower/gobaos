@@ -4,6 +4,9 @@ import (
 	"math"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDPTInt32Marshal(t *testing.T) {
@@ -23,16 +26,11 @@ func TestDPTInt32Marshal(t *testing.T) {
 			t.Parallel()
 			dpt := DPTInt32{Value: tc.value}
 			data, err := dpt.MarshalBinary()
-			if err != nil {
-				t.Fatalf("%s", err.Error())
-			}
+			require.NoError(t, err)
+
 			other := DPTInt32{}
-			if err = other.UnmarshalBinary(data); err != nil {
-				t.Fatalf("%s", err.Error())
-			}
-			if other.Value != dpt.Value {
-				t.Errorf("got value=%d, want value=%d", other.Value, dpt.Value)
-			}
+			require.NoError(t, other.UnmarshalBinary(data))
+			assert.Equal(t, dpt.Value, other.Value)
 		})
 	}
 }
@@ -50,9 +48,9 @@ func TestDPTInt32Set(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		{name: "Zero", input: "0", expected: DPTInt32{Value: 0}, errorExpected: false},
-		{name: "Max", input: strconv.Itoa(math.MaxInt32), expected: DPTInt32{Value: math.MaxInt32}, errorExpected: false},
-		{name: "Min", input: strconv.Itoa(math.MinInt32), expected: DPTInt32{Value: math.MinInt32}, errorExpected: false},
+		{name: "Zero", input: "0", expected: DPTInt32{Value: 0}},
+		{name: "Max", input: strconv.Itoa(math.MaxInt32), expected: DPTInt32{Value: math.MaxInt32}},
+		{name: "Min", input: strconv.Itoa(math.MinInt32), expected: DPTInt32{Value: math.MinInt32}},
 		{name: "Bad", input: "abc", errorExpected: true},
 		{name: "Overflow", input: strconv.FormatInt(int64(math.MaxInt32)+1, 10), errorExpected: true},
 	}
@@ -62,17 +60,12 @@ func TestDPTInt32Set(t *testing.T) {
 			t.Parallel()
 			dpt := DPTInt32{}
 			err := dpt.Set(tc.input)
-			switch {
-			case err == nil && tc.errorExpected:
-				t.Fatalf("error expected but did not happen")
-			case err != nil && !tc.errorExpected:
-				t.Fatalf("%s", err.Error())
-			case err != nil:
+			if tc.errorExpected {
+				assert.Error(t, err)
 				return
 			}
-			if dpt != tc.expected {
-				t.Errorf("got dpt=%s, expected %s", dpt.String(), tc.expected.String())
-			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, dpt)
 		})
 	}
 }

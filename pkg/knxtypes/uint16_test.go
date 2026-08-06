@@ -3,6 +3,9 @@ package knxtypes
 import (
 	"math"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDPTUint16Marshal(t *testing.T) {
@@ -21,16 +24,11 @@ func TestDPTUint16Marshal(t *testing.T) {
 			t.Parallel()
 			dpt := DPTUint16{Value: tc.value}
 			data, err := dpt.MarshalBinary()
-			if err != nil {
-				t.Fatalf("%s", err.Error())
-			}
+			require.NoError(t, err)
+
 			other := DPTUint16{}
-			if err = other.UnmarshalBinary(data); err != nil {
-				t.Fatalf("%s", err.Error())
-			}
-			if other.Value != dpt.Value {
-				t.Errorf("got value=%d, want value=%d", other.Value, dpt.Value)
-			}
+			require.NoError(t, other.UnmarshalBinary(data))
+			assert.Equal(t, dpt.Value, other.Value)
 		})
 	}
 }
@@ -48,8 +46,8 @@ func TestDPTUint16Set(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		{name: "Zero", input: "0", expected: DPTUint16{Value: 0}, errorExpected: false},
-		{name: "Max", input: "65535", expected: DPTUint16{Value: 65535}, errorExpected: false},
+		{name: "Zero", input: "0", expected: DPTUint16{Value: 0}},
+		{name: "Max", input: "65535", expected: DPTUint16{Value: 65535}},
 		{name: "Bad", input: "abc", errorExpected: true},
 		{name: "Negative", input: "-1", errorExpected: true},
 	}
@@ -59,17 +57,12 @@ func TestDPTUint16Set(t *testing.T) {
 			t.Parallel()
 			dpt := DPTUint16{}
 			err := dpt.Set(tc.input)
-			switch {
-			case err == nil && tc.errorExpected:
-				t.Fatalf("error expected but did not happen")
-			case err != nil && !tc.errorExpected:
-				t.Fatalf("%s", err.Error())
-			case err != nil:
+			if tc.errorExpected {
+				assert.Error(t, err)
 				return
 			}
-			if dpt != tc.expected {
-				t.Errorf("got dpt=%s, expected %s", dpt.String(), tc.expected.String())
-			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, dpt)
 		})
 	}
 }

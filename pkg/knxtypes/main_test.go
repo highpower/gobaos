@@ -2,6 +2,8 @@ package knxtypes
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type dptWrapper[G any] interface {
@@ -30,7 +32,6 @@ func bytesRequired(code TypeCode) int {
 }
 
 func testBadUnmarshal[G any, W dptWrapper[G]](t *testing.T) {
-
 	var value G
 	code := W(&value).TypeCode()
 	length := bytesRequired(code)
@@ -47,9 +48,7 @@ func testBadUnmarshal[G any, W dptWrapper[G]](t *testing.T) {
 			for i := range data {
 				data[i] = byte(i)
 			}
-			if err := W(&value).UnmarshalBinary(data); err == nil {
-				t.Errorf("error expected during unmarshal of %s", W(&value).TypeCode().String())
-			}
+			assert.Error(t, W(&value).UnmarshalBinary(data))
 		})
 	}
 }

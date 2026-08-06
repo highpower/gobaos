@@ -1,6 +1,11 @@
 package knxtypes
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
 func TestDPTRedGreenBlueMarshal(t *testing.T) {
 	type testCase struct {
@@ -21,18 +26,13 @@ func TestDPTRedGreenBlueMarshal(t *testing.T) {
 			t.Parallel()
 			dpt := DPTRedGreenBlue{Red: tc.red, Green: tc.green, Blue: tc.blue}
 			data, err := dpt.MarshalBinary()
-			if err != nil {
-				t.Fatalf("%s", err.Error())
-			}
+			require.NoError(t, err)
+
 			other := DPTRedGreenBlue{}
-			if err = other.UnmarshalBinary(data); err != nil {
-				t.Fatalf("%s", err.Error())
-			}
-			if other.Red != dpt.Red || other.Green != dpt.Green || other.Blue != dpt.Blue {
-				t.Errorf("got red=%d green=%d blue=%d, want red=%d green=%d blue=%d",
-					other.Red, other.Green, other.Blue,
-					dpt.Red, dpt.Green, dpt.Blue)
-			}
+			require.NoError(t, other.UnmarshalBinary(data))
+			assert.Equal(t, dpt.Red, other.Red)
+			assert.Equal(t, dpt.Green, other.Green)
+			assert.Equal(t, dpt.Blue, other.Blue)
 		})
 	}
 }
@@ -50,8 +50,8 @@ func TestDPTRedGreenBlueSet(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		{name: "Valid", input: "255,128,0", expected: DPTRedGreenBlue{Red: 255, Green: 128, Blue: 0}, errorExpected: false},
-		{name: "Zero", input: "0,0,0", expected: DPTRedGreenBlue{Red: 0, Green: 0, Blue: 0}, errorExpected: false},
+		{name: "Valid", input: "255,128,0", expected: DPTRedGreenBlue{Red: 255, Green: 128, Blue: 0}},
+		{name: "Zero", input: "0,0,0", expected: DPTRedGreenBlue{Red: 0, Green: 0, Blue: 0}},
 		{name: "WrongParts", input: "255,128", errorExpected: true},
 		{name: "BadNumber", input: "255,abc,0", errorExpected: true},
 		{name: "Overflow", input: "255,128,256", errorExpected: true},
@@ -62,17 +62,12 @@ func TestDPTRedGreenBlueSet(t *testing.T) {
 			t.Parallel()
 			dpt := DPTRedGreenBlue{}
 			err := dpt.Set(tc.input)
-			switch {
-			case err == nil && tc.errorExpected:
-				t.Fatalf("error expected but did not happen")
-			case err != nil && !tc.errorExpected:
-				t.Fatalf("%s", err.Error())
-			case err != nil:
+			if tc.errorExpected {
+				assert.Error(t, err)
 				return
 			}
-			if dpt != tc.expected {
-				t.Errorf("got dpt=%s, expected %s", dpt.String(), tc.expected.String())
-			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, dpt)
 		})
 	}
 }
