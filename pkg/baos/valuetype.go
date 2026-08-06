@@ -10,7 +10,9 @@ func SizeString(t ValueType) string {
 	switch t {
 	case 0, 1, 2, 3, 4, 5, 6:
 		return fmt.Sprintf("%d bits", int(t)+1)
-	case 7, 8, 9, 10:
+	case 7:
+		return fmt.Sprintf("%d byte", 1)
+	case 8, 9, 10:
 		return fmt.Sprintf("%d bytes", int(t)-6)
 	case 11:
 		return fmt.Sprintf("%d bytes", 6)
