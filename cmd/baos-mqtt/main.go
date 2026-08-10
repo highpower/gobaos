@@ -43,20 +43,20 @@ func runWith(conn *ft12.Conn, c *config) error {
 	wg.Add(1)
 	go runWorker(worker, &wg)
 
-	tc, err := newTLSConfig(c.CaCert)
+	tc, err := newTLSConfig(c.Mqtt.CaCert)
 	if err != nil {
 		return err
 	}
 
 	opts := mqtt.ClientOptions{
-		Servers:       []*url.URL{{Scheme: "mqtts", Host: c.MqttHost}},
+		Servers:       []*url.URL{{Scheme: "mqtts", Host: c.Mqtt.Host}},
 		AutoReconnect: true,
 		ClientID:      "baos-mqtt",
 		CleanSession:  true,
 		KeepAlive:     10,
 		TLSConfig:     tc,
-		Username:      c.MqttUser,
-		Password:      c.MqttPass,
+		Username:      c.Mqtt.User,
+		Password:      c.Mqtt.Password,
 	}
 	client := mqtt.NewClient(&opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
