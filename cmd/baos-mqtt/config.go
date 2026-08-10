@@ -14,7 +14,6 @@ type sensorSettings struct {
 	IDStrings  []string `yaml:"ids"`
 	StateTopic string   `yaml:"state-topic"`
 }
-
 type controllerSettings struct {
 	ids          []baos.DatapointID
 	IDStrings    []string `yaml:"ids"`
@@ -22,12 +21,16 @@ type controllerSettings struct {
 	CommandTopic string   `yaml:"command-topic"`
 }
 
+type mqttSettings struct {
+	CaCert   string `yaml:"ca-cert"`
+	Host     string `yaml:"host"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+}
+
 type config struct {
 	Device      string               `yaml:"device"`
-	MqttHost    string               `yaml:"mqtt-host"`
-	MqttUser    string               `yaml:"user"`
-	MqttPass    string               `yaml:"password"`
-	CaCert      string               `yaml:"ca-cert"`
+	Mqtt        mqttSettings         `yaml:"mqtt"`
 	Sensors     []sensorSettings     `yaml:"sensors"`
 	Controllers []controllerSettings `yaml:"controllers"`
 }

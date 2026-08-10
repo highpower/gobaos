@@ -6,3 +6,8 @@ controllers:
   - ids: [ 10-55 ]
     state-topic: switches/+
     command-topic: switches/+/set
+mqtt:
+  host: 192.168.88.245:1883
+  user: baos
+  password: test-password
+  ca-cert: /opt/local/etc/baos-mqtt/ca.crt
