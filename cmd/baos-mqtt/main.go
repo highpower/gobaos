@@ -23,25 +23,6 @@ func run(name string) error {
 		return err
 	}
 	defer func() { _ = conn.Close() }()
-	return runWith(conn, &c)
-}
-
-func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
-	defer wg.Done()
-	if err := w.Run(); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
-	}
-}
-
-func runWith(conn *ft12.Conn, c *config) error {
-	var wg sync.WaitGroup
-	defer wg.Wait()
-
-	worker := baos.NewWorker(conn)
-	defer worker.Stop()
-
-	wg.Add(1)
-	go runWorker(worker, &wg)
 
 	tc, err := newTLSConfig(c.Mqtt.CaCert)
 	if err != nil {
@@ -59,6 +40,26 @@ func runWith(conn *ft12.Conn, c *config) error {
 		Password:      c.Mqtt.Password,
 	}
 	client := mqtt.NewClient(&opts)
+	return runWith(conn, client, &c)
+}
+
+func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
+	defer wg.Done()
+	if err := w.Run(); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+	}
+}
+
+func runWith(conn *ft12.Conn, client mqtt.Client, c *config) error {
+	var wg sync.WaitGroup
+	defer wg.Wait()
+
+	worker := baos.NewWorker(conn)
+	defer worker.Stop()
+
+	wg.Add(1)
+	go runWorker(worker, &wg)
+
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
