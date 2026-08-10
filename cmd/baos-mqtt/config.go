@@ -32,10 +32,10 @@ type config struct {
 	Controllers []controllerSettings `yaml:"controllers"`
 }
 
-func newConfig(path string) (config, error) {
-	file, err := os.Open(path)
+func newConfig(name string) (config, error) {
+	file, err := os.Open(name)
 	if err != nil {
-		return config{}, err
+		return config{}, fmt.Errorf("cat not read config file %w", err)
 	}
 	defer func() { _ = file.Close() }()
 	result := config{}

@@ -239,7 +239,7 @@ func (t timeoutOption) apply(conn *Conn) {
 func NewConn(ttyName string, options ...ConnOption) (*Conn, error) {
 	f, err := os.OpenFile(ttyName, os.O_RDWR, 0)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can not read device: %w", err)
 	}
 	fd := int(f.Fd())
 	if err := flush(fd); err != nil {
