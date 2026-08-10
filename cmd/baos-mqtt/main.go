@@ -30,14 +30,15 @@ func run(name string) error {
 	}
 
 	opts := mqtt.ClientOptions{
-		Servers:       []*url.URL{{Scheme: "mqtts", Host: c.Mqtt.Host}},
-		AutoReconnect: true,
-		ClientID:      "baos-mqtt",
-		CleanSession:  true,
-		KeepAlive:     10,
-		TLSConfig:     tc,
-		Username:      c.Mqtt.User,
-		Password:      c.Mqtt.Password,
+		Servers:        []*url.URL{{Scheme: "tcps", Host: c.Mqtt.Host}},
+		AutoReconnect:  true,
+		ClientID:       "baos-mqtt",
+		CleanSession:   true,
+		ConnectTimeout: time.Second,
+		KeepAlive:      10,
+		TLSConfig:      tc,
+		Username:       c.Mqtt.User,
+		Password:       c.Mqtt.Password,
 	}
 	client := mqtt.NewClient(&opts)
 	return runWith(conn, client, &c)
