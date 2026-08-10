@@ -11,7 +11,7 @@ import (
 func loadCert(caCert string) (*x509.Certificate, error) {
 	data, err := os.ReadFile(caCert)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can not read certicicate: %w", err)
 	}
 
 	block, _ := pem.Decode(data)
