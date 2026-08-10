@@ -67,14 +67,14 @@ func runWith(conn *ft12.Conn, c *config) error {
 }
 
 func usage(writer io.Writer) {
-	_, _ = fmt.Fprintf(writer, "usage: baos-get -device <device> <id>\n")
+	_, _ = fmt.Fprintf(writer, "usage: baos-mqtt -config <config file>\n")
 	flag.CommandLine.SetOutput(writer)
 	flag.CommandLine.PrintDefaults()
 }
 
 func main() {
 	var conf string
-	flag.StringVar(&conf, "conf", "", "config file")
+	flag.StringVar(&conf, "config", "", "config file")
 
 	flag.Usage = func() { usage(os.Stdout) }
 	flag.Parse()
