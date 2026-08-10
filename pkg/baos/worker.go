@@ -17,7 +17,7 @@ type Worker struct {
 	errorOrStop chan errorOrStop
 	indications chan DatapointValueInd
 	calls       chan *call
-	handler     valueIndicationHandler
+	handler     ValueIndicationHandler
 	stopper     atomic.Value
 	goroutines  int
 }
@@ -25,8 +25,8 @@ type Worker struct {
 // ValueIndicationFunc is called when an unsolicited datapoint value indication arrives.
 type ValueIndicationFunc func(id DatapointID, data []byte) error
 
-type valueIndicationHandler interface {
-	handleValueIndication(id DatapointID, data []byte) error
+type ValueIndicationHandler interface {
+	Handle(id DatapointID, data []byte) error
 }
 
 // WorkerOption configures a Worker during construction.
@@ -296,7 +296,7 @@ func (w *Worker) handleIndication() error {
 func (w *Worker) runIndication(indications <-chan DatapointValueInd) {
 	for indication := range indications {
 		for _, value := range indication.Values {
-			if err := w.handler.handleValueIndication(value.ID, value.Data); err != nil {
+			if err := w.handler.Handle(value.ID, value.Data); err != nil {
 				w.errorOrStop <- errorOrStop{err: err}
 			}
 		}
@@ -323,7 +323,7 @@ func (c *call) waitForReady() {
 	<-c.ready
 }
 
-func (d defaultHandler) handleValueIndication(_ DatapointID, _ []byte) error {
+func (d defaultHandler) Handle(_ DatapointID, _ []byte) error {
 	return nil
 }
 
@@ -332,10 +332,10 @@ func (g goroutineCountOption) apply(w *Worker) {
 }
 
 func (o valueIndicationOption) apply(w *Worker) {
-	w.handler = valueIndicationHandler(o)
+	w.handler = ValueIndicationHandler(o)
 }
 
-func (o valueIndicationOption) handleValueIndication(id DatapointID, data []byte) error {
+func (o valueIndicationOption) Handle(id DatapointID, data []byte) error {
 	return o.f(id, data)
 }
 

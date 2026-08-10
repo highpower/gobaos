@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -25,21 +26,43 @@ func run(name string) error {
 	return runWith(conn, &c)
 }
 
+func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
+	defer wg.Done()
+	if err := w.Run(); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+	}
+}
+
 func runWith(conn *ft12.Conn, c *config) error {
+	var wg sync.WaitGroup
+	defer wg.Wait()
+
 	worker := baos.NewWorker(conn)
 	defer worker.Stop()
 
-	u := url.URL{Scheme: "mqtts", Host: c.MqttHost}
+	wg.Add(1)
+	go runWorker(worker, &wg)
+
+	tc, err := newTLSConfig(c.CaCert)
+	if err != nil {
+		return err
+	}
 
 	opts := mqtt.ClientOptions{
-		Servers:       []*url.URL{&u},
+		Servers:       []*url.URL{{Scheme: "mqtts", Host: c.MqttHost}},
 		AutoReconnect: true,
 		ClientID:      "baos-mqtt",
 		CleanSession:  true,
 		KeepAlive:     10,
+		TLSConfig:     tc,
+		Username:      c.MqttUser,
+		Password:      c.MqttPass,
 	}
-	_ = opts
-
+	client := mqtt.NewClient(&opts)
+	if token := client.Connect(); token.Wait() && token.Error() != nil {
+		return token.Error()
+	}
+	_, _ = fmt.Fprint(os.Stdout, "Connected to mqtt broker\n")
 	return nil
 }
 

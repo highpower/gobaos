@@ -25,7 +25,9 @@ type controllerSettings struct {
 type config struct {
 	Device      string               `yaml:"device"`
 	MqttHost    string               `yaml:"mqtt-host"`
-	RootCa      string               `yaml:"root-ca"`
+	MqttUser    string               `yaml:"user"`
+	MqttPass    string               `yaml:"password"`
+	CaCert      string               `yaml:"ca-cert"`
 	Sensors     []sensorSettings     `yaml:"sensors"`
 	Controllers []controllerSettings `yaml:"controllers"`
 }

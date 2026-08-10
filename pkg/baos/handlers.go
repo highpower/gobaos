@@ -176,7 +176,7 @@ func (h Handlers) RGBW(ids []DatapointID, f func(value RGBW) error) {
 	})
 }
 
-func (h Handlers) handleValueIndication(id DatapointID, data []byte) error {
+func (h Handlers) Handle(id DatapointID, data []byte) error {
 	handler, ok := h[id]
 	if ok {
 		return handler(id, data)
