@@ -13,6 +13,8 @@ import (
 
 type frame []byte
 
+type FileOpenFunc func(name string) (*os.File, error)
+
 // Conn is an FT1.2 serial connection.
 type Conn struct {
 	needReset    bool
@@ -21,7 +23,7 @@ type Conn struct {
 	incomingEven bool
 	outgoing     []frame
 	outgoingEven bool
-	openFlags    os.FileMode
+	opener       FileOpenFunc
 	pollTimeout  time.Duration
 }
 
@@ -31,7 +33,7 @@ type ConnOption interface {
 
 type timeoutOption time.Duration
 
-type openFlagsOption os.FileMode
+type fileOpenFuncOption FileOpenFunc
 
 const MaxMessageLength = 254
 
@@ -238,18 +240,40 @@ func (t timeoutOption) apply(conn *Conn) {
 	conn.pollTimeout = time.Duration(t)
 }
 
-func (o openFlagsOption) apply(conn *Conn) {
-	conn.openFlags = os.FileMode(o)
+func (f fileOpenFuncOption) apply(conn *Conn) {
+	conn.opener = FileOpenFunc(f)
 }
 
 // NewConn opens an FT1.2 connection on the named TTY device.
 func NewConn(ttyName string, options ...ConnOption) (*Conn, error) {
-	result := Conn{needReset: true, incoming: bytes.Buffer{}, incomingEven: false,
-		outgoing: nil, outgoingEven: false, pollTimeout: 100 * time.Millisecond}
+	result := Conn{needReset: true,
+		incoming:     bytes.Buffer{},
+		incomingEven: false,
+		outgoing:     nil,
+		outgoingEven: false,
+		opener:       defaultOpenFile,
+		pollTimeout:  100 * time.Millisecond}
 	for _, option := range options {
 		option.apply(&result)
 	}
-	f, err := os.OpenFile(ttyName, os.O_RDWR, result.openFlags)
+	f, err := result.opener(ttyName)
+	if err != nil {
+		return nil, err
+	}
+	result.file = f
+	return &result, nil
+}
+
+func WithTimeout(timeout time.Duration) ConnOption {
+	return timeoutOption(timeout)
+}
+
+func WithOpenFileFunc(f FileOpenFunc) ConnOption {
+	return fileOpenFuncOption(f)
+}
+
+func defaultOpenFile(name string) (*os.File, error) {
+	f, err := os.OpenFile(name, os.O_RDWR, 0o644)
 	if err != nil {
 		return nil, fmt.Errorf("can not read device: %w", err)
 	}
@@ -261,16 +285,7 @@ func NewConn(ttyName string, options ...ConnOption) (*Conn, error) {
 		_ = f.Close()
 		return nil, fmt.Errorf("set non-blocking io flag error: %w", err)
 	}
-	result.file = f
-	return &result, nil
-}
-
-func WithTimeout(timeout time.Duration) ConnOption {
-	return timeoutOption(timeout)
-}
-
-func WithOpenFlags(flags os.FileMode) ConnOption {
-	return openFlagsOption(flags)
+	return f, nil
 }
 
 func setTimeout(f *os.File, d time.Duration) error {

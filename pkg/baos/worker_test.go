@@ -15,17 +15,21 @@ func runDevice(wg *sync.WaitGroup, file *os.File) {
 	_, _ = file.Write([]byte{0x4c})
 }
 
+func openNamedPipe(name string) (*os.File, error) {
+	return os.OpenFile(name, os.O_RDWR, 0o644|os.ModeNamedPipe)
+}
+
 func TestFailingDevice(t *testing.T) {
 
 	const name = "testdata/failing"
-	file, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE, 0644|os.ModeNamedPipe)
+	file, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE, 0o644|os.ModeNamedPipe)
 	require.NoError(t, err)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 
 	go runDevice(&wg, file)
-	conn, err := ft12.NewConn(name, ft12.WithOpenFlags(os.ModeNamedPipe))
+	conn, err := ft12.NewConn(name, ft12.WithOpenFileFunc(openNamedPipe))
 	require.NoError(t, err)
 
 	worker := NewWorker(conn)
