@@ -1,4 +1,7 @@
 device: /dev/ttyAMA0
+logger:
+  output: stderr
+  level: info
 sensors:
   - ids: [ 1-7 ]
     state-topic: thermo/+

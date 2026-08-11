@@ -66,14 +66,14 @@ func (w *Worker) Run() error {
 		w.buffer = w.buffer[:0]
 		select {
 		case eos := <-w.errorOrStop:
-			return eos.err
+			return fmt.Errorf("connection error: %w", eos.err)
 		case c := <-w.calls:
 			if err := w.handleCall(c); err != nil {
-				return err
+				return fmt.Errorf("handle call error: %w", err)
 			}
 		default:
 			if err := w.handleIndication(); err != nil {
-				return err
+				return fmt.Errorf("handle indication error: %w", err)
 			}
 		}
 	}

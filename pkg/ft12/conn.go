@@ -21,6 +21,7 @@ type Conn struct {
 	incomingEven bool
 	outgoing     []frame
 	outgoingEven bool
+	openFlags    os.FileMode
 	pollTimeout  time.Duration
 }
 
@@ -29,6 +30,8 @@ type ConnOption interface {
 }
 
 type timeoutOption time.Duration
+
+type openFlagsOption os.FileMode
 
 const MaxMessageLength = 254
 
@@ -235,8 +238,17 @@ func (t timeoutOption) apply(conn *Conn) {
 	conn.pollTimeout = time.Duration(t)
 }
 
+func (o openFlagsOption) apply(conn *Conn) {
+	conn.openFlags = os.FileMode(o)
+}
+
 // NewConn opens an FT1.2 connection on the named TTY device.
 func NewConn(ttyName string, options ...ConnOption) (*Conn, error) {
+	result := Conn{needReset: true, incoming: bytes.Buffer{}, incomingEven: false,
+		outgoing: nil, outgoingEven: false, pollTimeout: 100 * time.Millisecond}
+	for _, option := range options {
+		option.apply(&result)
+	}
 	f, err := os.OpenFile(ttyName, os.O_RDWR, 0)
 	if err != nil {
 		return nil, fmt.Errorf("can not read device: %w", err)
@@ -250,16 +262,16 @@ func NewConn(ttyName string, options ...ConnOption) (*Conn, error) {
 		_ = f.Close()
 		return nil, err
 	}
-	result := Conn{needReset: true, file: f, incoming: bytes.Buffer{}, incomingEven: false,
-		outgoing: nil, outgoingEven: false, pollTimeout: 100 * time.Millisecond}
-	for _, option := range options {
-		option.apply(&result)
-	}
+	result.file = f
 	return &result, nil
 }
 
 func WithTimeout(timeout time.Duration) ConnOption {
 	return timeoutOption(timeout)
+}
+
+func WithOpenFlags(flags os.FileMode) ConnOption {
+	return openFlagsOption(flags)
 }
 
 func setTimeout(f *os.File, d time.Duration) error {

@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewConfig(t *testing.T) {
-	c, err := newConfig("testdata/config.yaml")
+	c, err := Parse("testdata/config.yaml")
 	require.NoError(t, err)
 	assert.Equal(t, c.Device, "/dev/ttyAMA0")
 	assert.Len(t, c.Sensors, 1)

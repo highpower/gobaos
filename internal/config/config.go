@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -8,6 +8,11 @@ import (
 	"strconv"
 	"strings"
 )
+
+type loggerData struct {
+	Level  string `yaml:"level"`
+	Output string `yaml:"output"`
+}
 
 type sensorSettings struct {
 	ids        []baos.DatapointID
@@ -28,35 +33,36 @@ type mqttSettings struct {
 	Password string `yaml:"password"`
 }
 
-type config struct {
+type Data struct {
 	Device      string               `yaml:"device"`
+	Logger      loggerData           `yaml:"logger"`
 	Mqtt        mqttSettings         `yaml:"mqtt"`
 	Sensors     []sensorSettings     `yaml:"sensors"`
 	Controllers []controllerSettings `yaml:"controllers"`
 }
 
-func newConfig(name string) (config, error) {
+func Parse(name string) (Data, error) {
 	file, err := os.Open(name)
 	if err != nil {
-		return config{}, fmt.Errorf("cat not read config file %w", err)
+		return Data{}, fmt.Errorf("cat not read config file %w", err)
 	}
 	defer func() { _ = file.Close() }()
-	result := config{}
+	result := Data{}
 	decoder := yaml.NewDecoder(file)
 	decoder.KnownFields(true)
 	if err = decoder.Decode(&result); err != nil {
-		return config{}, err
+		return Data{}, err
 	}
 	if err := result.parseSensorIDs(); err != nil {
-		return config{}, err
+		return Data{}, err
 	}
 	if err := result.parseControllerIDs(); err != nil {
-		return config{}, err
+		return Data{}, err
 	}
 	return result, nil
 }
 
-func (c *config) parseSensorIDs() error {
+func (c *Data) parseSensorIDs() error {
 	for _, sensor := range c.Sensors {
 		ids, err := parseIDStrings(sensor.IDStrings)
 		if err != nil {
@@ -67,7 +73,7 @@ func (c *config) parseSensorIDs() error {
 	return nil
 }
 
-func (c *config) parseControllerIDs() error {
+func (c *Data) parseControllerIDs() error {
 	for _, controller := range c.Controllers {
 		ids, err := parseIDStrings(controller.IDStrings)
 		if err != nil {
