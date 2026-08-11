@@ -249,18 +249,17 @@ func NewConn(ttyName string, options ...ConnOption) (*Conn, error) {
 	for _, option := range options {
 		option.apply(&result)
 	}
-	f, err := os.OpenFile(ttyName, os.O_RDWR, 0)
+	f, err := os.OpenFile(ttyName, os.O_RDWR, result.openFlags)
 	if err != nil {
 		return nil, fmt.Errorf("can not read device: %w", err)
 	}
-	fd := int(f.Fd())
-	if err := flush(fd); err != nil {
+	if err := flush(f); err != nil {
 		_ = f.Close()
-		return nil, err
+		return nil, fmt.Errorf("flush error: %w", err)
 	}
-	if err := syscall.SetNonblock(fd, true); err != nil {
+	if err := syscall.SetNonblock(int(f.Fd()), true); err != nil {
 		_ = f.Close()
-		return nil, err
+		return nil, fmt.Errorf("set non-blocking io flag error: %w", err)
 	}
 	result.file = f
 	return &result, nil

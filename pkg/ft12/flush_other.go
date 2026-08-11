@@ -2,6 +2,8 @@
 
 package ft12
 
-func flush(_ int) error {
+import "os"
+
+func flush(_ *os.File) error {
 	return nil
 }
