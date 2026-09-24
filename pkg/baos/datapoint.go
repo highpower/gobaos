@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"strconv"
 )
 
 // DatapointID identifies a single BAOS datapoint.
@@ -37,6 +38,10 @@ type datapointWrapper[G any] interface {
 }
 
 const datapointHeaderSize = 4
+
+func (i DatapointID) String() string {
+	return strconv.FormatUint(uint64(i), 10)
+}
 
 // Equal reports whether d and other represent the same datapoint value.
 func (d *Datapoint) Equal(other *Datapoint) bool {
@@ -107,7 +112,7 @@ func marshalDatapointsTo[G any, W datapointWrapper[G]](data []byte, datapoints [
 
 func unmarshalDatapointsFrom[G any, W datapointWrapper[G]](data []byte, n int) ([]G, error) {
 	result := make([]G, 0, n)
-	for i := 0; i < n; i++ {
+	for range n {
 		if len(data) < datapointHeaderSize {
 			return nil, fmt.Errorf("%w buffer has only %d bytes while %d needed", ErrInvalid,
 				len(data), datapointHeaderSize)

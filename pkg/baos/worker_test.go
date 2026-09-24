@@ -1,12 +1,13 @@
 package baos
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"gobaos/pkg/ft12"
 	"os"
 	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func runDevice(wg *sync.WaitGroup, file *os.File) {

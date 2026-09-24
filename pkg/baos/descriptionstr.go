@@ -177,7 +177,7 @@ func marshalStringsTo(data []byte, strings []string) error {
 
 func unmarshalStringsFrom(data []byte, n int) ([]string, error) {
 	result := make([]string, 0, n)
-	for i := 0; i < n; i++ {
+	for range n {
 		if len(data) < 2 {
 			return nil, fmt.Errorf("%w buffer has only %d bytes while 2 needed for length", ErrInvalid, len(data))
 		}

@@ -199,7 +199,7 @@ func marshalDescriptionsTo(data []byte, descriptions []DatapointDescription) err
 
 func unmarshalDescriptionsFrom(data []byte, n int) ([]DatapointDescription, error) {
 	result := make([]DatapointDescription, 0, n)
-	for i := 0; i < n; i++ {
+	for range n {
 		if len(data) < datapointDescriptionSize {
 			return nil, fmt.Errorf("%w buffer has only %d bytes while %d needed", ErrInvalid,
 				len(data), datapointDescriptionSize)

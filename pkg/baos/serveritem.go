@@ -51,7 +51,7 @@ func marshalItemsTo(data []byte, items []ServerItem) error {
 
 func unmarshalItemsFrom(data []byte, n int) ([]ServerItem, error) {
 	result := make([]ServerItem, 0, n)
-	for i := 0; i < n; i++ {
+	for range n {
 		if len(data) < serverItemHeaderSize {
 			return nil, fmt.Errorf("%w buffer has %d bytes while %d needed", ErrInvalid,
 				len(data), serverItemHeaderSize)
