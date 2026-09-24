@@ -1,6 +1,7 @@
 package baos
 
 import (
+	"context"
 	"encoding"
 	"encoding/binary"
 	"fmt"
@@ -35,6 +36,7 @@ type WorkerOption interface {
 }
 
 type call struct {
+	ctx      context.Context
 	request  encoding.BinaryMarshaler
 	response encoding.BinaryUnmarshaler
 	err      error
@@ -66,14 +68,14 @@ func (w *Worker) Run() error {
 		w.buffer = w.buffer[:0]
 		select {
 		case eos := <-w.errorOrStop:
-			return fmt.Errorf("connection error: %w", eos.err)
+			return eos.err
 		case c := <-w.calls:
 			if err := w.handleCall(c); err != nil {
-				return fmt.Errorf("handle call error: %w", err)
+				return err
 			}
 		default:
 			if err := w.handleIndication(); err != nil {
-				return fmt.Errorf("handle indication error: %w", err)
+				return err
 			}
 		}
 	}
@@ -86,22 +88,24 @@ func (w *Worker) Stop() {
 }
 
 // Get reads the current value of the given datapoint into dpt.
-func (w *Worker) Get(id DatapointID, dpt knxtypes.DPT) error {
+func (w *Worker) Get(ctx context.Context, id DatapointID, dpt knxtypes.DPT) error {
 	req := GetDatapointValueReq{StartDatapoint: id, NumberOfDatapoints: 1}
 	res := GetDatapointValueRes{}
 
-	current := w.makeCall(&req, &res)
+	current := w.makeCall(ctx, &req, &res)
 	w.calls <- current
 	current.waitForReady()
 	w.releaseCall(current)
 
 	switch {
+	case ctx.Err() != nil:
+		return fmt.Errorf("worker.get: %w", ctx.Err())
 	case current.err != nil:
-		return current.err
+		return fmt.Errorf("worker.get: %w", current.err)
 	case res.ErrorCode != 0:
-		return Error{res.ErrorCode}
+		return fmt.Errorf("worker.get: %w", Error{res.ErrorCode})
 	case len(res.Values) == 0:
-		return fmt.Errorf("%w response: 0 values for datapoint %d", ErrInvalid, id)
+		return fmt.Errorf("worker.get: %w response [0 values for datapoint %d]", ErrInvalid, id)
 	}
 	if err := dpt.UnmarshalBinary(res.Values[0].Data); err != nil {
 		return err
@@ -110,7 +114,7 @@ func (w *Worker) Get(id DatapointID, dpt knxtypes.DPT) error {
 }
 
 // Set writes dpt to the given datapoint and sends it on the bus.
-func (w *Worker) Set(id DatapointID, dpt knxtypes.DPT) error {
+func (w *Worker) Set(ctx context.Context, id DatapointID, dpt knxtypes.DPT) error {
 	data, err := dpt.MarshalBinary()
 	if err != nil {
 		return err
@@ -118,49 +122,52 @@ func (w *Worker) Set(id DatapointID, dpt knxtypes.DPT) error {
 	req := SetDatapointValueReq{Commands: []DatapointCommand{{ID: id, Command: SetAndSendOnBus, Data: data}}}
 	res := SetDatapointValueRes{ErrorCode: ErrorCode(0xff)}
 
-	current := w.makeCall(&req, &res)
+	current := w.makeCall(ctx, &req, &res)
 	w.calls <- current
 	current.waitForReady()
 	w.releaseCall(current)
 
 	switch {
+	case ctx.Err() != nil:
+		return fmt.Errorf("worker.set: %w", ctx.Err())
 	case current.err != nil:
-		return current.err
+		return fmt.Errorf("worker.set: %w", current.err)
 	case res.ErrorCode != 0:
-		return Error{res.ErrorCode}
+		return fmt.Errorf("worker.set: %w", Error{res.ErrorCode})
 	}
 	return nil
 }
 
 // Description reads datapoint description of  the given datapoint
-func (w *Worker) Description(id DatapointID) (DatapointDescription, error) {
-	result, err := w.descriptions(id, 1)
+func (w *Worker) Description(ctx context.Context, id DatapointID) (DatapointDescription, error) {
+	result, err := w.descriptions(ctx, id, 1)
 	switch {
 	case err != nil:
 		return DatapointDescription{}, err
 	case len(result) == 0:
-		return DatapointDescription{}, fmt.Errorf("%w response: 0 values for datapoint %d", ErrInvalid, id)
+		return DatapointDescription{},
+			fmt.Errorf("worker.description: %w response [no description for datapoint %d]", ErrInvalid, id)
 	}
 	return result[0], nil
 }
 
 // AllDescriptions reads descriptions for all configured datapoints.
-func (w *Worker) AllDescriptions() ([]DatapointDescription, error) {
-	item, err := w.ServerItem(ItemIDConfiguredDatapoints)
+func (w *Worker) AllDescriptions(ctx context.Context) ([]DatapointDescription, error) {
+	item, err := w.ServerItem(ctx, ItemIDConfiguredDatapoints)
 	if err != nil {
 		return nil, err
 	}
 	//TODO: add fetching functions instead of direct read
 	maxID := binary.BigEndian.Uint16(item.Data)
-	return w.descriptions(1, maxID)
+	return w.descriptions(ctx, 1, maxID)
 }
 
 // DescriptionString reads the description string of the given datapoint.
-func (w *Worker) DescriptionString(id DatapointID) (string, error) {
+func (w *Worker) DescriptionString(ctx context.Context, id DatapointID) (string, error) {
 	req := GetDescriptionStringReq{StartDatapoint: id, NumberOfStrings: 1}
 	res := GetDescriptionStringRes{}
 
-	current := w.makeCall(&req, &res)
+	current := w.makeCall(ctx, &req, &res)
 	w.calls <- current
 	current.waitForReady()
 	w.releaseCall(current)
@@ -177,11 +184,11 @@ func (w *Worker) DescriptionString(id DatapointID) (string, error) {
 }
 
 // ServerItem reads a single server item by its ID.
-func (w *Worker) ServerItem(id ItemID) (ServerItem, error) {
+func (w *Worker) ServerItem(ctx context.Context, id ItemID) (ServerItem, error) {
 	req := GetServerItemReq{StartItem: id, NumberOfItems: 1}
 	res := GetServerItemRes{}
 
-	current := w.makeCall(&req, &res)
+	current := w.makeCall(ctx, &req, &res)
 	w.calls <- current
 	current.waitForReady()
 	w.releaseCall(current)
@@ -198,11 +205,11 @@ func (w *Worker) ServerItem(id ItemID) (ServerItem, error) {
 }
 
 // SetServerItem writes data to a single server item by its ID.
-func (w *Worker) SetServerItem(id ItemID, data []byte) error {
+func (w *Worker) SetServerItem(ctx context.Context, id ItemID, data []byte) error {
 	req := SetServerItemReq{Items: []ServerItem{{ID: id, Data: data}}}
 	res := SetServerItemRes{}
 
-	current := w.makeCall(&req, &res)
+	current := w.makeCall(ctx, &req, &res)
 	w.calls <- current
 	current.waitForReady()
 	w.releaseCall(current)
@@ -216,7 +223,7 @@ func (w *Worker) SetServerItem(id ItemID, data []byte) error {
 	return nil
 }
 
-func (w *Worker) descriptions(start DatapointID, number uint16) ([]DatapointDescription, error) {
+func (w *Worker) descriptions(ctx context.Context, start DatapointID, number uint16) ([]DatapointDescription, error) {
 	result := []DatapointDescription(nil)
 	descInResponse := (ft12.MaxMessageLength - getDescriptionResHeaderSize) / datapointDescriptionSize
 	i := int(number)
@@ -224,7 +231,7 @@ func (w *Worker) descriptions(start DatapointID, number uint16) ([]DatapointDesc
 		req := GetDatapointDescriptionReq{StartDatapoint: start, NumberOfDatapoints: uint16(min(descInResponse, i))}
 		res := GetDatapointDescriptionRes{}
 
-		current := w.makeCall(&req, &res)
+		current := w.makeCall(ctx, &req, &res)
 		w.calls <- current
 		current.waitForReady()
 		w.releaseCall(current)
@@ -303,8 +310,8 @@ func (w *Worker) runIndication(indications <-chan DatapointValueInd) {
 	}
 }
 
-func (w *Worker) makeCall(req encoding.BinaryMarshaler, resp encoding.BinaryUnmarshaler) *call {
-	result := call{request: req, response: resp, ready: make(chan bool, 1)}
+func (w *Worker) makeCall(ctx context.Context, req encoding.BinaryMarshaler, resp encoding.BinaryUnmarshaler) *call {
+	result := call{ctx: ctx, request: req, response: resp, ready: make(chan bool, 1)}
 	return &result
 }
 
@@ -320,7 +327,10 @@ func (w *Worker) alreadyStopped() {
 }
 
 func (c *call) waitForReady() {
-	<-c.ready
+	select {
+	case <-c.ready:
+	case <-c.ctx.Done():
+	}
 }
 
 func (d defaultHandler) Handle(_ DatapointID, _ []byte) error {

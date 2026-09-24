@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"gobaos/pkg/baos"
@@ -42,14 +43,17 @@ func runWith(conn *ft12.Conn, id baos.DatapointID, value string) error {
 	wg.Add(1)
 	go runWorker(worker, &wg)
 
-	dpt, err := baos.CreateForID(worker, id)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	dpt, err := baos.CreateForID(ctx, worker, id)
 	if err != nil {
 		return err
 	}
 	if err := dpt.Set(value); err != nil {
 		return err
 	}
-	if err := worker.Set(id, dpt); err != nil {
+	if err := worker.Set(ctx, id, dpt); err != nil {
 		return err
 	}
 	return nil

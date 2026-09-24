@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"gobaos/pkg/baos"
@@ -37,7 +38,10 @@ func runWith(conn *ft12.Conn) error {
 	wg.Add(1)
 	go runWorker(worker, &wg)
 
-	descriptions, err := worker.AllDescriptions()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	descriptions, err := worker.AllDescriptions(ctx)
 	if err != nil {
 		return err
 	}
