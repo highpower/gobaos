@@ -2,8 +2,9 @@ package main
 
 import (
 	"gobaos/pkg/baos"
-	"gopkg.in/yaml.v3"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 type config struct {

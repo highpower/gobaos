@@ -1,10 +1,9 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
-	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"go.uber.org/zap"
 	"gobaos/internal/config"
 	"gobaos/pkg/baos"
 	"gobaos/pkg/ft12"
@@ -13,6 +12,9 @@ import (
 	"os"
 	"sync"
 	"time"
+
+	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"go.uber.org/zap"
 )
 
 func run(name string) error {
@@ -54,7 +56,7 @@ func run(name string) error {
 func runWorker(w *baos.Worker, wg *sync.WaitGroup, log *zap.SugaredLogger) {
 	defer wg.Done()
 	if err := w.Run(); err != nil {
-		log.Error("worker run error", zap.Error(err))
+		log.Errorf("main.runWorker: %s", err.Error())
 	}
 }
 
@@ -68,18 +70,21 @@ func runWith(conn *ft12.Conn, client mqtt.Client, log *zap.SugaredLogger) error 
 	wg.Add(1)
 	go runWorker(worker, &wg, log)
 
-	descriptions, err := worker.AllDescriptions()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	_, err := worker.AllDescriptions(ctx)
 	if err != nil {
-		log.Error("error while getting descriptions", zap.Error(err))
+		log.Errorf("main.runWith: descriptions error %s", err.Error())
 		return err
 	}
-	_ = descriptions
 
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
-		log.Error("broker error", zap.Error(token.Error()))
+		err := token.Error()
+		log.Errorf("main.runWith: broker error %s", err.Error())
 		return token.Error()
 	}
-	log.Infof("Connected to mqtt broker")
+	log.Infof("main.runWith: connected to mqtt")
 	return nil
 }
 

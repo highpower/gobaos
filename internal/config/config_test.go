@@ -1,11 +1,13 @@
 package config
 
 import (
+	"slices"
+
+	"gobaos/pkg/baos"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gobaos/pkg/baos"
-	"sort"
-	"testing"
 )
 
 func TestNewConfig(t *testing.T) {
@@ -56,8 +58,8 @@ func TestVisitIDStrings(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			sort.Slice(res, func(i, j int) bool { return res[i] < res[j] })
-			sort.Slice(tc.resultExpected, func(i, j int) bool { return tc.resultExpected[i] < tc.resultExpected[j] })
+			slices.Sort(res)
+			slices.Sort(tc.resultExpected)
 			assert.Equal(t, tc.resultExpected, res)
 		})
 	}
