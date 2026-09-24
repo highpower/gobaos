@@ -28,7 +28,7 @@ func (d *DPTRedGreenBlueWhite) Set(value string) error {
 		return fmt.Errorf("%w redGreenBlueWhite '%s'", ErrBadValue, value)
 	}
 	numbers := [4]uint8{0, 0, 0, 0}
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		v, err := strconv.ParseUint(parts[i], 10, 8)
 		if err != nil {
 			return err
