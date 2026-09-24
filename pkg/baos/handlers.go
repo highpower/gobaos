@@ -161,18 +161,18 @@ func (h Handlers) Enum(ids []DatapointID, f func(id DatapointID, value uint8) er
 }
 
 // RGB registers a handler for RGB color DPT indications.
-func (h Handlers) RGB(ids []DatapointID, f func(value RGB) error) {
+func (h Handlers) RGB(ids []DatapointID, f func(id DatapointID, value RGB) error) {
 	register[knxtypes.DPTRedGreenBlue](h, ids, func(id DatapointID, dpt knxtypes.DPTRedGreenBlue) error {
 		rgb := RGB{Red: dpt.Red, Green: dpt.Green, Blue: dpt.Blue}
-		return f(rgb)
+		return f(id, rgb)
 	})
 }
 
 // RGBW registers a handler for RGBW color DPT indications.
-func (h Handlers) RGBW(ids []DatapointID, f func(value RGBW) error) {
+func (h Handlers) RGBW(ids []DatapointID, f func(id DatapointID, value RGBW) error) {
 	register[knxtypes.DPTRedGreenBlueWhite](h, ids, func(id DatapointID, dpt knxtypes.DPTRedGreenBlueWhite) error {
 		rgbw := RGBW{Red: dpt.Red, Green: dpt.Green, Blue: dpt.Blue, White: dpt.White, Flags: dpt.Flags}
-		return f(rgbw)
+		return f(id, rgbw)
 	})
 }
 
