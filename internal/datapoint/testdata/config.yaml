@@ -2,13 +2,13 @@ device: /dev/ttyAMA0
 logger:
   level: info
   output: stderr
-sensors:
+read-only:
   - ids: [ 1-7 ]
-    state-topic: thermo/+
-controllers:
+    state-topic: datapoint/+
+updatable:
   - ids: [ 10-55 ]
-    state-topic: switches/+
-    command-topic: switches/+/set
+    state-topic: datapoint/+
+    update-topic: datapoint/+/set
 mqtt:
   host: 192.168.88.245:1883
   user: baos

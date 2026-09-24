@@ -1,4 +1,4 @@
-package config
+package datapoint
 
 import (
 	"errors"
@@ -23,82 +23,82 @@ type mqttSettings struct {
 	Password string `yaml:"password"`
 }
 
-type sensorSettings struct {
+type readOnlySettings struct {
 	ids        []baos.DatapointID
 	IDStrings  []string `yaml:"ids"`
 	StateTopic string   `yaml:"state-topic"`
 }
-type controllerSettings struct {
-	ids          []baos.DatapointID
-	IDStrings    []string `yaml:"ids"`
-	StateTopic   string   `yaml:"state-topic"`
-	CommandTopic string   `yaml:"command-topic"`
+type updatableSettings struct {
+	ids         []baos.DatapointID
+	IDStrings   []string `yaml:"ids"`
+	StateTopic  string   `yaml:"state-topic"`
+	UpdateTopic string   `yaml:"update-topic"`
 }
 
-type Data struct {
-	Device      string               `yaml:"device"`
-	Logger      loggerData           `yaml:"logger"`
-	Mqtt        mqttSettings         `yaml:"mqtt"`
-	Sensors     []sensorSettings     `yaml:"sensors"`
-	Controllers []controllerSettings `yaml:"controllers"`
+type Config struct {
+	Device    string              `yaml:"device"`
+	Logger    loggerData          `yaml:"logger"`
+	ReadOnly  []readOnlySettings  `yaml:"read-only"`
+	Updatable []updatableSettings `yaml:"updatable"`
+	Mqtt      mqttSettings        `yaml:"mqtt"`
 }
 
 func (l *loggerData) Valid() error {
 	switch {
 	case l.Level == "":
-		return fmt.Errorf("%w: empty log level", ErrInvalid)
+		return fmt.Errorf("%w: empty log level", ErrBadConfig)
 	case l.Output == "":
-		return fmt.Errorf("%w: empty log output", ErrInvalid)
+		return fmt.Errorf("%w: empty log output", ErrBadConfig)
 	}
 	return nil
 }
 
 func (s *mqttSettings) Valid() error {
 	if s.Host == "" {
-		return fmt.Errorf("%w: empty mqtt host", ErrInvalid)
+		return fmt.Errorf("%w: empty mqtt host", ErrBadConfig)
 	}
 	if (s.User != "" && s.Password == "") || (s.User == "" && s.Password != "") {
-		return fmt.Errorf("%w: invalid mqtt user/password", ErrInvalid)
+		return fmt.Errorf("%w: invalid mqtt user/password", ErrBadConfig)
 	}
 	return nil
 }
 
-func (s *sensorSettings) Valid() error {
+func (s *readOnlySettings) Valid() error {
 	if len(s.ids) == 0 {
-		return fmt.Errorf("%w: no sensor id found", ErrInvalid)
+		return fmt.Errorf("%w: no read-only id found", ErrBadConfig)
 	}
 	if s.StateTopic == "" {
-		return fmt.Errorf("%w: empty state topic", ErrInvalid)
+		return fmt.Errorf("%w: empty state topic", ErrBadConfig)
 	}
 	return nil
 }
 
-func (s *controllerSettings) Valid() error {
+func (s *updatableSettings) Valid() error {
 	if len(s.ids) == 0 {
-		return fmt.Errorf("%w: no controller id found", ErrInvalid)
+		return fmt.Errorf("%w: no updatable id found", ErrBadConfig)
 	}
 	switch {
 	case s.StateTopic == "":
-		return fmt.Errorf("%w: empty state topic", ErrInvalid)
-	case s.CommandTopic == "":
-		return fmt.Errorf("%w: empty command topic", ErrInvalid)
+		return fmt.Errorf("%w: empty state topic", ErrBadConfig)
+	case s.UpdateTopic == "":
+		return fmt.Errorf("%w: empty update topic", ErrBadConfig)
 	}
 	return nil
 }
 
-func (d *Data) Valid() error {
+func (d *Config) Valid() error {
 	if d.Device == "" {
-		return fmt.Errorf("%w: missing device", ErrInvalid)
+		return fmt.Errorf("%w: missing device", ErrBadConfig)
 	}
 	if err := errors.Join(d.Logger.Valid(), d.Mqtt.Valid()); err != nil {
 		return err
 	}
-	for _, s := range d.Sensors {
+	for _, s := range d.ReadOnly {
 		if err := s.Valid(); err != nil {
 			return err
 		}
 	}
-	for _, c := range d.Controllers {
+	for _, c := range d.Updatable {
 		if err := c.Valid(); err != nil {
 			return err
 		}
@@ -106,48 +106,48 @@ func (d *Data) Valid() error {
 	return nil
 }
 
-func Parse(name string) (Data, error) {
+func NewConfig(name string) (Config, error) {
 	file, err := os.Open(name)
 	if err != nil {
-		return Data{}, fmt.Errorf("cat not read config file %w", err)
+		return Config{}, fmt.Errorf("newConfig: %w", err)
 	}
 	defer func() { _ = file.Close() }()
-	result := Data{}
+	result := Config{}
 	decoder := yaml.NewDecoder(file)
 	decoder.KnownFields(true)
 	if err := decoder.Decode(&result); err != nil {
-		return Data{}, err
+		return Config{}, err
 	}
 	if err := result.parseSensorIDs(); err != nil {
-		return Data{}, err
+		return Config{}, err
 	}
 	if err := result.parseControllerIDs(); err != nil {
-		return Data{}, err
+		return Config{}, err
 	}
 	if err := result.Valid(); err != nil {
-		return Data{}, err
+		return Config{}, err
 	}
 	return result, nil
 }
 
-func (d *Data) parseSensorIDs() error {
-	for i := range d.Sensors {
-		ids, err := parseIDStrings(d.Sensors[i].IDStrings)
+func (d *Config) parseSensorIDs() error {
+	for i := range d.ReadOnly {
+		ids, err := parseIDStrings(d.ReadOnly[i].IDStrings)
 		if err != nil {
 			return err
 		}
-		d.Sensors[i].ids = ids
+		d.ReadOnly[i].ids = ids
 	}
 	return nil
 }
 
-func (d *Data) parseControllerIDs() error {
-	for i := range d.Controllers {
-		ids, err := parseIDStrings(d.Controllers[i].IDStrings)
+func (d *Config) parseControllerIDs() error {
+	for i := range d.Updatable {
+		ids, err := parseIDStrings(d.Updatable[i].IDStrings)
 		if err != nil {
 			return err
 		}
-		d.Controllers[i].ids = ids
+		d.Updatable[i].ids = ids
 	}
 	return nil
 }
@@ -178,7 +178,7 @@ func parseDatapointID(str string) (baos.DatapointID, error) {
 	case err != nil:
 		return 0, err
 	case val == 0:
-		return 0, fmt.Errorf("%w: datapoint id == 0", ErrInvalid)
+		return 0, fmt.Errorf("%w: datapoint id == 0", ErrBadConfig)
 	}
 	return baos.DatapointID(val), nil
 }
@@ -186,7 +186,7 @@ func parseDatapointID(str string) (baos.DatapointID, error) {
 func parseDatapointIDRange(str string) ([]baos.DatapointID, error) {
 	parts := strings.Split(str, "-")
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid id range: %s", str)
+		return nil, fmt.Errorf("%w: invalid id range %s", ErrBadConfig, str)
 	}
 	end, err := parseDatapointID(strings.TrimSpace(parts[1]))
 	if err != nil {
@@ -196,7 +196,10 @@ func parseDatapointIDRange(str string) ([]baos.DatapointID, error) {
 	if err != nil {
 		return nil, err
 	}
-	result := make([]baos.DatapointID, 0, end-start)
+	if start > end {
+		return nil, fmt.Errorf("%w: invalid id range %s", ErrBadConfig, str)
+	}
+	result := make([]baos.DatapointID, 0, end-start+1)
 	for i := start; i <= end; i++ {
 		result = append(result, i)
 	}

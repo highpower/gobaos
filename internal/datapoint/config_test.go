@@ -1,4 +1,4 @@
-package config
+package datapoint
 
 import (
 	"slices"
@@ -11,11 +11,11 @@ import (
 )
 
 func TestNewConfig(t *testing.T) {
-	c, err := Parse("testdata/config.yaml")
+	c, err := NewConfig("testdata/config.yaml")
 	require.NoError(t, err)
 	assert.Equal(t, c.Device, "/dev/ttyAMA0")
-	assert.Len(t, c.Sensors, 1)
-	assert.Len(t, c.Controllers, 1)
+	assert.Len(t, c.ReadOnly, 1)
+	assert.Len(t, c.Updatable, 1)
 }
 
 func TestVisitIDStrings(t *testing.T) {
