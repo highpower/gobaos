@@ -43,18 +43,18 @@ func TestDPTFloatBadUnmarshal(t *testing.T) {
 
 func TestDPTFloatSet(t *testing.T) {
 	type testCase struct {
-		name     string
-		input    string
-		expected DPTFloat
-		wantErr  bool
+		name          string
+		input         string
+		expected      DPTFloat
+		errorExpected bool
 	}
 
 	testCases := []testCase{
 		{name: "Zero", input: "0", expected: DPTFloat{Value: 0}},
 		{name: "Positive", input: "22.0", expected: DPTFloat{Value: 22.0}},
 		{name: "Negative", input: "-3.5", expected: DPTFloat{Value: -3.5}},
-		{name: "TooLarge", input: "2.25e18", wantErr: true},
-		{name: "Bad", input: "abc", wantErr: true},
+		{name: "TooLarge", input: "2.25e18", errorExpected: true},
+		{name: "Bad", input: "abc", errorExpected: true},
 	}
 
 	for _, tc := range testCases {
@@ -62,7 +62,7 @@ func TestDPTFloatSet(t *testing.T) {
 			t.Parallel()
 			dpt := DPTFloat{}
 			err := dpt.Set(tc.input)
-			if tc.wantErr {
+			if tc.errorExpected {
 				assert.Error(t, err)
 				return
 			}

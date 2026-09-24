@@ -74,15 +74,17 @@ func (f *DPTFloat) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-func floatExpansion(number float64) (int, int, bool) {
-	negative := false
-	mantissa := int(number * 100)
+func floatExpansion(number float64) (mantissa, exp int, negative bool) {
+	if float64(math.MaxInt)/100 < number {
+		return math.MaxInt, 0, false
+	}
+	mantissa = int(number * 100)
 	if mantissa < 0 {
 		mantissa = -mantissa
 		negative = true
 	}
-	exp := 0
-	for mantissa > 2047 && exp < 7 {
+	exp = 0
+	for mantissa > 2047 && exp < 15 {
 		mantissa >>= 1
 		exp++
 	}
