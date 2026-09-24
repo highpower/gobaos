@@ -211,3 +211,11 @@ func NewDPT(code TypeCode) (DPT, error) {
 	}
 	return nil, fmt.Errorf("%w: %d", ErrUnknownType, code)
 }
+
+func MustNewDPT(code TypeCode) DPT {
+	result, err := NewDPT(code)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
