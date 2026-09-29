@@ -1,4 +1,4 @@
-package datapoint
+package pattern
 
 import (
 	"bytes"
@@ -6,12 +6,12 @@ import (
 	"strings"
 )
 
-type pattern struct {
+type Parsed struct {
 	index int
 	parts []string
 }
 
-func (p *pattern) apply(str string) string {
+func (p *Parsed) Apply(str string) string {
 	buffer := bytes.Buffer{}
 	for i, part := range p.parts {
 		if i == p.index {
@@ -26,9 +26,9 @@ func (p *pattern) apply(str string) string {
 	return buffer.String()
 }
 
-func parsePattern(str string) (pattern, error) {
+func Parse(str string) (Parsed, error) {
 	if str == "" {
-		return pattern{}, fmt.Errorf("%w: %s", ErrBadPattern, str)
+		return Parsed{}, fmt.Errorf("%w: %s", ErrInvalid, str)
 	}
 	index := -1
 	parts := strings.Split(str, "/")
@@ -38,12 +38,12 @@ func parsePattern(str string) (pattern, error) {
 			index = i
 			continue
 		case part == "+":
-			return pattern{}, fmt.Errorf("%w: %s contains more than 1 '+' token", ErrBadPattern, str)
+			return Parsed{}, fmt.Errorf("%w: %s contains more than 1 '+' token", ErrInvalid, str)
 		}
 	}
 	if index == -1 {
-		return pattern{}, fmt.Errorf("%w: '%s' contains no wildcard", ErrBadPattern, str)
+		return Parsed{}, fmt.Errorf("%w: '%s' contains no wildcard", ErrInvalid, str)
 	}
-	result := pattern{index: index, parts: parts}
+	result := Parsed{index: index, parts: parts}
 	return result, nil
 }

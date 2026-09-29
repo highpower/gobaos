@@ -1,0 +1,21 @@
+logger:
+  level: info
+  output: stderr
+mqtt:
+  host: 127.0.0.1:1883
+  user: thermo-watchdog
+  password: test-password
+  ca-cert: /opt/local/etc/mosquitto/certs/cacert.pem
+datapoints:
+  pattern: datapoints/+
+  updatable-pattern: datapoints/+/set
+  every: 2m
+  id-map:
+    - read-only: 1
+      updatable: 8
+    - read-only: 2
+      updatable: 9
+    - read-only: 3
+      updatable: 10
+    - read-only: 4
+      updatable: 11
