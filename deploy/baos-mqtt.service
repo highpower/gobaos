@@ -1,0 +1,11 @@
+[Unit]
+Description=BAOS events listener
+After=network.target
+Requisite=mosquitto.service
+
+[Service]
+Type=simple
+ExecStart=/opt/local/bin/baos-mqtt -config /opt/local/etc/baos-mqtt.yaml
+
+[Install]
+WantedBy=multi-user.target
