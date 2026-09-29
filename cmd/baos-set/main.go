@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"gobaos/pkg/baos"
@@ -9,8 +10,9 @@ import (
 	"io"
 	"os"
 	"strconv"
-	"sync"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 )
 
 func run(device string, args []string) error {
@@ -26,22 +28,18 @@ func run(device string, args []string) error {
 	return runWith(conn, baos.DatapointID(id), args[1])
 }
 
-func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
-	defer wg.Done()
-	if err := w.Run(); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+func runWith(conn *ft12.Conn, id baos.DatapointID, value string) error {
+	group := errgroup.Group{}
+	if err := runWithGroup(&group, conn, id, value); err != nil {
+		return errors.Join(fmt.Errorf("runWithGroup: %w", err), group.Wait())
 	}
+	return group.Wait()
 }
 
-func runWith(conn *ft12.Conn, id baos.DatapointID, value string) error {
-	var wg sync.WaitGroup
-	defer wg.Wait()
-
+func runWithGroup(g *errgroup.Group, conn *ft12.Conn, id baos.DatapointID, value string) error {
 	worker := baos.NewWorker(conn)
 	defer worker.Stop()
-
-	wg.Add(1)
-	go runWorker(worker, &wg)
+	g.Go(worker.Run)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

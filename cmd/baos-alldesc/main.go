@@ -2,14 +2,16 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"gobaos/pkg/baos"
 	"gobaos/pkg/ft12"
 	"io"
 	"os"
-	"sync"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 )
 
 func run(device string) error {
@@ -21,22 +23,18 @@ func run(device string) error {
 	return runWith(conn)
 }
 
-func runWorker(w *baos.Worker, wg *sync.WaitGroup) {
-	defer wg.Done()
-	if err := w.Run(); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+func runWith(conn *ft12.Conn) error {
+	group := errgroup.Group{}
+	if err := runWithGroup(&group, conn); err != nil {
+		return errors.Join(fmt.Errorf("runWithGroup: %w", err), group.Wait())
 	}
+	return group.Wait()
 }
 
-func runWith(conn *ft12.Conn) error {
-	var wg sync.WaitGroup
-	defer wg.Wait()
-
+func runWithGroup(g *errgroup.Group, conn *ft12.Conn) error {
 	worker := baos.NewWorker(conn)
 	defer worker.Stop()
-
-	wg.Add(1)
-	go runWorker(worker, &wg)
+	g.Go(worker.Run)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

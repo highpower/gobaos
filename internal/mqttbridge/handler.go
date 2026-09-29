@@ -93,7 +93,7 @@ func (h *Handler) OnIndication(id baos.DatapointID, data []byte) error {
 		value := dpt.Get()
 		h.client.Publish(item.topic, 0, false, value)
 		h.log.Infof("handler.onIndication: message with value '%s' of dpt %d sent to '%s'",
-			id, value, item.topic)
+			value, id, item.topic)
 	}
 	return nil
 }
