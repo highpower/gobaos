@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"gobaos/internal/config"
 	"gobaos/internal/mqttbridge"
@@ -36,21 +35,14 @@ func run(c *config.Data) error {
 }
 
 func runWith(conn *ft12.Conn, c *config.Data, log *zap.SugaredLogger) error {
-	group := errgroup.Group{}
-	if err := runWithGroup(&group, conn, c, log); err != nil {
-		return errors.Join(fmt.Errorf("runWith: %w", err), group.Wait())
-	}
-	return group.Wait()
-}
-
-func runWithGroup(g *errgroup.Group, conn *ft12.Conn, c *config.Data, log *zap.SugaredLogger) error {
 	atomicHandler := atomic.Value{}
 	worker := baos.NewWorker(conn, baos.WithGoroutineCount(c.Baos.IndicationHandlers),
 		baos.WithHandler(func(id baos.DatapointID, data []byte) error {
 			return onIndication(atomicHandler, id, data)
 		}))
 	defer worker.Stop()
-	g.Go(worker.Run)
+	group := errgroup.Group{}
+	group.Go(worker.Run)
 
 	handler, err := mqttbridge.NewHandler(worker, c, mqttbridge.WithLogger(log))
 	if err != nil {
@@ -58,5 +50,5 @@ func runWithGroup(g *errgroup.Group, conn *ft12.Conn, c *config.Data, log *zap.S
 	}
 	atomicHandler.Store(handler)
 	log.Infof("main.run: baos-mqtt started with %s", c.String())
-	return nil
+	return group.Wait()
 }
