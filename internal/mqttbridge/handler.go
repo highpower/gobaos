@@ -68,7 +68,8 @@ func (h *Handler) onMessage(_ mqtt.Client, message mqtt.Message) {
 			h.log.Errorf("bridge.onMessage: can not create dpt[%s]", err.Error())
 			return
 		}
-		if err := dpt.Set(string(message.Payload())); err != nil {
+		value := string(message.Payload())
+		if err := dpt.Set(value); err != nil {
 			h.log.Errorf("bridge.onMessage: can not parse message[%s]", err.Error())
 			return
 		}
@@ -76,6 +77,7 @@ func (h *Handler) onMessage(_ mqtt.Client, message mqtt.Message) {
 		if err := h.worker.Set(ctx, item.id, dpt); err != nil {
 			h.log.Errorf("bridge.onMessage: can not set dpt value[%s]", err.Error())
 		}
+		h.log.Infof("handler.onMessage: dpt with id %d set to '%s'", item.id, value)
 	}
 }
 
@@ -90,6 +92,8 @@ func (h *Handler) OnIndication(id baos.DatapointID, data []byte) error {
 		}
 		value := dpt.Get()
 		h.client.Publish(item.topic, 0, false, value)
+		h.log.Infof("handler.onIndication: message with value '%s' of dpt %d sent to '%s'",
+			id, value, item.topic)
 	}
 	return nil
 }
