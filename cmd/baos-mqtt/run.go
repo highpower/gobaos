@@ -19,7 +19,7 @@ func onIndication(pointer atomic.Value, id baos.DatapointID, data []byte) error 
 }
 
 func run(c *config.Data) error {
-	logger, err := newLogger(c)
+	log, err := newLogger(c)
 	if err != nil {
 		return fmt.Errorf("main.run: cannot create logger[%w]", err)
 	}
@@ -27,6 +27,7 @@ func run(c *config.Data) error {
 	if err != nil {
 		return fmt.Errorf("main.run: cannot connect to baos device[%w]", err)
 	}
+	log.Debugf("main.run: ft12 connection created")
 	defer func() { _ = conn.Close() }()
 	value := atomic.Value{}
 	worker := baos.NewWorker(conn,
@@ -34,11 +35,13 @@ func run(c *config.Data) error {
 		baos.WithHandler(func(id baos.DatapointID, data []byte) error {
 			return onIndication(value, id, data)
 		}))
-	handler, err := mqttbridge.NewHandler(worker, c, mqttbridge.WithLogger(logger))
+	log.Debugf("main.run: worker created")
+	handler, err := mqttbridge.NewHandler(worker, c, mqttbridge.WithLogger(log))
 	if err != nil {
 		return fmt.Errorf("main.run: cannot create handler[%w]", err)
 	}
+	log.Debugf("main.run: handler created")
 	value.Store(handler)
-	logger.Infof("main.run: baos-mqtt started with %s", c.String())
+	log.Infof("main.run: baos-mqtt started with %s", c.String())
 	return worker.Run()
 }
