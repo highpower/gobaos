@@ -1,12 +1,16 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"gobaos/internal/config"
 	"gobaos/internal/mqttbridge"
 	"gobaos/pkg/baos"
 	"gobaos/pkg/ft12"
+	"os"
+	"os/signal"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"go.uber.org/zap"
@@ -40,15 +44,24 @@ func runWith(conn *ft12.Conn, c *config.Data, log *zap.SugaredLogger) error {
 		baos.WithHandler(func(id baos.DatapointID, data []byte) error {
 			return onIndication(atomicHandler, id, data)
 		}))
-	defer worker.Stop()
+
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+	go stopWorker(worker, signals)
+
 	group := errgroup.Group{}
 	group.Go(worker.Run)
 
 	handler, err := mqttbridge.NewHandler(worker, c, mqttbridge.WithLogger(log))
 	if err != nil {
-		return fmt.Errorf("main.run: cannot create handler[%w]", err)
+		return errors.Join(fmt.Errorf("main.run: cannot create handler[%w]", err), group.Wait())
 	}
 	atomicHandler.Store(handler)
 	log.Infof("main.run: baos-mqtt started with %s", c.String())
 	return group.Wait()
+}
+
+func stopWorker(worker *baos.Worker, signals <-chan os.Signal) {
+	<-signals
+	worker.Stop()
 }
