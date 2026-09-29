@@ -49,36 +49,38 @@ type updatableItem struct {
 	code knxtypes.TypeCode
 }
 
-func (b *Handler) onConnect(client mqtt.Client) {
-	topics := make(map[string]byte, len(b.updatable))
-	for topic := range b.updatable {
+func (h *Handler) onConnect(client mqtt.Client) {
+	h.log.Debugf("handler.onConnect: entering")
+	defer h.log.Debugf("handler.onConnect: exiting")
+	topics := make(map[string]byte, len(h.updatable))
+	for topic := range h.updatable {
 		topics[topic] = 0
 	}
-	if token := client.SubscribeMultiple(topics, b.onMessage); token.Wait() && token.Error() != nil {
-		b.log.Errorf("bridge.onConnect: failed to subscribe to topics: %s", token.Error().Error())
+	if token := client.SubscribeMultiple(topics, h.onMessage); token.Wait() && token.Error() != nil {
+		h.log.Errorf("bridge.onConnect: failed to subscribe to topics: %s", token.Error().Error())
 	}
 }
 
-func (b *Handler) onMessage(_ mqtt.Client, message mqtt.Message) {
-	if item, ok := b.updatable[message.Topic()]; ok {
+func (h *Handler) onMessage(_ mqtt.Client, message mqtt.Message) {
+	if item, ok := h.updatable[message.Topic()]; ok {
 		dpt, err := knxtypes.NewDPT(item.code)
 		if err != nil {
-			b.log.Errorf("bridge.onMessage: can not create dpt[%s]", err.Error())
+			h.log.Errorf("bridge.onMessage: can not create dpt[%s]", err.Error())
 			return
 		}
 		if err := dpt.Set(string(message.Payload())); err != nil {
-			b.log.Errorf("bridge.onMessage: can not parse message[%s]", err.Error())
+			h.log.Errorf("bridge.onMessage: can not parse message[%s]", err.Error())
 			return
 		}
 		ctx := context.Background()
-		if err := b.worker.Set(ctx, item.id, dpt); err != nil {
-			b.log.Errorf("bridge.onMessage: can not set dpt value[%s]", err.Error())
+		if err := h.worker.Set(ctx, item.id, dpt); err != nil {
+			h.log.Errorf("bridge.onMessage: can not set dpt value[%s]", err.Error())
 		}
 	}
 }
 
-func (b *Handler) OnIndication(id baos.DatapointID, data []byte) error {
-	if item, ok := b.readOnly[id]; ok {
+func (h *Handler) OnIndication(id baos.DatapointID, data []byte) error {
+	if item, ok := h.readOnly[id]; ok {
 		dpt, err := knxtypes.NewDPT(item.code)
 		if err != nil {
 			return fmt.Errorf("bridge.onIndication: can not create dpt[%w]", err)
@@ -87,7 +89,7 @@ func (b *Handler) OnIndication(id baos.DatapointID, data []byte) error {
 			return fmt.Errorf("bridge.onIndication: can not unmarshal data[%w]", err)
 		}
 		value := dpt.Get()
-		b.client.Publish(item.topic, 0, false, value)
+		h.client.Publish(item.topic, 0, false, value)
 	}
 	return nil
 }
@@ -122,7 +124,9 @@ func NewHandler(worker *baos.Worker, s Settings, opts ...BridgeOption) (*Handler
 	return &result, nil
 }
 
-func (b *Handler) setupDescriptions(s DatapointsSettings, desc []baos.DatapointDescription) error {
+func (h *Handler) setupDescriptions(s DatapointsSettings, desc []baos.DatapointDescription) error {
+	h.log.Debugf("setupDescriptions: entering")
+	defer h.log.Debugf("setupDescriptions: exiting")
 	p, err := pattern.Parse(s.Pattern())
 	if err != nil {
 		return fmt.Errorf("can not parse pattern: %w", err)
@@ -134,10 +138,10 @@ func (b *Handler) setupDescriptions(s DatapointsSettings, desc []baos.DatapointD
 	for _, desc := range desc {
 		switch {
 		case s.ReadOnlyContains(desc.ID):
-			b.readOnly[desc.ID] = readOnlyItem{topic: p.Apply(strconv.Itoa(int(desc.ID))), code: desc.Code}
+			h.readOnly[desc.ID] = readOnlyItem{topic: p.Apply(strconv.Itoa(int(desc.ID))), code: desc.Code}
 		case s.UpdatableContains(desc.ID):
 			topic := up.Apply(strconv.Itoa(int(desc.ID)))
-			b.updatable[topic] = updatableItem{id: desc.ID, code: desc.Code}
+			h.updatable[topic] = updatableItem{id: desc.ID, code: desc.Code}
 		}
 	}
 	return nil
