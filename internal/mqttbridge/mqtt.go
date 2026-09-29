@@ -1,17 +1,5 @@
 package mqttbridge
 
-import (
-	"crypto/tls"
-	"crypto/x509"
-	"encoding/pem"
-	"fmt"
-	"net/url"
-	"os"
-	"time"
-
-	mqtt "github.com/eclipse/paho.mqtt.golang"
-)
-
 type MqttSettings interface {
 	Host() string
 	User() string
@@ -19,6 +7,7 @@ type MqttSettings interface {
 	CaCert() string
 }
 
+/*
 func loadCert(caCert string) (*x509.Certificate, error) {
 	data, err := os.ReadFile(caCert)
 	if err != nil {
@@ -63,7 +52,7 @@ func plainClientOptions(s MqttSettings, ch mqtt.OnConnectHandler) (mqtt.ClientOp
 	}, nil
 }
 
-func secureClientOptions(s MqttSettings, ch mqtt.OnConnectHandler) (mqtt.ClientOptions, error) {
+func secureClientOptions(s MqttSettings, handler mqtt.OnConnectHandler) (mqtt.ClientOptions, error) {
 	tc, err := newTLSConfig(s.CaCert())
 	if err != nil {
 		return mqtt.ClientOptions{}, fmt.Errorf("can not create tls config: %w", err)
@@ -71,7 +60,7 @@ func secureClientOptions(s MqttSettings, ch mqtt.OnConnectHandler) (mqtt.ClientO
 	return mqtt.ClientOptions{
 		Servers:        []*url.URL{{Scheme: "tcps", Host: s.Host()}},
 		AutoReconnect:  true,
-		OnConnect:      ch,
+		OnConnect:      handler,
 		ClientID:       "thermo-watchdog",
 		CleanSession:   true,
 		PingTimeout:    10 * time.Second,
@@ -83,16 +72,15 @@ func secureClientOptions(s MqttSettings, ch mqtt.OnConnectHandler) (mqtt.ClientO
 	}, nil
 }
 
-func newClientOptions(s MqttSettings, ch mqtt.OnConnectHandler) (mqtt.ClientOptions, error) {
+func newClientOptions(s MqttSettings, handler mqtt.OnConnectHandler) (mqtt.ClientOptions, error) {
 	if s.CaCert() == "" {
-		return plainClientOptions(s, ch)
+		return plainClientOptions(s, handler)
 	}
-	return secureClientOptions(s, ch)
+	return secureClientOptions(s, handler)
 }
 
-func connect(s MqttSettings, ch mqtt.OnConnectHandler) (mqtt.Client, error) {
-	// mqtt.DEBUG = log.New(os.Stdout, "", 0)
-	opts, err := newClientOptions(s, ch)
+func connect(s MqttSettings, handler mqtt.OnConnectHandler) (mqtt.Client, error) {
+	opts, err := newClientOptions(s, handler)
 	if err != nil {
 		return nil, fmt.Errorf("mqtt.connect: %w", err)
 	}
@@ -102,3 +90,5 @@ func connect(s MqttSettings, ch mqtt.OnConnectHandler) (mqtt.Client, error) {
 	}
 	return client, nil
 }
+
+*/

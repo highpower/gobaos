@@ -2,44 +2,72 @@ package config
 
 import (
 	"fmt"
-	"thermo-watchdog/internal/pattern"
-	"time"
+	"gobaos/internal/pattern"
+	"strconv"
+	"strings"
 )
 
-type idMapData struct {
-	ReadOnly  int `yaml:"read-only"`
-	Updatable int `yaml:"updatable"`
+type idData struct {
+	id  int
+	pat pattern.Parsed
 }
 
-type datapointsData struct {
-	Pattern          string        `yaml:"pattern"`
-	UpdatablePattern string        `yaml:"updatable-pattern"`
-	Every            time.Duration `yaml:"every"`
-	IDMap            []idMapData   `yaml:"id-map"`
+type datapointData struct {
+	IDs     string `yaml:"ids"`
+	Pattern string `yaml:"pattern"`
 }
 
-func (s *datapointsData) valid() error {
-	if _, err := pattern.Parse(s.Pattern); err != nil {
-		return fmt.Errorf("invalid pattern: %w", err)
+func (d *datapointData) valid() error {
+	if _, err := parseIDs(d.IDs); err != nil {
+		return fmt.Errorf("invalid ids: %w", err)
 	}
-	if _, err := pattern.Parse(s.UpdatablePattern); err != nil {
-		return fmt.Errorf("invalid updatable pattern: %w", err)
-	}
-	if s.Every == 0 {
-		return fmt.Errorf("positive value for every is required")
-	}
-	all := make(map[int]bool)
-	for _, m := range s.IDMap {
-		if m.ReadOnly == 0 || m.Updatable == 0 {
-			return fmt.Errorf("invalid id mapping: %d, %d", m.ReadOnly, m.Updatable)
-		}
-		if _, ok := all[m.ReadOnly]; ok {
-			return fmt.Errorf("duplicate read-only id: %d", m.ReadOnly)
-		}
-		if _, ok := all[m.Updatable]; ok {
-			return fmt.Errorf("duplicate updatable id: %d", m.Updatable)
-		}
-		all[m.ReadOnly], all[m.Updatable] = true, true
+	if _, err := pattern.Parse(d.Pattern); err != nil {
+		return fmt.Errorf("invalid read-only pattern: %w", err)
 	}
 	return nil
+}
+
+func parseIDs(s string) ([]int, error) {
+	result := make([]int, 0)
+	parts := strings.SplitSeq(s, ",")
+	for p := range parts {
+		p = strings.TrimSpace(p)
+		if strings.ContainsRune(p, '-') {
+			ids, err := parseIDRange(p)
+			if err != nil {
+				return nil, fmt.Errorf("invalid ids: %w", err)
+			}
+			result = append(result, ids...)
+			continue
+		}
+		value, err := strconv.ParseInt(p, 10, 16)
+		if err != nil {
+			return nil, fmt.Errorf("invalid ids: %w", err)
+		}
+		result = append(result, int(value))
+	}
+	return result, nil
+}
+
+func parseIDRange(s string) ([]int, error) {
+	result := make([]int, 0)
+	parts := strings.Split(s, "-")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid id range: '%s'", s)
+	}
+	left, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return nil, fmt.Errorf("invalid id range: %w", err)
+	}
+	right, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return nil, fmt.Errorf("invalid id range: %w", err)
+	}
+	if left > right {
+		return nil, fmt.Errorf("invalid id range: %d > %d", left, right)
+	}
+	for i := left; i <= right; i++ {
+		result = append(result, i)
+	}
+	return result, nil
 }

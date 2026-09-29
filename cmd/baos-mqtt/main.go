@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"gobaos/internal/config"
 	"io"
 	"os"
-	"thermo-watchdog/internal/config"
 )
 
 func halt(err error) {

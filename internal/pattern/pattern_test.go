@@ -37,9 +37,9 @@ func TestParse(t *testing.T) {
 func TestApply(t *testing.T) {
 
 	type testCase struct {
-		name    string
-		pattern Parsed
-		input   string
+		name           string
+		pattern        Parsed
+		input          string
 		resultExpected string
 	}
 

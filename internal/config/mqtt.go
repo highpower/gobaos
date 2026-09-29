@@ -3,7 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
-	"thermo-watchdog/internal/mask"
+	"gobaos/internal/mask"
 )
 
 type mqttData struct {

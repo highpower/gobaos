@@ -4,17 +4,21 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"gobaos/internal/pattern"
 	"io"
 	"os"
-	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
 type Data struct {
-	Mqtt       mqttData       `yaml:"mqtt"`
-	Logger     loggerData     `yaml:"logger"`
-	Datapoints datapointsData `yaml:"datapoints"`
+	Mqtt      mqttData        `yaml:"mqtt"`
+	Baos      baosData        `yaml:"baos"`
+	Logger    loggerData      `yaml:"logger"`
+	ReadOnly  []datapointData `yaml:"read-only"`
+	Updatable []datapointData `yaml:"updatable"`
+	readOnly  []idData
+	updatable []idData
 }
 
 func (d *Data) Host() string {
@@ -41,22 +45,19 @@ func (d *Data) Output() string {
 	return d.Logger.Output
 }
 
-func (d *Data) Pattern() string {
-	return d.Datapoints.Pattern
+func (d *Data) VisitReadOnly(f func(id int, pattern pattern.Parsed) error) error {
+	for _, ip := range d.readOnly {
+		if err := f(ip.id, ip.pat); err != nil {
+			return fmt.Errorf("data.visitReadOnly: %w", err)
+		}
+	}
+	return nil
 }
 
-func (d *Data) UpdatablePattern() string {
-	return d.Datapoints.UpdatablePattern
-}
-
-func (d *Data) Every() time.Duration {
-	return d.Datapoints.Every
-}
-
-func (d *Data) VisitAll(f func(pattern int, updatable int) error) error {
-	for _, m := range d.Datapoints.IDMap {
-		if err := f(m.ReadOnly, m.Updatable); err != nil {
-			return err
+func (d *Data) VisitUpdatable(f func(id int, pattern pattern.Parsed) error) error {
+	for _, ip := range d.updatable {
+		if err := f(ip.id, ip.pat); err != nil {
+			return fmt.Errorf("data.visitUpdatable: %w", err)
 		}
 	}
 	return nil
@@ -89,7 +90,17 @@ func (d *Data) dump(writer io.Writer, sep string, always bool) error {
 }
 
 func (d *Data) valid() error {
-	return errors.Join(d.Logger.valid(), d.Mqtt.valid(), d.Datapoints.valid())
+	for _, dp := range d.ReadOnly {
+		if err := dp.valid(); err != nil {
+			return err
+		}
+	}
+	for _, dp := range d.Updatable {
+		if err := dp.valid(); err != nil {
+			return err
+		}
+	}
+	return errors.Join(d.Logger.valid(), d.Mqtt.valid(), d.Baos.valid())
 }
 
 func Parse(name string) (*Data, error) {
@@ -104,6 +115,7 @@ func Parse(name string) (*Data, error) {
 	if err := decoder.Decode(&result); err != nil {
 		return nil, fmt.Errorf("config.parse: %w", err)
 	}
+
 	if err := result.valid(); err != nil {
 		return nil, fmt.Errorf("config.parse: %w", err)
 	}

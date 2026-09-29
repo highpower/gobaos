@@ -7,20 +7,13 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func parseLevel(s string) (zapcore.Level, error) {
-	result := zapcore.InfoLevel
-	if s != "" {
-		level, err := zapcore.ParseLevel(s)
-		if err != nil {
-			return zapcore.InvalidLevel, err
-		}
-		result = level
-	}
-	return result, nil
+type loggerSettings interface {
+	Level() string
+	Output() string
 }
 
-func newLogger(l, out string) (*zap.SugaredLogger, error) {
-	level, err := parseLevel(l)
+func newLogger(settings loggerSettings) (*zap.SugaredLogger, error) {
+	level, err := zapcore.ParseLevel(settings.Level())
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +21,7 @@ func newLogger(l, out string) (*zap.SugaredLogger, error) {
 	cf := zap.Config{
 		Level:             atomicLevel,
 		Encoding:          "json",
-		OutputPaths:       []string{out},
+		OutputPaths:       []string{settings.Output()},
 		Development:       false,
 		DisableCaller:     true,
 		DisableStacktrace: true,
