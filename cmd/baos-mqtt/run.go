@@ -8,6 +8,8 @@ import (
 	"gobaos/pkg/ft12"
 	"sync/atomic"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 )
 
 func onIndication(pointer atomic.Value, id baos.DatapointID, data []byte) error {
@@ -35,6 +37,9 @@ func run(c *config.Data) error {
 		baos.WithHandler(func(id baos.DatapointID, data []byte) error {
 			return onIndication(value, id, data)
 		}))
+	group := errgroup.Group{}
+	group.Go(worker.Run)
+
 	log.Debugf("main.run: worker created")
 	handler, err := mqttbridge.NewHandler(worker, c, mqttbridge.WithLogger(log))
 	if err != nil {
@@ -43,5 +48,5 @@ func run(c *config.Data) error {
 	log.Debugf("main.run: handler created")
 	value.Store(handler)
 	log.Infof("main.run: baos-mqtt started with %s", c.String())
-	return worker.Run()
+	return group.Wait()
 }
