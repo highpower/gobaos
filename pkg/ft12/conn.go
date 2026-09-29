@@ -277,13 +277,16 @@ func defaultOpenFile(name string) (*os.File, error) {
 	if err != nil {
 		return nil, fmt.Errorf("can not read device: %w", err)
 	}
+	if err := flock(int(f.Fd())); err != nil {
+		return nil, fmt.Errorf("can not lock device: %w", err)
+	}
 	if err := flush(f); err != nil {
 		_ = f.Close()
-		return nil, fmt.Errorf("flush error: %w", err)
+		return nil, fmt.Errorf("can not flush device: %w", err)
 	}
 	if err := syscall.SetNonblock(int(f.Fd()), true); err != nil {
 		_ = f.Close()
-		return nil, fmt.Errorf("set non-blocking io flag error: %w", err)
+		return nil, fmt.Errorf("set non-blocking error: %w", err)
 	}
 	return f, nil
 }
