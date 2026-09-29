@@ -13,7 +13,7 @@ func flush(file *os.File) error {
 		return fmt.Errorf("stat error: %w", err)
 	}
 	mode := st.Mode()
-	if mode&os.ModeNamedPipe != os.ModeNamedPipe {
+	if mode&os.ModeCharDevice != mode&os.ModeCharDevice {
 		return nil
 	}
 	return unix.IoctlSetInt(int(file.Fd()), unix.TCFLSH, unix.TCIFLUSH)
