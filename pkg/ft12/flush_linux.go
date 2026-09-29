@@ -16,5 +16,5 @@ func flush(file *os.File) error {
 	if mode&os.ModeCharDevice != mode&os.ModeCharDevice {
 		return nil
 	}
-	return unix.IoctlSetInt(int(file.Fd()), unix.TCFLSH, unix.TCIFLUSH)
+	return unix.IoctlSetInt(int(file.Fd()), unix.TCFLSH, unix.TCIOFLUSH)
 }
