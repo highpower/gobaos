@@ -18,6 +18,8 @@ func TestParseIDs(t *testing.T) {
 
 	testCases := []testCase{
 		{name: "Empty", s: "", resultExpected: nil, errorExpected: false},
+		{name: "List", s: "1,2,3,6", resultExpected: []int{1, 2, 3, 6}, errorExpected: false},
+		{name: "Ranges", s: "1-3,6-9", resultExpected: []int{1, 2, 3, 6, 7, 8, 9}, errorExpected: false},
 	}
 
 	for _, tc := range testCases {
@@ -26,7 +28,7 @@ func TestParseIDs(t *testing.T) {
 			if tc.errorExpected {
 				require.Error(t, err)
 			}
-			assert.Equal(t, res, tc.resultExpected)
+			assert.Equal(t, tc.resultExpected, res)
 		})
 	}
 

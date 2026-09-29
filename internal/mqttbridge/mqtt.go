@@ -1,5 +1,17 @@
 package mqttbridge
 
+import (
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
+	"net/url"
+	"os"
+	"time"
+
+	mqtt "github.com/eclipse/paho.mqtt.golang"
+)
+
 type MqttSettings interface {
 	Host() string
 	User() string
@@ -7,7 +19,6 @@ type MqttSettings interface {
 	CaCert() string
 }
 
-/*
 func loadCert(caCert string) (*x509.Certificate, error) {
 	data, err := os.ReadFile(caCert)
 	if err != nil {
@@ -90,5 +101,3 @@ func connect(s MqttSettings, handler mqtt.OnConnectHandler) (mqtt.Client, error)
 	}
 	return client, nil
 }
-
-*/

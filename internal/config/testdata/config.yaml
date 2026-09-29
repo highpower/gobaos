@@ -2,6 +2,7 @@ logger:
   level: info
   output: stderr
 baos:
+  device: /dev/ttyAMA0
   indication-handlers: 5
 mqtt:
   host: 127.0.0.1:1883
@@ -9,8 +10,8 @@ mqtt:
   password: test-password
   ca-cert: /opt/local/etc/mosquitto/certs/cacert.pem
 read-only:
-  - pattern: datapoints/+
-    ids: 1-4
+  pattern: datapoints/+
+  ids: [ 1-7,21-27 ]
 updatable:
-  - pattern: datapoints/+/set
-    ids: 8-11
+  pattern: datapoints/+/set
+  ids: [ 8-11 ]

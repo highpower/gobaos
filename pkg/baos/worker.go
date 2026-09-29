@@ -27,7 +27,7 @@ type Worker struct {
 type ValueIndicationFunc func(id DatapointID, data []byte) error
 
 type ValueIndicationHandler interface {
-	Handle(id DatapointID, data []byte) error
+	OnIndication(id DatapointID, data []byte) error
 }
 
 // WorkerOption configures a Worker during construction.
@@ -303,7 +303,7 @@ func (w *Worker) handleIndication() error {
 func (w *Worker) runIndication(indications <-chan DatapointValueInd) {
 	for indication := range indications {
 		for _, value := range indication.Values {
-			if err := w.handler.Handle(value.ID, value.Data); err != nil {
+			if err := w.handler.OnIndication(value.ID, value.Data); err != nil {
 				w.errorOrStop <- errorOrStop{err: err}
 			}
 		}
@@ -333,7 +333,7 @@ func (c *call) waitForReady() {
 	}
 }
 
-func (d defaultHandler) Handle(_ DatapointID, _ []byte) error {
+func (d defaultHandler) OnIndication(_ DatapointID, _ []byte) error {
 	return nil
 }
 
@@ -345,7 +345,7 @@ func (o valueIndicationOption) apply(w *Worker) {
 	w.handler = ValueIndicationHandler(o)
 }
 
-func (o valueIndicationOption) Handle(id DatapointID, data []byte) error {
+func (o valueIndicationOption) OnIndication(id DatapointID, data []byte) error {
 	return o.f(id, data)
 }
 

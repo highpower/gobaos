@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"gobaos/internal/pattern"
+	"gobaos/pkg/baos"
 	"io"
 	"os"
 
@@ -12,13 +12,13 @@ import (
 )
 
 type Data struct {
-	Mqtt      mqttData        `yaml:"mqtt"`
-	Baos      baosData        `yaml:"baos"`
-	Logger    loggerData      `yaml:"logger"`
-	ReadOnly  []datapointData `yaml:"read-only"`
-	Updatable []datapointData `yaml:"updatable"`
-	readOnly  []idData
-	updatable []idData
+	Mqtt      mqttData      `yaml:"mqtt"`
+	Baos      baosData      `yaml:"baos"`
+	Logger    loggerData    `yaml:"logger"`
+	ReadOnly  datapointData `yaml:"read-only"`
+	Updatable datapointData `yaml:"updatable"`
+	readOnly  map[int]bool
+	updatable map[int]bool
 }
 
 func (d *Data) Host() string {
@@ -45,22 +45,22 @@ func (d *Data) Output() string {
 	return d.Logger.Output
 }
 
-func (d *Data) VisitReadOnly(f func(id int, pattern pattern.Parsed) error) error {
-	for _, ip := range d.readOnly {
-		if err := f(ip.id, ip.pat); err != nil {
-			return fmt.Errorf("data.visitReadOnly: %w", err)
-		}
-	}
-	return nil
+func (d *Data) Pattern() string {
+	return d.ReadOnly.Pattern
 }
 
-func (d *Data) VisitUpdatable(f func(id int, pattern pattern.Parsed) error) error {
-	for _, ip := range d.updatable {
-		if err := f(ip.id, ip.pat); err != nil {
-			return fmt.Errorf("data.visitUpdatable: %w", err)
-		}
-	}
-	return nil
+func (d *Data) UpdatablePattern() string {
+	return d.Updatable.Pattern
+}
+
+func (d *Data) ReadOnlyContains(id baos.DatapointID) bool {
+	_, ok := d.readOnly[int(id)]
+	return ok
+}
+
+func (d *Data) UpdatableContains(id baos.DatapointID) bool {
+	_, ok := d.updatable[int(id)]
+	return ok
 }
 
 func (d *Data) String() string {
@@ -90,17 +90,8 @@ func (d *Data) dump(writer io.Writer, sep string, always bool) error {
 }
 
 func (d *Data) valid() error {
-	for _, dp := range d.ReadOnly {
-		if err := dp.valid(); err != nil {
-			return err
-		}
-	}
-	for _, dp := range d.Updatable {
-		if err := dp.valid(); err != nil {
-			return err
-		}
-	}
-	return errors.Join(d.Logger.valid(), d.Mqtt.valid(), d.Baos.valid())
+	return errors.Join(d.Logger.valid(), d.Mqtt.valid(), d.Baos.valid(),
+		d.ReadOnly.valid(), d.Updatable.valid())
 }
 
 func Parse(name string) (*Data, error) {
@@ -115,9 +106,32 @@ func Parse(name string) (*Data, error) {
 	if err := decoder.Decode(&result); err != nil {
 		return nil, fmt.Errorf("config.parse: %w", err)
 	}
-
 	if err := result.valid(); err != nil {
 		return nil, fmt.Errorf("config.parse: %w", err)
 	}
+	readOnly, err := constructMap(result.ReadOnly.IDs)
+	if err != nil {
+		return nil, fmt.Errorf("config.parse: %w", err)
+	}
+	result.readOnly = readOnly
+	updatable, err := constructMap(result.Updatable.IDs)
+	if err != nil {
+		return nil, fmt.Errorf("config.parse: %w", err)
+	}
+	result.updatable = updatable
 	return &result, nil
+}
+
+func constructMap(list []string) (map[int]bool, error) {
+	m := make(map[int]bool)
+	for _, ids := range list {
+		idList, err := parseIDs(ids)
+		if err != nil {
+			return nil, fmt.Errorf("config.parse: %w", err)
+		}
+		for _, id := range idList {
+			m[id] = true
+		}
+	}
+	return m, nil
 }

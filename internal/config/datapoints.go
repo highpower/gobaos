@@ -7,19 +7,16 @@ import (
 	"strings"
 )
 
-type idData struct {
-	id  int
-	pat pattern.Parsed
-}
-
 type datapointData struct {
-	IDs     string `yaml:"ids"`
-	Pattern string `yaml:"pattern"`
+	IDs     []string `yaml:"ids"`
+	Pattern string   `yaml:"pattern"`
 }
 
 func (d *datapointData) valid() error {
-	if _, err := parseIDs(d.IDs); err != nil {
-		return fmt.Errorf("invalid ids: %w", err)
+	for _, id := range d.IDs {
+		if _, err := parseIDs(id); err != nil {
+			return fmt.Errorf("invalid ids: %w", err)
+		}
 	}
 	if _, err := pattern.Parse(d.Pattern); err != nil {
 		return fmt.Errorf("invalid read-only pattern: %w", err)

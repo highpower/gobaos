@@ -121,7 +121,7 @@ func TestGetDatapointDescriptionResValid(t *testing.T) {
 
 	testCases := []testCase{
 		{name: "Empty", value: GetDatapointDescriptionRes{}, errorExpected: true},
-		{name: "WithDescriptions", value: GetDatapointDescriptionRes{StartDatapoint: 1, Descriptions: []DatapointDescription{{ID: 1, ValueType: 7, ConfigFlags: 0x02, DPT: 1}}}, errorExpected: false},
+		{name: "WithDescriptions", value: GetDatapointDescriptionRes{StartDatapoint: 1, Descriptions: []DatapointDescription{{ID: 1, ValueType: 7, ConfigFlags: 0x02, Code: 1}}}, errorExpected: false},
 		{name: "WithErrorCode", value: GetDatapointDescriptionRes{StartDatapoint: 1, ErrorCode: 5}, errorExpected: false},
 		{name: "DescriptionsAndErrorCode",
 			value: GetDatapointDescriptionRes{StartDatapoint: 1, Descriptions: []DatapointDescription{{ID: 1}}, ErrorCode: 5}, errorExpected: true},
@@ -148,11 +148,11 @@ func TestGetDatapointDescriptionResEqual(t *testing.T) {
 		resultExpected bool
 	}
 	testCases := []testCase{
-		{name: "Equal", value: GetDatapointDescriptionRes{StartDatapoint: 1, Descriptions: []DatapointDescription{{ID: 1, ValueType: 7, ConfigFlags: 0x02, DPT: 1}}}, other: GetDatapointDescriptionRes{StartDatapoint: 1, Descriptions: []DatapointDescription{{ID: 1, ValueType: 7, ConfigFlags: 0x02, DPT: 1}}}, resultExpected: true},
+		{name: "Equal", value: GetDatapointDescriptionRes{StartDatapoint: 1, Descriptions: []DatapointDescription{{ID: 1, ValueType: 7, ConfigFlags: 0x02, Code: 1}}}, other: GetDatapointDescriptionRes{StartDatapoint: 1, Descriptions: []DatapointDescription{{ID: 1, ValueType: 7, ConfigFlags: 0x02, Code: 1}}}, resultExpected: true},
 		{name: "StartUnequal", value: GetDatapointDescriptionRes{StartDatapoint: 1}, other: GetDatapointDescriptionRes{StartDatapoint: 2}, resultExpected: false},
 		{name: "ErrorCodeUnequal", value: GetDatapointDescriptionRes{ErrorCode: 1}, other: GetDatapointDescriptionRes{ErrorCode: 2}, resultExpected: false},
 		{name: "DescriptionsLenUnequal", value: GetDatapointDescriptionRes{Descriptions: []DatapointDescription{{ID: 1}}}, other: GetDatapointDescriptionRes{Descriptions: []DatapointDescription{}}, resultExpected: false},
-		{name: "DescriptionDPTUnequal", value: GetDatapointDescriptionRes{Descriptions: []DatapointDescription{{ID: 1, DPT: 1}}}, other: GetDatapointDescriptionRes{Descriptions: []DatapointDescription{{ID: 1, DPT: 2}}}, resultExpected: false},
+		{name: "DescriptionDPTUnequal", value: GetDatapointDescriptionRes{Descriptions: []DatapointDescription{{ID: 1, Code: 1}}}, other: GetDatapointDescriptionRes{Descriptions: []DatapointDescription{{ID: 1, Code: 2}}}, resultExpected: false},
 	}
 
 	for _, tc := range testCases {
@@ -170,7 +170,7 @@ func TestGetDatapointDescriptionResMarshal(t *testing.T) {
 	}
 	testCases := []testCase{
 		{name: "Empty", value: GetDatapointDescriptionRes{}},
-		{name: "WithDescriptions", value: GetDatapointDescriptionRes{StartDatapoint: 2, Descriptions: []DatapointDescription{{ID: 10, ValueType: 7, ConfigFlags: 0x02, DPT: 1}, {ID: 11, ValueType: 8, ConfigFlags: 0x04, DPT: 2}}}},
+		{name: "WithDescriptions", value: GetDatapointDescriptionRes{StartDatapoint: 2, Descriptions: []DatapointDescription{{ID: 10, ValueType: 7, ConfigFlags: 0x02, Code: 1}, {ID: 11, ValueType: 8, ConfigFlags: 0x04, Code: 2}}}},
 		{name: "Error", value: GetDatapointDescriptionRes{StartDatapoint: 3, ErrorCode: 5}},
 	}
 
@@ -227,7 +227,7 @@ func FuzzGetDatapointDescriptionReq(f *testing.F) {
 }
 
 func FuzzGetDatapointDescriptionRes(f *testing.F) {
-	res := GetDatapointDescriptionRes{StartDatapoint: 1, Descriptions: []DatapointDescription{{ID: 1, ValueType: 7, ConfigFlags: 0x02, DPT: 1}}}
+	res := GetDatapointDescriptionRes{StartDatapoint: 1, Descriptions: []DatapointDescription{{ID: 1, ValueType: 7, ConfigFlags: 0x02, Code: 1}}}
 	data, _ := res.MarshalBinary()
 	f.Add(data)
 	f.Fuzz(func(t *testing.T, data []byte) {

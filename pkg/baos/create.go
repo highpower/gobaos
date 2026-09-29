@@ -11,5 +11,5 @@ func CreateForID(ctx context.Context, worker *Worker, id DatapointID) (knxtypes.
 	if err != nil {
 		return nil, err
 	}
-	return knxtypes.NewDPT(description.DPT)
+	return knxtypes.NewDPT(description.Code)
 }

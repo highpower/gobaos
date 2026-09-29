@@ -14,7 +14,7 @@ func halt(err error) {
 }
 
 func usage(writer io.Writer) {
-	_, _ = fmt.Fprintf(writer, "Usage: thermo-watchdog -config <config file>\n")
+	_, _ = fmt.Fprintf(writer, "Usage: baos-mqtt -config <config file>\n")
 	flag.CommandLine.SetOutput(writer)
 	flag.CommandLine.PrintDefaults()
 }

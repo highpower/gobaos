@@ -13,7 +13,7 @@ type DatapointDescription struct {
 	ID          DatapointID
 	ValueType   ValueType
 	ConfigFlags byte
-	DPT         knxtypes.TypeCode
+	Code        knxtypes.TypeCode
 }
 
 // GetDatapointDescriptionReq is a request to read datapoint descriptions.
@@ -37,18 +37,18 @@ const (
 // Equal reports whether d and other represent the same datapoint description.
 func (d *DatapointDescription) Equal(other *DatapointDescription) bool {
 	return d.ID == other.ID && d.ValueType == other.ValueType &&
-		d.ConfigFlags == other.ConfigFlags && d.DPT == other.DPT
+		d.ConfigFlags == other.ConfigFlags && d.Code == other.Code
 }
 
 // String returns a human-readable representation of the datapoint description.
 func (d *DatapointDescription) String() string {
 	return fmt.Sprintf("datapointDescription[id=%d,valueType=%d,configFlags=%d,dpt=%d]",
-		d.ID, d.ValueType, d.ConfigFlags, d.DPT)
+		d.ID, d.ValueType, d.ConfigFlags, d.Code)
 }
 
 // Valid validates the datapoint description fields.
 func (d *DatapointDescription) Valid() error {
-	return errors.Join(d.DPT.Valid())
+	return errors.Join(d.Code.Valid())
 }
 
 // Service returns the main service identifier.
@@ -188,7 +188,7 @@ func marshalDescriptionsTo(data []byte, descriptions []DatapointDescription) err
 		binary.BigEndian.PutUint16(data[0:2], uint16(descriptions[i].ID))
 		data[2] = byte(descriptions[i].ValueType)
 		data[3] = descriptions[i].ConfigFlags
-		data[4] = byte(descriptions[i].DPT)
+		data[4] = byte(descriptions[i].Code)
 		data = data[datapointDescriptionSize:]
 	}
 	if len(data) != 0 {
@@ -208,7 +208,7 @@ func unmarshalDescriptionsFrom(data []byte, n int) ([]DatapointDescription, erro
 			ID:          DatapointID(binary.BigEndian.Uint16(data[0:2])),
 			ValueType:   ValueType(data[2]),
 			ConfigFlags: data[3],
-			DPT:         knxtypes.TypeCode(data[4]),
+			Code:        knxtypes.TypeCode(data[4]),
 		})
 		data = data[datapointDescriptionSize:]
 	}
