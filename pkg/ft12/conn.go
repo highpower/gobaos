@@ -121,11 +121,8 @@ func (c *Conn) pollRead() error {
 }
 
 func (c *Conn) pollWrite() error {
-	for _, f := range c.outgoing {
-		if _, err := c.file.Write(f); err != nil {
-			return err
-		}
-		if err := c.readAck(); err != nil {
+	for _, fr := range c.outgoing {
+		if _, err := c.file.Write(fr); err != nil {
 			return err
 		}
 	}
@@ -135,26 +132,42 @@ func (c *Conn) pollWrite() error {
 
 func (c *Conn) writeResetRequest() error {
 	if _, err := c.file.Write([]byte{0x10, 0x40, 0x40, 0x16}); err != nil {
-		return err
+		return fmt.Errorf("conn.writeResetRequest: %w", err)
 	}
-	return c.readAck()
+	return nil
+}
+
+func (c *Conn) readFrameHeader() (byte, error) {
+	firstByte, err := c.readByte()
+	switch {
+	case err != nil:
+		return 0, fmt.Errorf("conn.readFrameToBuffer: %w", err)
+	case firstByte == 0xE5: // acknowledgement, 1 byte
+		return 0, nil
+	case firstByte == 0x10: // reset indication, 4 byte
+		return 0, c.readResetIndicationRest()
+	case firstByte == 0x68: // data, 4 byte
+		return c.readFrameRest()
+	default:
+		return 0, fmt.Errorf("conn.readFrameHeader: unknown first byte 0x%02x", firstByte)
+	}
 }
 
 func (c *Conn) readFrameToBuffer(buffer []byte) (int, error) {
-	hd, err := c.readHeader()
+	l, err := c.readFrameHeader()
 	switch {
 	case err != nil:
-		return 0, err
-	case hd.len() == 0:
+		return 0, fmt.Errorf("conn.readFrameToBuffer: %w", err)
+	case l == 0:
 		return 0, nil
 	}
-	if _, err = io.ReadFull(c.file, buffer[:hd.len()+2]); err != nil {
+	if _, err = io.ReadFull(c.file, buffer[:l+2]); err != nil {
 		return 0, err
 	}
 	if err := c.writeAck(); err != nil {
 		return 0, err
 	}
-	data, err := c.unmarshalFrame(buffer[:hd.len()+2])
+	data, err := c.unmarshalFrame(buffer[:l+2])
 	if err != nil {
 		return 0, err
 	}
@@ -162,26 +175,21 @@ func (c *Conn) readFrameToBuffer(buffer []byte) (int, error) {
 	return 0, nil
 }
 
-func (c *Conn) readHeader() (header, error) {
-	hd := header{}
+func (c *Conn) readByte() (byte, error) {
+	buffer := [1]byte{}
 	if err := setTimeout(c.file, c.pollTimeout); err != nil {
-		return header{}, err
+		return 0, err
 	}
 	defer func() { _ = clearTimeout(c.file) }()
-	n, err := io.ReadFull(c.file, hd[:])
+	n, err := c.file.Read(buffer[:])
 	var ne net.Error
 	switch {
 	case (errors.As(err, &ne) && ne.Timeout()) || n == 0:
-		return header{}, nil
+		return 0, nil
 	case err != nil:
-		return header{}, err
-	case hd.valid() != nil:
-		return hd, fmt.Errorf("%w header: %x", ErrInvalid, hd)
-	case hd.isResetIndication():
-		c.needReset = true
-		return header{}, nil
+		return 0, err
 	}
-	return hd, nil
+	return buffer[0], nil
 }
 
 func (c *Conn) unmarshalFrame(data []byte) ([]byte, error) {
@@ -202,18 +210,15 @@ func (c *Conn) unmarshalFrame(data []byte) ([]byte, error) {
 	return data[1 : len(data)-2], nil
 }
 
-func (c *Conn) readAck() error {
-	buffer := [1]byte{}
+func (c *Conn) readFrameRest() (byte, error) {
+	buffer := [3]byte{}
 	if _, err := io.ReadFull(c.file, buffer[:]); err != nil {
-		return err
+		return 0, err
 	}
-	switch buffer[0] {
-	case 0xE5:
-		return nil
-	case 0x10:
-		return c.readResetIndicationRest()
+	if buffer[0] != buffer[1] || buffer[len(buffer)-1] != 0x68 {
+		return 0, fmt.Errorf("%w reset indication", ErrInvalid)
 	}
-	return fmt.Errorf("%w ack: %02x", ErrInvalid, buffer[0])
+	return buffer[0], nil
 }
 
 func (c *Conn) readResetIndicationRest() error {
@@ -222,7 +227,7 @@ func (c *Conn) readResetIndicationRest() error {
 		return err
 	}
 	if !bytes.Equal(buffer[:], []byte{0xC0, 0xC0, 0x16}) {
-		return fmt.Errorf("%w reset indication", ErrInvalid)
+		return fmt.Errorf("read reset indication: %w", ErrInvalid)
 	}
 	c.needReset = true
 	return nil
@@ -278,6 +283,7 @@ func defaultOpenFile(name string) (*os.File, error) {
 		return nil, fmt.Errorf("can not read device: %w", err)
 	}
 	if err := flock(int(f.Fd())); err != nil {
+		_ = f.Close()
 		return nil, fmt.Errorf("can not lock device: %w", err)
 	}
 	if err := flush(f); err != nil {
