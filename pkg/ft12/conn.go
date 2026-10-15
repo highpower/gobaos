@@ -142,6 +142,8 @@ func (c *Conn) readFrameHeader() (byte, error) {
 	switch {
 	case err != nil:
 		return 0, fmt.Errorf("conn.readFrameToBuffer: %w", err)
+	case firstByte == 0:  // no data
+		return 0, nil
 	case firstByte == 0xE5: // acknowledgement, 1 byte
 		return 0, nil
 	case firstByte == 0x10: // reset indication, 4 byte
