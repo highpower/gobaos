@@ -74,24 +74,24 @@ func TestDPTTimeOfDayUnmarshal(t *testing.T) {
 
 func TestDPTTimeOfDaySet(t *testing.T) {
 	type testCase struct {
-		name     string
-		input    string
-		expected DPTTimeOfDay
-		wantErr  bool
+		name          string
+		input         string
+		expected      DPTTimeOfDay
+		errorExpected bool
 	}
 
 	testCases := []testCase{
 		{name: "ValidTimeOnly", input: "12:30:45", expected: DPTTimeOfDay{Weekday: 0, Hour: 12, Minute: 30, Second: 45}},
 		{name: "ValidWithWeekday", input: "mon,12:30:45", expected: DPTTimeOfDay{Weekday: 1, Hour: 12, Minute: 30, Second: 45}},
-		{name: "WrongParts", input: "mon,12:30:45,extra", wantErr: true},
-		{name: "BadTimeFormat", input: "12:30", wantErr: true},
-		{name: "NotAnHour", input: "mon,bad:00:00", wantErr: true},
-		{name: "NotAMinute", input: "00:bad:00", wantErr: true},
-		{name: "NotASecond", input: "tue,00:00:bad", wantErr: true},
-		{name: "BadHour", input: "25:00:00", wantErr: true},
-		{name: "BadMinute", input: "12:61:00", wantErr: true},
-		{name: "BadSecond", input: "12:00:61", wantErr: true},
-		{name: "BadWeekday", input: "foo,12:00:00", wantErr: true},
+		{name: "WrongParts", input: "mon,12:30:45,extra", errorExpected: true},
+		{name: "BadTimeFormat", input: "12:30", errorExpected: true},
+		{name: "NotAnHour", input: "mon,bad:00:00", errorExpected: true},
+		{name: "NotAMinute", input: "00:bad:00", errorExpected: true},
+		{name: "NotASecond", input: "tue,00:00:bad", errorExpected: true},
+		{name: "BadHour", input: "25:00:00", errorExpected: true},
+		{name: "BadMinute", input: "12:61:00", errorExpected: true},
+		{name: "BadSecond", input: "12:00:61", errorExpected: true},
+		{name: "BadWeekday", input: "foo,12:00:00", errorExpected: true},
 	}
 
 	for _, tc := range testCases {
@@ -99,7 +99,7 @@ func TestDPTTimeOfDaySet(t *testing.T) {
 			t.Parallel()
 			dpt := DPTTimeOfDay{}
 			err := dpt.Set(tc.input)
-			if tc.wantErr {
+			if tc.errorExpected {
 				assert.Error(t, err)
 				return
 			}

@@ -27,13 +27,20 @@ type dateStruct struct {
 	weekday uint8
 }
 
+const (
+	dayBitSize   = 8
+	monthBitSize = 8
+	yearBitSize  = 16
+)
+
 // Get returns the date and time as "DD/MM/YYYY HH:MM:SS".
 func (d *DPTDateTime8Byte) Get() string {
 	year := 1900 + int(d.Year)
 	if d.Weekday == 0 {
 		return fmt.Sprintf("%02d/%02d/%04d %02d:%02d:%02d", d.Day, d.Month, year, d.Hour, d.Minute, d.Second)
 	}
-	return fmt.Sprintf("%02d/%02d/%04d,%s %02d:%02d:%02d", d.Day, d.Month, year, weekdays[d.Weekday],
+	wd, _ := weekdayName(d.Weekday)
+	return fmt.Sprintf("%02d/%02d/%04d,%s %02d:%02d:%02d", d.Day, d.Month, year, wd,
 		d.Hour, d.Minute, d.Second)
 }
 
@@ -128,7 +135,7 @@ func parseDateFullYear(s string) (dateStruct, error) {
 	if len(parts) != 3 {
 		return dateStruct{}, fmt.Errorf("%w: invalid date %s", ErrBadValue, parts[0])
 	}
-	bits := []int{8, 8, 16}
+	bits := []int{dayBitSize, monthBitSize, yearBitSize}
 	numbers := [3]uint64{0, 0, 0}
 	for i, part := range parts {
 		n, err := strconv.ParseUint(part, 10, bits[i])

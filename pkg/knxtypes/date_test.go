@@ -43,21 +43,21 @@ func TestDPTDateBadUnmarshal(t *testing.T) {
 
 func TestDPTDateSet(t *testing.T) {
 	type testCase struct {
-		name     string
-		input    string
-		expected DPTDate
-		wantErr  bool
+		name          string
+		input         string
+		expected      DPTDate
+		errorExpected bool
 	}
 
 	testCases := []testCase{
 		{name: "Valid", input: "15/06/23", expected: DPTDate{Day: 15, Month: 6, Year: 23}},
-		{name: "WrongParts", input: "15/06/23/extra", wantErr: true},
-		{name: "NotADay", input: "bad/06/23", wantErr: true},
-		{name: "NotAMonth", input: "15/bad/23", wantErr: true},
-		{name: "NotAYear", input: "15/06/bad", wantErr: true},
-		{name: "BadDay", input: "32/06/23", wantErr: true},
-		{name: "BadMonth", input: "15/13/23", wantErr: true},
-		{name: "BadYear", input: "15/06/106", wantErr: true},
+		{name: "WrongParts", input: "15/06/23/extra", errorExpected: true},
+		{name: "NotADay", input: "bad/06/23", errorExpected: true},
+		{name: "NotAMonth", input: "15/bad/23", errorExpected: true},
+		{name: "NotAYear", input: "15/06/bad", errorExpected: true},
+		{name: "BadDay", input: "32/06/23", errorExpected: true},
+		{name: "BadMonth", input: "15/13/23", errorExpected: true},
+		{name: "BadYear", input: "15/06/106", errorExpected: true},
 	}
 
 	for _, tc := range testCases {
@@ -65,7 +65,7 @@ func TestDPTDateSet(t *testing.T) {
 			t.Parallel()
 			dpt := DPTDate{}
 			err := dpt.Set(tc.input)
-			if tc.wantErr {
+			if tc.errorExpected {
 				assert.Error(t, err)
 				return
 			}
@@ -77,26 +77,26 @@ func TestDPTDateSet(t *testing.T) {
 
 func TestDPTDateValid(t *testing.T) {
 	type testCase struct {
-		name    string
-		dpt     DPTDate
-		wantErr bool
+		name          string
+		dpt           DPTDate
+		errorExpected bool
 	}
 
 	testCases := []testCase{
 		{name: "Min", dpt: DPTDate{Day: 1, Month: 1, Year: 0}},
 		{name: "Max", dpt: DPTDate{Day: 31, Month: 12, Year: 99}},
-		{name: "DayZero", dpt: DPTDate{Day: 0, Month: 1, Year: 0}, wantErr: true},
-		{name: "BadDay", dpt: DPTDate{Day: 32, Month: 1, Year: 0}, wantErr: true},
-		{name: "BadMonth", dpt: DPTDate{Day: 1, Month: 0, Year: 0}, wantErr: true},
-		{name: "BadMonthMax", dpt: DPTDate{Day: 1, Month: 13, Year: 0}, wantErr: true},
-		{name: "BadYear", dpt: DPTDate{Day: 1, Month: 1, Year: 100}, wantErr: true},
+		{name: "DayZero", dpt: DPTDate{Day: 0, Month: 1, Year: 0}, errorExpected: true},
+		{name: "BadDay", dpt: DPTDate{Day: 32, Month: 1, Year: 0}, errorExpected: true},
+		{name: "BadMonth", dpt: DPTDate{Day: 1, Month: 0, Year: 0}, errorExpected: true},
+		{name: "BadMonthMax", dpt: DPTDate{Day: 1, Month: 13, Year: 0}, errorExpected: true},
+		{name: "BadYear", dpt: DPTDate{Day: 1, Month: 1, Year: 100}, errorExpected: true},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			err := tc.dpt.Valid()
-			if tc.wantErr {
+			if tc.errorExpected {
 				assert.Error(t, err)
 				return
 			}

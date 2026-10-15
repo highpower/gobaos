@@ -87,16 +87,16 @@ func TestDatapointValueIndMarshal(t *testing.T) {
 
 func TestDatapointValueIndUnmarshalErrors(t *testing.T) {
 	type testCase struct {
-		name        string
-		data        []byte
-		errExpected bool
+		name          string
+		data          []byte
+		errorExpected bool
 	}
 
 	testCases := []testCase{
-		{name: "TooShort", data: []byte{0xF0, 0xC1, 0x00}, errExpected: true},
-		{name: "WrongService", data: []byte{0x00, 0xC1, 0x00, 0x00, 0x00, 0x00}, errExpected: true},
-		{name: "WrongSubService", data: []byte{0xF0, 0x00, 0x00, 0x00, 0x00, 0x00}, errExpected: true},
-		{name: "TruncatedValues", data: []byte{0xF0, 0xC1, 0x00, 0x00, 0x00, 0x01}, errExpected: true},
+		{name: "TooShort", data: []byte{0xF0, 0xC1, 0x00}, errorExpected: true},
+		{name: "WrongService", data: []byte{0x00, 0xC1, 0x00, 0x00, 0x00, 0x00}, errorExpected: true},
+		{name: "WrongSubService", data: []byte{0xF0, 0x00, 0x00, 0x00, 0x00, 0x00}, errorExpected: true},
+		{name: "TruncatedValues", data: []byte{0xF0, 0xC1, 0x00, 0x00, 0x00, 0x01}, errorExpected: true},
 	}
 
 	for _, tc := range testCases {
@@ -104,7 +104,7 @@ func TestDatapointValueIndUnmarshalErrors(t *testing.T) {
 			t.Parallel()
 			r := DatapointValueInd{}
 			err := r.UnmarshalBinary(tc.data)
-			if tc.errExpected {
+			if tc.errorExpected {
 				assert.Error(t, err)
 				return
 			}

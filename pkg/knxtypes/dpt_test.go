@@ -9,9 +9,9 @@ import (
 
 func TestValidTypeCode(t *testing.T) {
 	type testCase struct {
-		name    string
-		code    TypeCode
-		wantErr bool
+		name          string
+		code          TypeCode
+		errorExpected bool
 	}
 
 	testCases := []testCase{
@@ -37,16 +37,16 @@ func TestValidTypeCode(t *testing.T) {
 		{name: "Enum", code: EnumCode},
 		{name: "RedGreenBlue", code: RedGreenBlueCode},
 		{name: "RedGreenBlueWhite", code: RedGreenBlueWhiteCode},
-		{name: "Zero", code: TypeCode(0), wantErr: true},
-		{name: "Negative", code: TypeCode(-1), wantErr: true},
-		{name: "Invalid", code: TypeCode(999), wantErr: true},
+		{name: "Zero", code: TypeCode(0), errorExpected: true},
+		{name: "Negative", code: TypeCode(-1), errorExpected: true},
+		{name: "Invalid", code: TypeCode(999), errorExpected: true},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			err := tc.code.Valid()
-			if tc.wantErr {
+			if tc.errorExpected {
 				assert.Error(t, err)
 				return
 			}
@@ -57,10 +57,10 @@ func TestValidTypeCode(t *testing.T) {
 
 func TestParseTypeCode(t *testing.T) {
 	type testCase struct {
-		name    string
-		value   string
-		result  TypeCode
-		wantErr bool
+		name          string
+		value         string
+		result        TypeCode
+		errorExpected bool
 	}
 
 	testCases := []testCase{
@@ -89,15 +89,15 @@ func TestParseTypeCode(t *testing.T) {
 		{name: "RedGreenBlue", value: "redgreenblue", result: RedGreenBlueCode},
 		{name: "RGBW", value: "rgbw", result: RedGreenBlueWhiteCode},
 		{name: "RedGreenBlueWhite", value: "redgreenbluewhite", result: RedGreenBlueWhiteCode},
-		{name: "Empty", value: "", wantErr: true},
-		{name: "Invalid", value: "unknown", wantErr: true},
+		{name: "Empty", value: "", errorExpected: true},
+		{name: "Invalid", value: "unknown", errorExpected: true},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			res, err := ParseTypeCode(tc.value)
-			if tc.wantErr {
+			if tc.errorExpected {
 				assert.Error(t, err)
 				return
 			}

@@ -3,9 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"gobaos/internal/config"
 	"io"
 	"os"
+
+	"gobaos/internal/config"
 )
 
 func halt(err error) {

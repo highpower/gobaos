@@ -2,23 +2,24 @@ package config
 
 import (
 	"fmt"
-	"gobaos/internal/pattern"
 	"strconv"
 	"strings"
+
+	"gobaos/internal/pattern"
 )
 
-type datapointData struct {
+type datapointSettings struct {
 	IDs     []string `yaml:"ids"`
 	Pattern string   `yaml:"pattern"`
 }
 
-func (d *datapointData) valid() error {
-	for _, id := range d.IDs {
+func (s *datapointSettings) valid() error {
+	for _, id := range s.IDs {
 		if _, err := parseIDs(id); err != nil {
 			return fmt.Errorf("invalid ids: %w", err)
 		}
 	}
-	if _, err := pattern.Parse(d.Pattern); err != nil {
+	if _, err := pattern.Parse(s.Pattern); err != nil {
 		return fmt.Errorf("invalid read-only pattern: %w", err)
 	}
 	return nil

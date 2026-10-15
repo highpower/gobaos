@@ -7,13 +7,13 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-type loggerSettings interface {
+type loggerSettingsProvider interface {
 	Level() string
 	Output() string
 }
 
-func newLogger(settings loggerSettings) (*zap.SugaredLogger, error) {
-	level, err := zapcore.ParseLevel(settings.Level())
+func newLogger(sp loggerSettingsProvider) (*zap.SugaredLogger, error) {
+	level, err := zapcore.ParseLevel(sp.Level())
 	if err != nil {
 		return nil, err
 	}
@@ -21,7 +21,7 @@ func newLogger(settings loggerSettings) (*zap.SugaredLogger, error) {
 	cf := zap.Config{
 		Level:             atomicLevel,
 		Encoding:          "json",
-		OutputPaths:       []string{settings.Output()},
+		OutputPaths:       []string{sp.Output()},
 		Development:       false,
 		DisableCaller:     true,
 		DisableStacktrace: true,

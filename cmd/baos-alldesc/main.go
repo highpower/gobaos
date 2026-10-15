@@ -5,11 +5,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"gobaos/pkg/baos"
-	"gobaos/pkg/ft12"
 	"io"
 	"os"
 	"time"
+
+	"gobaos/pkg/baos"
+	"gobaos/pkg/ft12"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -17,7 +18,7 @@ import (
 func run(device string) error {
 	conn, err := ft12.NewConn(device, ft12.WithTimeout(50*time.Millisecond))
 	if err != nil {
-		return err
+		return fmt.Errorf("open device %q: %w", device, err)
 	}
 	defer func() { _ = conn.Close() }()
 	return runWith(conn)
@@ -41,7 +42,7 @@ func runWithGroup(g *errgroup.Group, conn *ft12.Conn) error {
 
 	descriptions, err := worker.AllDescriptions(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("get all descriptions: %w", err)
 	}
 	for _, d := range descriptions {
 		_, _ = fmt.Fprintf(os.Stdout, "datapoint %d: type %d-%s(%s)\n", d.ID, d.Code, d.Code.String(),

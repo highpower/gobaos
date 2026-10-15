@@ -4,77 +4,78 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"gobaos/pkg/baos"
 	"io"
 	"os"
+
+	"gobaos/pkg/baos"
 
 	"gopkg.in/yaml.v3"
 )
 
-type Data struct {
-	Mqtt      mqttData      `yaml:"mqtt"`
-	Baos      baosData      `yaml:"baos"`
-	Logger    loggerData    `yaml:"logger"`
-	ReadOnly  datapointData `yaml:"read-only"`
-	Updatable datapointData `yaml:"updatable"`
+type Settings struct {
+	Mqtt      mqttSettings      `yaml:"mqtt"`
+	Baos      baosSettings      `yaml:"baos"`
+	Logger    loggerSettings    `yaml:"logger"`
+	ReadOnly  datapointSettings `yaml:"read-only"`
+	Updatable datapointSettings `yaml:"updatable"`
 	readOnly  map[int]bool
 	updatable map[int]bool
 }
 
-func (d *Data) Host() string {
-	return d.Mqtt.Host
+func (s *Settings) Host() string {
+	return s.Mqtt.Host
 }
 
-func (d *Data) User() string {
-	return d.Mqtt.User
+func (s *Settings) User() string {
+	return s.Mqtt.User
 }
 
-func (d *Data) Password() string {
-	return d.Mqtt.Password
+func (s *Settings) Password() string {
+	return s.Mqtt.Password
 }
 
-func (d *Data) CaCert() string {
-	return d.Mqtt.CaCert
+func (s *Settings) CaCert() string {
+	return s.Mqtt.CaCert
 }
 
-func (d *Data) Level() string {
-	return d.Logger.Level
+func (s *Settings) Level() string {
+	return s.Logger.Level
 }
 
-func (d *Data) Output() string {
-	return d.Logger.Output
+func (s *Settings) Output() string {
+	return s.Logger.Output
 }
 
-func (d *Data) Pattern() string {
-	return d.ReadOnly.Pattern
+func (s *Settings) Pattern() string {
+	return s.ReadOnly.Pattern
 }
 
-func (d *Data) UpdatablePattern() string {
-	return d.Updatable.Pattern
+func (s *Settings) UpdatablePattern() string {
+	return s.Updatable.Pattern
 }
 
-func (d *Data) ReadOnlyContains(id baos.DatapointID) bool {
-	_, ok := d.readOnly[int(id)]
+func (s *Settings) ReadOnlyContains(id baos.DatapointID) bool {
+	_, ok := s.readOnly[int(id)]
 	return ok
 }
 
-func (d *Data) UpdatableContains(id baos.DatapointID) bool {
-	_, ok := d.updatable[int(id)]
+func (s *Settings) UpdatableContains(id baos.DatapointID) bool {
+	_, ok := s.updatable[int(id)]
 	return ok
 }
 
-func (d *Data) String() string {
+func (s *Settings) String() string {
 	buffer := bytes.Buffer{}
 	buffer.WriteString("config[")
-	if err := d.dump(&buffer, ",", false); err != nil {
+	if err := s.dump(&buffer, ",", false); err != nil {
 		panic(err)
 	}
 	buffer.WriteString("]")
 	return buffer.String()
 }
 
-func (d *Data) dump(writer io.Writer, sep string, always bool) error {
-	parts := []fmt.Stringer{&d.Logger, &d.Mqtt}
+func (s *Settings) dump(writer io.Writer, sep string, always bool) error {
+	parts := []fmt.Stringer{&s.Logger, &s.Mqtt}
 	for i, s := range parts {
 		if _, err := io.WriteString(writer, s.String()); err != nil {
 			return err
@@ -89,12 +90,12 @@ func (d *Data) dump(writer io.Writer, sep string, always bool) error {
 	return nil
 }
 
-func (d *Data) valid() error {
-	return errors.Join(d.Logger.valid(), d.Mqtt.valid(), d.Baos.valid(),
-		d.ReadOnly.valid(), d.Updatable.valid())
+func (s *Settings) valid() error {
+	return errors.Join(s.Logger.valid(), s.Mqtt.valid(), s.Baos.valid(),
+		s.ReadOnly.valid(), s.Updatable.valid())
 }
 
-func Parse(name string) (*Data, error) {
+func Parse(name string) (*Settings, error) {
 	file, err := os.Open(name)
 	if err != nil {
 		return nil, fmt.Errorf("config.parse: %w", err)
@@ -102,7 +103,7 @@ func Parse(name string) (*Data, error) {
 	defer func() { _ = file.Close() }()
 	decoder := yaml.NewDecoder(file)
 	decoder.KnownFields(true)
-	result := Data{}
+	result := Settings{}
 	if err := decoder.Decode(&result); err != nil {
 		return nil, fmt.Errorf("config.parse: %w", err)
 	}

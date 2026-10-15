@@ -42,23 +42,23 @@ func TestDPTAccessBadUnmarshal(t *testing.T) {
 
 func TestDPTAccessSet(t *testing.T) {
 	type testCase struct {
-		name    string
-		value   string
-		result  DPTAccess
-		wantErr bool
+		name          string
+		value         string
+		result        DPTAccess
+		errorExpected bool
 	}
 
 	testCases := []testCase{
 		{name: "Valid", value: "10:20:5:1", result: DPTAccess{Key: 10, ID: 20, Index: 5, AdditionalData: 1}},
 		{name: "Min", value: "0:0:0:0", result: DPTAccess{Key: 0, ID: 0, Index: 0, AdditionalData: 0}},
 		{name: "Max", value: "127:127:15:3", result: DPTAccess{Key: 127, ID: 127, Index: 15, AdditionalData: 3}},
-		{name: "KeyTooLarge", value: "128:0:0:0", wantErr: true},
-		{name: "IDTooLarge", value: "0:128:0:0", wantErr: true},
-		{name: "IndexTooLarge", value: "0:0:16:0", wantErr: true},
-		{name: "AddDataTooLarge", value: "0:0:0:4", wantErr: true},
-		{name: "TooFewParts", value: "1:2:3", wantErr: true},
-		{name: "TooManyParts", value: "1:2:3:4:5", wantErr: true},
-		{name: "InvalidKey", value: "abc:0:0:0", wantErr: true},
+		{name: "KeyTooLarge", value: "128:0:0:0", errorExpected: true},
+		{name: "IDTooLarge", value: "0:128:0:0", errorExpected: true},
+		{name: "IndexTooLarge", value: "0:0:16:0", errorExpected: true},
+		{name: "AddDataTooLarge", value: "0:0:0:4", errorExpected: true},
+		{name: "TooFewParts", value: "1:2:3", errorExpected: true},
+		{name: "TooManyParts", value: "1:2:3:4:5", errorExpected: true},
+		{name: "InvalidKey", value: "abc:0:0:0", errorExpected: true},
 	}
 
 	for _, tc := range testCases {
@@ -66,7 +66,7 @@ func TestDPTAccessSet(t *testing.T) {
 			t.Parallel()
 			res := DPTAccess{}
 			err := res.Set(tc.value)
-			if tc.wantErr {
+			if tc.errorExpected {
 				assert.Error(t, err)
 				return
 			}

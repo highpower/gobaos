@@ -12,7 +12,7 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-type MqttSettings interface {
+type MqttSettingsProvider interface {
 	Host() string
 	User() string
 	Password() string
@@ -48,9 +48,9 @@ func newTLSConfig(caCert string) (*tls.Config, error) {
 	return &result, nil
 }
 
-func plainClientOptions(s MqttSettings, ch mqtt.OnConnectHandler) (mqtt.ClientOptions, error) {
+func plainClientOptions(sp MqttSettingsProvider, ch mqtt.OnConnectHandler) (mqtt.ClientOptions, error) {
 	return mqtt.ClientOptions{
-		Servers:        []*url.URL{{Scheme: "tcp", Host: s.Host()}},
+		Servers:        []*url.URL{{Scheme: "tcp", Host: sp.Host()}},
 		AutoReconnect:  true,
 		OnConnect:      ch,
 		ClientID:       "thermo-watchdog",
@@ -58,18 +58,18 @@ func plainClientOptions(s MqttSettings, ch mqtt.OnConnectHandler) (mqtt.ClientOp
 		PingTimeout:    10 * time.Second,
 		ConnectTimeout: time.Second,
 		KeepAlive:      10,
-		Username:       s.User(),
-		Password:       s.Password(),
+		Username:       sp.User(),
+		Password:       sp.Password(),
 	}, nil
 }
 
-func secureClientOptions(s MqttSettings, handler mqtt.OnConnectHandler) (mqtt.ClientOptions, error) {
-	tc, err := newTLSConfig(s.CaCert())
+func secureClientOptions(sp MqttSettingsProvider, handler mqtt.OnConnectHandler) (mqtt.ClientOptions, error) {
+	tc, err := newTLSConfig(sp.CaCert())
 	if err != nil {
 		return mqtt.ClientOptions{}, fmt.Errorf("can not create tls config: %w", err)
 	}
 	return mqtt.ClientOptions{
-		Servers:        []*url.URL{{Scheme: "tcps", Host: s.Host()}},
+		Servers:        []*url.URL{{Scheme: "tcps", Host: sp.Host()}},
 		AutoReconnect:  true,
 		OnConnect:      handler,
 		ClientID:       "thermo-watchdog",
@@ -78,20 +78,20 @@ func secureClientOptions(s MqttSettings, handler mqtt.OnConnectHandler) (mqtt.Cl
 		ConnectTimeout: time.Second,
 		KeepAlive:      10,
 		TLSConfig:      tc,
-		Username:       s.User(),
-		Password:       s.Password(),
+		Username:       sp.User(),
+		Password:       sp.Password(),
 	}, nil
 }
 
-func newClientOptions(s MqttSettings, handler mqtt.OnConnectHandler) (mqtt.ClientOptions, error) {
-	if s.CaCert() == "" {
-		return plainClientOptions(s, handler)
+func newClientOptions(sp MqttSettingsProvider, handler mqtt.OnConnectHandler) (mqtt.ClientOptions, error) {
+	if sp.CaCert() == "" {
+		return plainClientOptions(sp, handler)
 	}
-	return secureClientOptions(s, handler)
+	return secureClientOptions(sp, handler)
 }
 
-func connect(s MqttSettings, handler mqtt.OnConnectHandler) (mqtt.Client, error) {
-	opts, err := newClientOptions(s, handler)
+func connect(sp MqttSettingsProvider, handler mqtt.OnConnectHandler) (mqtt.Client, error) {
+	opts, err := newClientOptions(sp, handler)
 	if err != nil {
 		return nil, fmt.Errorf("mqtt.connect: %w", err)
 	}

@@ -115,10 +115,10 @@ func (h Handlers) Float4Byte(ids []DatapointID, f func(id DatapointID, value flo
 }
 
 // Access registers a handler for access-control DPT indications.
-func (h Handlers) Access(ids []DatapointID, f func(value Access) error) {
+func (h Handlers) Access(ids []DatapointID, f func(id DatapointID, value Access) error) {
 	register[knxtypes.DPTAccess](h, ids, func(id DatapointID, dpt knxtypes.DPTAccess) error {
 		access := Access{Key: dpt.Key, ID: dpt.ID, Index: dpt.Index, AdditionalData: dpt.AdditionalData}
-		return f(access)
+		return f(id, access)
 	})
 }
 

@@ -20,13 +20,9 @@ type timeStruct struct {
 	second uint8
 }
 
-var weekdays = map[uint8]string{
-	1: "mon", 2: "tue", 3: "wed", 4: "thu", 5: "fri", 6: "sat", 7: "sun",
-}
-
 // Get returns the time as a string, optionally prefixed by the weekday.
 func (t *DPTTimeOfDay) Get() string {
-	if s, ok := weekdays[t.Weekday]; ok {
+	if s, ok := weekdayName(t.Weekday); ok {
 		return fmt.Sprintf("%s,%02d:%02d:%02d", s, t.Hour, t.Minute, t.Second)
 	}
 	return fmt.Sprintf("%02d:%02d:%02d", t.Hour, t.Minute, t.Second)
@@ -77,7 +73,7 @@ func (t *DPTTimeOfDay) Valid() error {
 
 // String returns a human-readable representation of DPTTimeOfDay.
 func (t *DPTTimeOfDay) String() string {
-	wd := weekdays[t.Weekday]
+	wd, _ := weekdayName(t.Weekday)
 	return fmt.Sprintf("dptTimeOfDay['%s',%d:%d:%d]", wd, t.Hour, t.Minute, t.Second)
 }
 
@@ -118,12 +114,46 @@ func parseTime(s string) (timeStruct, error) {
 }
 
 func parseWeekday(s string) (uint8, error) {
-	for k, v := range weekdays {
-		if strings.EqualFold(s, v) {
-			return k, nil
-		}
+	switch strings.ToLower(s) {
+	case "mon":
+		return 1, nil
+	case "tue":
+		return 2, nil
+	case "wed":
+		return 3, nil
+	case "thu":
+		return 4, nil
+	case "fri":
+		return 5, nil
+	case "sat":
+		return 6, nil
+	case "sun":
+		return 7, nil
+	default:
+		return 0, fmt.Errorf("%w: timeOfDay %s", ErrBadValue, s)
 	}
-	return 0, fmt.Errorf("%w: timeOfDay %s", ErrBadValue, s)
+}
+
+// weekdayName returns the English abbreviation for a KNX weekday number (1..7).
+func weekdayName(n uint8) (string, bool) {
+	switch n {
+	case 1:
+		return "mon", true
+	case 2:
+		return "tue", true
+	case 3:
+		return "wed", true
+	case 4:
+		return "thu", true
+	case 5:
+		return "fri", true
+	case 6:
+		return "sat", true
+	case 7:
+		return "sun", true
+	default:
+		return "", false
+	}
 }
 
 func validTime(hour, minute, second uint8) error {

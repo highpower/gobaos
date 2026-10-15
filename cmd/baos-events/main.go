@@ -3,21 +3,22 @@ package main
 import (
 	"flag"
 	"fmt"
-	"gobaos/pkg/baos"
-	"gobaos/pkg/ft12"
 	"io"
 	"os"
 	"time"
+
+	"gobaos/pkg/baos"
+	"gobaos/pkg/ft12"
 )
 
 func run(name string) error {
 	c, err := newConfig(name)
 	if err != nil {
-		return err
+		return fmt.Errorf("load config: %w", err)
 	}
 	conn, err := ft12.NewConn(c.Device, ft12.WithTimeout(50*time.Millisecond))
 	if err != nil {
-		return err
+		return fmt.Errorf("open device %q: %w", c.Device, err)
 	}
 	defer func() { _ = conn.Close() }()
 
@@ -41,7 +42,7 @@ func runWith(conn *ft12.Conn, handlers baos.Handlers) error {
 	worker := baos.NewWorker(conn, baos.WithHandlers(handlers))
 	defer worker.Stop()
 	if err := worker.Run(); err != nil {
-		return err
+		return fmt.Errorf("worker run: %w", err)
 	}
 	return nil
 }

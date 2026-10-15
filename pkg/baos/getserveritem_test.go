@@ -156,16 +156,16 @@ func TestGetServerItemResMarshal(t *testing.T) {
 
 func TestGetServerItemResUnmarshalErrors(t *testing.T) {
 	type testCase struct {
-		name        string
-		data        []byte
-		errExpected bool
+		name          string
+		data          []byte
+		errorExpected bool
 	}
 	testCases := []testCase{
-		{name: "TooShort", data: []byte{0xF0, 0x81, 0x00}, errExpected: true},
-		{name: "WrongService", data: []byte{0x00, 0x81, 0x00, 0x00, 0x00, 0x00}, errExpected: true},
-		{name: "WrongSubService", data: []byte{0xF0, 0x00, 0x00, 0x00, 0x00, 0x00}, errExpected: true},
-		{name: "TruncatedItems", data: []byte{0xF0, 0x81, 0x00, 0x00, 0x00, 0x01}, errExpected: true},
-		{name: "ItemDataTooShort", data: []byte{0xF0, 0x81, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x02}, errExpected: true},
+		{name: "TooShort", data: []byte{0xF0, 0x81, 0x00}, errorExpected: true},
+		{name: "WrongService", data: []byte{0x00, 0x81, 0x00, 0x00, 0x00, 0x00}, errorExpected: true},
+		{name: "WrongSubService", data: []byte{0xF0, 0x00, 0x00, 0x00, 0x00, 0x00}, errorExpected: true},
+		{name: "TruncatedItems", data: []byte{0xF0, 0x81, 0x00, 0x00, 0x00, 0x01}, errorExpected: true},
+		{name: "ItemDataTooShort", data: []byte{0xF0, 0x81, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x02}, errorExpected: true},
 	}
 
 	for _, tc := range testCases {
@@ -173,7 +173,7 @@ func TestGetServerItemResUnmarshalErrors(t *testing.T) {
 			t.Parallel()
 			r := GetServerItemRes{}
 			err := r.UnmarshalBinary(tc.data)
-			if tc.errExpected {
+			if tc.errorExpected {
 				assert.Error(t, err)
 				return
 			}

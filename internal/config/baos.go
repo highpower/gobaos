@@ -1,10 +1,10 @@
 package config
 
-type baosData struct {
+type baosSettings struct {
 	Device             string `yaml:"device"`
 	IndicationHandlers int    `yaml:"indication-handlers"`
 }
 
-func (d *baosData) valid() error {
+func (s *baosSettings) valid() error {
 	return nil
 }

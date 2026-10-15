@@ -5,15 +5,15 @@ import (
 	"encoding"
 	"encoding/binary"
 	"fmt"
+	"sync/atomic"
+
 	"gobaos/pkg/ft12"
 	"gobaos/pkg/knxtypes"
-	"sync/atomic"
 )
 
 // Worker handles BAOS communication over an FT1.2 connection.
 type Worker struct {
 	conn        *ft12.Conn
-	current     *call
 	buffer      []byte
 	errorOrStop chan errorOrStop
 	indications chan DatapointValueInd
@@ -57,6 +57,8 @@ type valueIndicationOption struct {
 }
 
 type stopperFunc func()
+
+const defaultIndicationHandlerCount = 5
 
 // Run starts the worker's event loop. It blocks until Stop is called or an error occurs.
 func (w *Worker) Run() error {
@@ -157,7 +159,7 @@ func (w *Worker) AllDescriptions(ctx context.Context) ([]DatapointDescription, e
 	if err != nil {
 		return nil, err
 	}
-	//TODO: add fetching functions instead of direct read
+	// TODO(o.obolenskiy): add fetching functions instead of direct read
 	maxID := binary.BigEndian.Uint16(item.Data)
 	return w.descriptions(ctx, 1, maxID)
 }
@@ -174,7 +176,7 @@ func (w *Worker) DescriptionString(ctx context.Context, id DatapointID) (string,
 
 	switch {
 	case current.err != nil:
-		return "", current.err
+		return "", fmt.Errorf("error in descriptionString request: %w", current.err)
 	case res.ErrorCode != 0:
 		return "", Error{res.ErrorCode}
 	case len(res.Strings) == 0:
@@ -195,7 +197,7 @@ func (w *Worker) ServerItem(ctx context.Context, id ItemID) (ServerItem, error) 
 
 	switch {
 	case current.err != nil:
-		return ServerItem{}, current.err
+		return ServerItem{}, fmt.Errorf("error in getServerItem request: %w", current.err)
 	case res.ErrorCode != 0:
 		return ServerItem{}, Error{res.ErrorCode}
 	case len(res.Items) == 0:
@@ -216,7 +218,7 @@ func (w *Worker) SetServerItem(ctx context.Context, id ItemID, data []byte) erro
 
 	switch {
 	case current.err != nil:
-		return current.err
+		return fmt.Errorf("error in setServerItem request: %w", current.err)
 	case res.ErrorCode != 0:
 		return Error{res.ErrorCode}
 	}
@@ -238,7 +240,7 @@ func (w *Worker) descriptions(ctx context.Context, start DatapointID, number uin
 
 		switch {
 		case current.err != nil:
-			return nil, current.err
+			return nil, fmt.Errorf("error in getDatapointDescription request: %w", current.err)
 		case res.ErrorCode == NoElementFound:
 			return result, nil
 		case res.ErrorCode != 0:
@@ -254,14 +256,14 @@ func (w *Worker) descriptions(ctx context.Context, start DatapointID, number uin
 func (w *Worker) handleCall(current *call) error {
 	data, err := current.request.MarshalBinary()
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal request error: %w", err)
 	}
 	if _, err := w.conn.Write(data); err != nil {
-		return err
+		return fmt.Errorf("write request error: %w", err)
 	}
 	for w.conn.Available() == 0 {
 		if err := w.conn.Poll(); err != nil {
-			return err
+			return fmt.Errorf("handleCall poll error: %w", err)
 		}
 	}
 	if cap(w.buffer) < w.conn.Available() {
@@ -269,7 +271,7 @@ func (w *Worker) handleCall(current *call) error {
 	}
 	w.buffer = w.buffer[:w.conn.Available()]
 	if _, err := w.conn.Read(w.buffer); err != nil {
-		return err
+		return fmt.Errorf("read response error: %w", err)
 	}
 	if err := current.response.UnmarshalBinary(w.buffer); err != nil {
 		current.err = err
@@ -280,21 +282,21 @@ func (w *Worker) handleCall(current *call) error {
 
 func (w *Worker) handleIndication() error {
 	if err := w.conn.Poll(); err != nil {
-		return err
+		return fmt.Errorf("handleIndication poll error: %w", err)
 	}
 	if cap(w.buffer) < w.conn.Available() {
 		w.buffer = make([]byte, 0, w.conn.Available())
 	}
 	w.buffer = w.buffer[:w.conn.Available()]
 	if _, err := w.conn.Read(w.buffer); err != nil {
-		return err
+		return fmt.Errorf("read indication error: %w", err)
 	}
 	if !IsDatapointValueInd(w.buffer) {
 		return nil
 	}
 	indication := DatapointValueInd{}
 	if err := indication.UnmarshalBinary(w.buffer); err != nil {
-		return err
+		return fmt.Errorf("unmarshal indication error: %w", err)
 	}
 	w.indications <- indication
 	return nil
@@ -351,15 +353,15 @@ func (o valueIndicationOption) OnIndication(id DatapointID, data []byte) error {
 
 // NewWorker creates a Worker backed by the given FT1.2 connection.
 func NewWorker(conn *ft12.Conn, options ...WorkerOption) *Worker {
+
 	result := Worker{
 		conn:        conn,
-		current:     nil,
 		buffer:      nil,
 		errorOrStop: make(chan errorOrStop),
 		indications: make(chan DatapointValueInd),
 		calls:       make(chan *call),
 		handler:     defaultHandler{},
-		goroutines:  5,
+		goroutines:  defaultIndicationHandlerCount,
 	}
 	result.stopper.Store(stopperFunc(result.stop))
 	for _, option := range options {

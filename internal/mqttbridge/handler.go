@@ -3,24 +3,25 @@ package mqttbridge
 import (
 	"context"
 	"fmt"
+	"strconv"
+
 	"gobaos/internal/pattern"
 	"gobaos/pkg/baos"
 	"gobaos/pkg/knxtypes"
-	"strconv"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-type DatapointsSettings interface {
+type DatapointsSettingsProvider interface {
 	Pattern() string
 	UpdatablePattern() string
 	ReadOnlyContains(id baos.DatapointID) bool
 	UpdatableContains(id baos.DatapointID) bool
 }
 
-type Settings interface {
-	MqttSettings
-	DatapointsSettings
+type SettingsProvider interface {
+	MqttSettingsProvider
+	DatapointsSettingsProvider
 }
 
 type Handler struct {
@@ -102,7 +103,7 @@ func (o withLoggerOption) apply(b *Handler) {
 	b.log = o.log
 }
 
-func NewHandler(worker *baos.Worker, s Settings, opts ...BridgeOption) (*Handler, error) {
+func NewHandler(worker *baos.Worker, sp SettingsProvider, opts ...BridgeOption) (*Handler, error) {
 	ctx := context.Background()
 	desc, err := worker.AllDescriptions(ctx)
 	if err != nil {
@@ -117,10 +118,10 @@ func NewHandler(worker *baos.Worker, s Settings, opts ...BridgeOption) (*Handler
 	for _, opt := range opts {
 		opt.apply(&result)
 	}
-	if err := result.setupDescriptions(s, desc); err != nil {
+	if err := result.setupDescriptions(sp, desc); err != nil {
 		return nil, fmt.Errorf("bridge.new: can not setup descriptions: %w", err)
 	}
-	client, err := connect(s, result.onConnect)
+	client, err := connect(sp, result.onConnect)
 	if err != nil {
 		return nil, fmt.Errorf("bridge.new: can not connect to mqtt: %w", err)
 	}
@@ -128,22 +129,22 @@ func NewHandler(worker *baos.Worker, s Settings, opts ...BridgeOption) (*Handler
 	return &result, nil
 }
 
-func (h *Handler) setupDescriptions(s DatapointsSettings, desc []baos.DatapointDescription) error {
+func (h *Handler) setupDescriptions(sp DatapointsSettingsProvider, desc []baos.DatapointDescription) error {
 	h.log.Debugf("setupDescriptions: entering")
 	defer h.log.Debugf("setupDescriptions: exiting")
-	p, err := pattern.Parse(s.Pattern())
+	p, err := pattern.Parse(sp.Pattern())
 	if err != nil {
 		return fmt.Errorf("can not parse pattern: %w", err)
 	}
-	up, err := pattern.Parse(s.UpdatablePattern())
+	up, err := pattern.Parse(sp.UpdatablePattern())
 	if err != nil {
 		return fmt.Errorf("can not parse updatable pattern: %w", err)
 	}
 	for _, desc := range desc {
 		switch {
-		case s.ReadOnlyContains(desc.ID):
+		case sp.ReadOnlyContains(desc.ID):
 			h.readOnly[desc.ID] = readOnlyItem{topic: p.Apply(strconv.Itoa(int(desc.ID))), code: desc.Code}
-		case s.UpdatableContains(desc.ID):
+		case sp.UpdatableContains(desc.ID):
 			topic := up.Apply(strconv.Itoa(int(desc.ID)))
 			h.updatable[topic] = updatableItem{id: desc.ID, code: desc.Code}
 		}

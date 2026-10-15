@@ -79,15 +79,15 @@ func TestGetDescriptionStringReqMarshal(t *testing.T) {
 
 func TestGetDescriptionStringReqUnmarshalErrors(t *testing.T) {
 	type testCase struct {
-		name        string
-		data        []byte
-		errExpected bool
+		name          string
+		data          []byte
+		errorExpected bool
 	}
 	testCases := []testCase{
-		{name: "TooShort", data: []byte{0xF0, 0x04, 0x00}, errExpected: true},
-		{name: "WrongService", data: []byte{0x00, 0x04, 0x00, 0x00, 0x00, 0x00}, errExpected: true},
-		{name: "WrongSubService", data: []byte{0xF0, 0x00, 0x00, 0x00, 0x00, 0x00}, errExpected: true},
-		{name: "Valid", data: []byte{0xF0, 0x04, 0x00, 0x05, 0x00, 0x0A}, errExpected: false},
+		{name: "TooShort", data: []byte{0xF0, 0x04, 0x00}, errorExpected: true},
+		{name: "WrongService", data: []byte{0x00, 0x04, 0x00, 0x00, 0x00, 0x00}, errorExpected: true},
+		{name: "WrongSubService", data: []byte{0xF0, 0x00, 0x00, 0x00, 0x00, 0x00}, errorExpected: true},
+		{name: "Valid", data: []byte{0xF0, 0x04, 0x00, 0x05, 0x00, 0x0A}, errorExpected: false},
 	}
 
 	for _, tc := range testCases {
@@ -95,7 +95,7 @@ func TestGetDescriptionStringReqUnmarshalErrors(t *testing.T) {
 			t.Parallel()
 			r := GetDescriptionStringReq{}
 			err := r.UnmarshalBinary(tc.data)
-			if tc.errExpected {
+			if tc.errorExpected {
 				assert.Error(t, err)
 				return
 			}
@@ -182,17 +182,17 @@ func TestGetDescriptionStringResMarshal(t *testing.T) {
 
 func TestGetDescriptionStringResUnmarshalErrors(t *testing.T) {
 	type testCase struct {
-		name        string
-		data        []byte
-		errExpected bool
+		name          string
+		data          []byte
+		errorExpected bool
 	}
 	testCases := []testCase{
-		{name: "TooShort", data: []byte{0xF0, 0x84, 0x00}, errExpected: true},
-		{name: "WrongService", data: []byte{0x00, 0x84, 0x00, 0x00, 0x00, 0x00}, errExpected: true},
-		{name: "WrongSubService", data: []byte{0xF0, 0x00, 0x00, 0x00, 0x00, 0x00}, errExpected: true},
-		{name: "TruncatedStrings", data: []byte{0xF0, 0x84, 0x00, 0x00, 0x00, 0x01}, errExpected: true},
-		{name: "StringDataTooShort", data: []byte{0xF0, 0x84, 0x00, 0x00, 0x00, 0x01, 0x00, 0x05, 0x01}, errExpected: true},
-		{name: "ExtraBytes", data: []byte{0xF0, 0x84, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0xAB, 0xCD, 0xEF}, errExpected: true},
+		{name: "TooShort", data: []byte{0xF0, 0x84, 0x00}, errorExpected: true},
+		{name: "WrongService", data: []byte{0x00, 0x84, 0x00, 0x00, 0x00, 0x00}, errorExpected: true},
+		{name: "WrongSubService", data: []byte{0xF0, 0x00, 0x00, 0x00, 0x00, 0x00}, errorExpected: true},
+		{name: "TruncatedStrings", data: []byte{0xF0, 0x84, 0x00, 0x00, 0x00, 0x01}, errorExpected: true},
+		{name: "StringDataTooShort", data: []byte{0xF0, 0x84, 0x00, 0x00, 0x00, 0x01, 0x00, 0x05, 0x01}, errorExpected: true},
+		{name: "ExtraBytes", data: []byte{0xF0, 0x84, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0xAB, 0xCD, 0xEF}, errorExpected: true},
 	}
 
 	for _, tc := range testCases {
@@ -200,7 +200,7 @@ func TestGetDescriptionStringResUnmarshalErrors(t *testing.T) {
 			t.Parallel()
 			r := GetDescriptionStringRes{}
 			err := r.UnmarshalBinary(tc.data)
-			if tc.errExpected {
+			if tc.errorExpected {
 				assert.Error(t, err)
 				return
 			}

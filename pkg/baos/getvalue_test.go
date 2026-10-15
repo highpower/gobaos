@@ -93,15 +93,15 @@ func TestGetDatapointValueReqMarshal(t *testing.T) {
 
 func TestGetDatapointValueReqUnmarshalErrors(t *testing.T) {
 	type testCase struct {
-		name        string
-		data        []byte
-		errExpected bool
+		name          string
+		data          []byte
+		errorExpected bool
 	}
 
 	testCases := []testCase{
-		{name: "TooShort", data: []byte{0xF0, 0x05, 0x00}, errExpected: true},
-		{name: "WrongService", data: []byte{0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00}, errExpected: true},
-		{name: "WrongSubService", data: []byte{0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, errExpected: true},
+		{name: "TooShort", data: []byte{0xF0, 0x05, 0x00}, errorExpected: true},
+		{name: "WrongService", data: []byte{0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00}, errorExpected: true},
+		{name: "WrongSubService", data: []byte{0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, errorExpected: true},
 	}
 
 	for _, tc := range testCases {
@@ -109,7 +109,7 @@ func TestGetDatapointValueReqUnmarshalErrors(t *testing.T) {
 			t.Parallel()
 			r := GetDatapointValueReq{}
 			err := r.UnmarshalBinary(tc.data)
-			if tc.errExpected {
+			if tc.errorExpected {
 				assert.Error(t, err)
 				return
 			}
@@ -212,17 +212,17 @@ func TestGetDatapointValueResMarshal(t *testing.T) {
 
 func TestGetDatapointValueResUnmarshalErrors(t *testing.T) {
 	type testCase struct {
-		name        string
-		data        []byte
-		errExpected bool
+		name          string
+		data          []byte
+		errorExpected bool
 	}
 
 	testCases := []testCase{
-		{name: "TooShort", data: []byte{0xF0, 0x85, 0x00}, errExpected: true},
-		{name: "WrongService", data: []byte{0x00, 0x85, 0x00, 0x00, 0x00, 0x00}, errExpected: true},
-		{name: "WrongSubService", data: []byte{0xF0, 0x00, 0x00, 0x00, 0x00, 0x00}, errExpected: true},
-		{name: "TruncatedValues", data: []byte{0xF0, 0x85, 0x00, 0x00, 0x00, 0x01}, errExpected: true},
-		{name: "InvalidLength", data: []byte{0xF0, 0x85, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x10, 0xFF}, errExpected: true},
+		{name: "TooShort", data: []byte{0xF0, 0x85, 0x00}, errorExpected: true},
+		{name: "WrongService", data: []byte{0x00, 0x85, 0x00, 0x00, 0x00, 0x00}, errorExpected: true},
+		{name: "WrongSubService", data: []byte{0xF0, 0x00, 0x00, 0x00, 0x00, 0x00}, errorExpected: true},
+		{name: "TruncatedValues", data: []byte{0xF0, 0x85, 0x00, 0x00, 0x00, 0x01}, errorExpected: true},
+		{name: "InvalidLength", data: []byte{0xF0, 0x85, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x10, 0xFF}, errorExpected: true},
 	}
 
 	for _, tc := range testCases {
@@ -230,7 +230,7 @@ func TestGetDatapointValueResUnmarshalErrors(t *testing.T) {
 			t.Parallel()
 			r := GetDatapointValueRes{}
 			err := r.UnmarshalBinary(tc.data)
-			if tc.errExpected {
+			if tc.errorExpected {
 				assert.Error(t, err)
 				return
 			}

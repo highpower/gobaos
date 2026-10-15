@@ -2,9 +2,12 @@
 
 package ft12
 
-import "fmt"
-import "os"
-import "golang.org/x/sys/unix"
+import (
+	"fmt"
+	"os"
+
+	"golang.org/x/sys/unix"
+)
 
 func flush(file *os.File) error {
 	st, err := file.Stat()

@@ -1,10 +1,11 @@
 package baos
 
 import (
-	"gobaos/pkg/ft12"
 	"os"
 	"sync"
 	"testing"
+
+	"gobaos/pkg/ft12"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

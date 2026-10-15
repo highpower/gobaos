@@ -44,7 +44,7 @@ func (c *DPTChar) String() string {
 }
 
 // MarshalBinary encodes DPTChar into a 1-byte payload.
-func (c *DPTChar) MarshalBinary() (data []byte, err error) {
+func (c *DPTChar) MarshalBinary() ([]byte, error) {
 	return []byte{byte(c.Value)}, nil
 }
 

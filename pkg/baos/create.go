@@ -2,6 +2,7 @@ package baos
 
 import (
 	"context"
+
 	"gobaos/pkg/knxtypes"
 )
 

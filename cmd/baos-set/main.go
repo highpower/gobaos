@@ -5,12 +5,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"gobaos/pkg/baos"
-	"gobaos/pkg/ft12"
 	"io"
 	"os"
 	"strconv"
 	"time"
+
+	"gobaos/pkg/baos"
+	"gobaos/pkg/ft12"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -18,11 +19,11 @@ import (
 func run(device string, args []string) error {
 	id, err := strconv.ParseUint(args[0], 10, 16)
 	if err != nil {
-		return err
+		return fmt.Errorf("parse datapoint id: %w", err)
 	}
 	conn, err := ft12.NewConn(device, ft12.WithTimeout(50*time.Millisecond))
 	if err != nil {
-		return err
+		return fmt.Errorf("open device %q: %w", device, err)
 	}
 	defer func() { _ = conn.Close() }()
 	return runWith(conn, baos.DatapointID(id), args[1])
@@ -46,13 +47,13 @@ func runWithGroup(g *errgroup.Group, conn *ft12.Conn, id baos.DatapointID, value
 
 	dpt, err := baos.CreateForID(ctx, worker, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("create dpt for datapoint %d: %w", id, err)
 	}
 	if err := dpt.Set(value); err != nil {
-		return err
+		return fmt.Errorf("set datapoint %d value: %w", id, err)
 	}
 	if err := worker.Set(ctx, id, dpt); err != nil {
-		return err
+		return fmt.Errorf("write datapoint %d: %w", id, err)
 	}
 	return nil
 }

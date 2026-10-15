@@ -4,8 +4,9 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"gobaos/pkg/knxtypes"
 	"slices"
+
+	"gobaos/pkg/knxtypes"
 )
 
 // DatapointDescription holds the static description of a single BAOS datapoint.

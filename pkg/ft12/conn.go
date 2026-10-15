@@ -36,6 +36,7 @@ type timeoutOption time.Duration
 type fileOpenFuncOption FileOpenFunc
 
 const MaxMessageLength = 254
+const defaultPollTimeout = 100 * time.Millisecond
 
 // Poll reads incoming FT1.2 frames from the serial connection and buffers the payload for later retrieval via Read.
 func (c *Conn) Poll() error {
@@ -137,39 +138,39 @@ func (c *Conn) writeResetRequest() error {
 	return nil
 }
 
-func (c *Conn) readFrameHeader() (byte, error) {
-	firstByte, err := c.readByte()
+func (c *Conn) readFrameHeader(buffer []byte) (byte, error) {
+	firstByte, err := c.readByte(buffer)
 	switch {
 	case err != nil:
-		return 0, fmt.Errorf("conn.readFrameToBuffer: %w", err)
-	case firstByte == 0:  // no data
+		return 0, fmt.Errorf("conn.readFrameHeader: %w", err)
+	case firstByte == 0: // no data
 		return 0, nil
 	case firstByte == 0xE5: // acknowledgement, 1 byte
 		return 0, nil
-	case firstByte == 0x10: // reset indication, 4 byte
-		return 0, c.readResetIndicationRest()
 	case firstByte == 0x68: // data, 4 byte
-		return c.readFrameRest()
+		return c.readFrameRest(buffer[1:4])
+	case firstByte == 0x10: // reset indication, 4 byte
+		return 0, c.readResetIndicationRest(buffer[1:4])
 	default:
 		return 0, fmt.Errorf("conn.readFrameHeader: unknown first byte 0x%02x", firstByte)
 	}
 }
 
 func (c *Conn) readFrameToBuffer(buffer []byte) (int, error) {
-	l, err := c.readFrameHeader()
+	length, err := c.readFrameHeader(buffer)
 	switch {
 	case err != nil:
 		return 0, fmt.Errorf("conn.readFrameToBuffer: %w", err)
-	case l == 0:
+	case length == 0:
 		return 0, nil
 	}
-	if _, err = io.ReadFull(c.file, buffer[:l+2]); err != nil {
+	if _, err = io.ReadFull(c.file, buffer[:length+2]); err != nil {
 		return 0, err
 	}
 	if err := c.writeAck(); err != nil {
 		return 0, err
 	}
-	data, err := c.unmarshalFrame(buffer[:l+2])
+	data, err := c.unmarshalFrame(buffer[:length+2])
 	if err != nil {
 		return 0, err
 	}
@@ -177,13 +178,12 @@ func (c *Conn) readFrameToBuffer(buffer []byte) (int, error) {
 	return 0, nil
 }
 
-func (c *Conn) readByte() (byte, error) {
-	buffer := [1]byte{}
+func (c *Conn) readByte(buffer []byte) (byte, error) {
 	if err := setTimeout(c.file, c.pollTimeout); err != nil {
 		return 0, err
 	}
 	defer func() { _ = clearTimeout(c.file) }()
-	n, err := c.file.Read(buffer[:])
+	n, err := c.file.Read(buffer[0:1])
 	var ne net.Error
 	switch {
 	case (errors.As(err, &ne) && ne.Timeout()) || n == 0:
@@ -212,9 +212,8 @@ func (c *Conn) unmarshalFrame(data []byte) ([]byte, error) {
 	return data[1 : len(data)-2], nil
 }
 
-func (c *Conn) readFrameRest() (byte, error) {
-	buffer := [3]byte{}
-	if _, err := io.ReadFull(c.file, buffer[:]); err != nil {
+func (c *Conn) readFrameRest(buffer []byte) (byte, error) {
+	if _, err := io.ReadFull(c.file, buffer); err != nil {
 		return 0, err
 	}
 	if buffer[0] != buffer[1] || buffer[len(buffer)-1] != 0x68 {
@@ -223,12 +222,11 @@ func (c *Conn) readFrameRest() (byte, error) {
 	return buffer[0], nil
 }
 
-func (c *Conn) readResetIndicationRest() error {
-	buffer := [3]byte{}
-	if _, err := io.ReadFull(c.file, buffer[:]); err != nil {
+func (c *Conn) readResetIndicationRest(buffer []byte) error {
+	if _, err := io.ReadFull(c.file, buffer); err != nil {
 		return err
 	}
-	if !bytes.Equal(buffer[:], []byte{0xC0, 0xC0, 0x16}) {
+	if !bytes.Equal(buffer, []byte{0xC0, 0xC0, 0x16}) {
 		return fmt.Errorf("read reset indication: %w", ErrInvalid)
 	}
 	c.needReset = true
@@ -253,13 +251,14 @@ func (f fileOpenFuncOption) apply(conn *Conn) {
 
 // NewConn opens an FT1.2 connection on the named TTY device.
 func NewConn(ttyName string, options ...ConnOption) (*Conn, error) {
+
 	result := Conn{needReset: true,
 		incoming:     bytes.Buffer{},
 		incomingEven: false,
 		outgoing:     nil,
 		outgoingEven: false,
 		opener:       defaultOpenFile,
-		pollTimeout:  100 * time.Millisecond}
+		pollTimeout:  defaultPollTimeout}
 	for _, option := range options {
 		option.apply(&result)
 	}

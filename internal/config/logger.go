@@ -8,16 +8,16 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-type loggerData struct {
+type loggerSettings struct {
 	Level  string `yaml:"level"`
 	Output string `yaml:"output"`
 }
 
-func (s *loggerData) String() string {
+func (s *loggerSettings) String() string {
 	return fmt.Sprintf("logger[level='%s',output='%s']", s.Level, s.Output)
 }
 
-func (s *loggerData) valid() error {
+func (s *loggerSettings) valid() error {
 	if _, err := zapcore.ParseLevel(s.Level); err != nil {
 		return fmt.Errorf("invalid log level: %w", err)
 	}

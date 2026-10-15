@@ -9,5 +9,4 @@ import (
 func TestParse(t *testing.T) {
 	_, err := Parse("testdata/config.yaml")
 	require.NoError(t, err)
-
 }
