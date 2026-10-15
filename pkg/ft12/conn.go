@@ -109,9 +109,8 @@ func (c *Conn) resetIfNeeded() error {
 }
 
 func (c *Conn) pollRead() error {
-	buffer := [260]byte{}
 	for {
-		n, err := c.readFrameToBuffer(buffer[:])
+		n, err := c.readFrameToBuffer()
 		switch {
 		case err != nil:
 			return err
@@ -138,8 +137,9 @@ func (c *Conn) writeResetRequest() error {
 	return nil
 }
 
-func (c *Conn) readFrameHeader(buffer []byte) (byte, error) {
-	firstByte, err := c.readByte(buffer)
+func (c *Conn) readFrameHeader() (byte, error) {
+	buffer := [4]byte{}
+	firstByte, err := c.readByte(buffer[0:1])
 	switch {
 	case err != nil:
 		return 0, fmt.Errorf("conn.readFrameHeader: %w", err)
@@ -156,14 +156,15 @@ func (c *Conn) readFrameHeader(buffer []byte) (byte, error) {
 	}
 }
 
-func (c *Conn) readFrameToBuffer(buffer []byte) (int, error) {
-	length, err := c.readFrameHeader(buffer)
+func (c *Conn) readFrameToBuffer() (int, error) {
+	length, err := c.readFrameHeader()
 	switch {
 	case err != nil:
 		return 0, fmt.Errorf("conn.readFrameToBuffer: %w", err)
 	case length == 0:
 		return 0, nil
 	}
+	buffer := [260]byte{}
 	if _, err = io.ReadFull(c.file, buffer[:length+2]); err != nil {
 		return 0, err
 	}
@@ -214,17 +215,17 @@ func (c *Conn) unmarshalFrame(data []byte) ([]byte, error) {
 
 func (c *Conn) readFrameRest(buffer []byte) (byte, error) {
 	if _, err := io.ReadFull(c.file, buffer); err != nil {
-		return 0, err
+		return 0, fmt.Errorf("read data frame error: %w", err)
 	}
 	if buffer[0] != buffer[1] || buffer[len(buffer)-1] != 0x68 {
-		return 0, fmt.Errorf("%w reset indication", ErrInvalid)
+		return 0, fmt.Errorf("%w data frame", ErrInvalid)
 	}
 	return buffer[0], nil
 }
 
 func (c *Conn) readResetIndicationRest(buffer []byte) error {
 	if _, err := io.ReadFull(c.file, buffer); err != nil {
-		return err
+		return fmt.Errorf("read reset indication error: %w", err)
 	}
 	if !bytes.Equal(buffer, []byte{0xC0, 0xC0, 0x16}) {
 		return fmt.Errorf("read reset indication: %w", ErrInvalid)
