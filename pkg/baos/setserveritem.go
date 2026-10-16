@@ -1,7 +1,6 @@
 package baos
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"slices"
@@ -9,59 +8,28 @@ import (
 
 // setServerItemReq is a request to write server items.
 type setServerItemReq struct {
-	Items []ServerItem
+	items []ServerItem
 }
 
 // setServerItemRes is a response confirming the set operation or reporting an error.
 type setServerItemRes struct {
-	StartItem     ItemID
-	NumberOfItems uint16
-	ErrorCode     ErrorCode
-}
-
-// Service returns the main service identifier.
-func (r *setServerItemReq) Service() byte {
-	return MainService
-}
-
-// SubService returns the sub-service identifier for the request.
-func (r *setServerItemReq) SubService() byte {
-	return SubServiceSetServerItemReq
-}
-
-// Equal reports whether r and other are identical requests.
-func (r *setServerItemReq) Equal(other *setServerItemReq) bool {
-	return slices.EqualFunc(r.Items, other.Items, func(i1, i2 ServerItem) bool {
-		return i1.Equal(&i2)
-	})
-}
-
-// String returns a human-readable representation of the request.
-func (r *setServerItemReq) String() string {
-	buffer := bytes.Buffer{}
-	buffer.WriteString("setServerItemReq[items=[")
-	for i, it := range r.Items {
-		buffer.WriteString(it.String())
-		if i != len(r.Items)-1 {
-			buffer.WriteString(",")
-		}
-	}
-	buffer.WriteString("]]")
-	return buffer.String()
+	startItem     ItemID
+	numberOfItems uint16
+	errorCode     ErrorCode
 }
 
 // MarshalBinary encodes the request into its BAOS wire format.
 func (r *setServerItemReq) MarshalBinary() ([]byte, error) {
-	result := make([]byte, 6+sizeInBytes(r.Items))
-	result[0] = MainService
-	result[1] = SubServiceSetServerItemReq
+	result := make([]byte, 6+sizeInBytes(r.items))
+	result[0] = mainService
+	result[1] = subServiceSetServerItemReq
 	startItem := ItemID(0)
-	if len(r.Items) > 0 {
-		startItem = r.Items[0].ID
+	if len(r.items) > 0 {
+		startItem = r.items[0].ID
 	}
 	binary.BigEndian.PutUint16(result[2:4], uint16(startItem))
-	binary.BigEndian.PutUint16(result[4:6], uint16(len(r.Items)))
-	if err := marshalItemsTo(result[6:], r.Items); err != nil {
+	binary.BigEndian.PutUint16(result[4:6], uint16(len(r.items)))
+	if err := marshalItemsTo(result[6:], r.items); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -72,50 +40,35 @@ func (r *setServerItemReq) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) < 6:
 		return fmt.Errorf("%w data length %d, expected at least %d", ErrInvalid, len(data), 6)
-	case data[0] != MainService:
-		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], MainService)
-	case data[1] != SubServiceSetServerItemReq:
-		return fmt.Errorf("%w data subservice %d, expected %d", ErrInvalid, data[1], SubServiceSetServerItemReq)
+	case data[0] != mainService:
+		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], mainService)
+	case data[1] != subServiceSetServerItemReq:
+		return fmt.Errorf("%w data subservice %d, expected %d", ErrInvalid, data[1], subServiceSetServerItemReq)
 	}
 	num := int(binary.BigEndian.Uint16(data[4:6]))
 	items, err := unmarshalItemsFrom(data[6:], num)
 	if err != nil {
 		return err
 	}
-	r.Items = items
+	r.items = items
 	return nil
 }
 
-// Service returns the main service identifier.
-func (r *setServerItemRes) Service() byte {
-	return MainService
-}
-
-// SubService returns the sub-service identifier for the response.
-func (r *setServerItemRes) SubService() byte {
-	return SubServiceSetServerItemRes
-}
-
-// Equal reports whether r and other are identical responses.
-func (r *setServerItemRes) Equal(other *setServerItemRes) bool {
-	return r.StartItem == other.StartItem && r.NumberOfItems == other.NumberOfItems &&
-		byte(r.ErrorCode) == byte(other.ErrorCode)
-}
-
-// String returns a human-readable representation of the response.
-func (r *setServerItemRes) String() string {
-	return fmt.Sprintf("setServerItemRes[startItem=%d,numberOfItems=%d,errorCode=%d]", r.StartItem,
-		r.NumberOfItems, r.ErrorCode)
+// equal reports whether r and other are identical requests.
+func (r *setServerItemReq) equal(other *setServerItemReq) bool {
+	return slices.EqualFunc(r.items, other.items, func(i1, i2 ServerItem) bool {
+		return i1.Equal(&i2)
+	})
 }
 
 // MarshalBinary encodes the response into its BAOS wire format.
 func (r *setServerItemRes) MarshalBinary() ([]byte, error) {
 	result := make([]byte, 7)
-	result[0] = MainService
-	result[1] = SubServiceSetServerItemRes
-	binary.BigEndian.PutUint16(result[2:4], uint16(r.StartItem))
-	binary.BigEndian.PutUint16(result[4:6], r.NumberOfItems)
-	result[6] = byte(r.ErrorCode)
+	result[0] = mainService
+	result[1] = subServiceSetServerItemRes
+	binary.BigEndian.PutUint16(result[2:4], uint16(r.startItem))
+	binary.BigEndian.PutUint16(result[4:6], r.numberOfItems)
+	result[6] = byte(r.errorCode)
 	return result, nil
 }
 
@@ -124,13 +77,19 @@ func (r *setServerItemRes) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) != 7:
 		return fmt.Errorf("%w data length %d, expected to be %d", ErrInvalid, len(data), 7)
-	case data[0] != MainService:
-		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], MainService)
-	case data[1] != SubServiceSetServerItemRes:
-		return fmt.Errorf("%w data subservice %d, expected %d", ErrInvalid, data[1], SubServiceSetServerItemRes)
+	case data[0] != mainService:
+		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], mainService)
+	case data[1] != subServiceSetServerItemRes:
+		return fmt.Errorf("%w data subservice %d, expected %d", ErrInvalid, data[1], subServiceSetServerItemRes)
 	}
-	r.StartItem = ItemID(binary.BigEndian.Uint16(data[2:4]))
-	r.NumberOfItems = binary.BigEndian.Uint16(data[4:6])
-	r.ErrorCode = ErrorCode(data[6])
+	r.startItem = ItemID(binary.BigEndian.Uint16(data[2:4]))
+	r.numberOfItems = binary.BigEndian.Uint16(data[4:6])
+	r.errorCode = ErrorCode(data[6])
 	return nil
+}
+
+// equal reports whether r and other are identical responses.
+func (r *setServerItemRes) equal(other *setServerItemRes) bool {
+	return r.startItem == other.startItem && r.numberOfItems == other.numberOfItems &&
+		byte(r.errorCode) == byte(other.errorCode)
 }

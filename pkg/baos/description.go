@@ -3,9 +3,8 @@ package baos
 import (
 	"encoding/binary"
 	"fmt"
-	"slices"
-
 	"gobaos/pkg/knxtypes"
+	"slices"
 )
 
 // DatapointDescription holds the static description of a single BAOS datapoint.
@@ -18,15 +17,15 @@ type DatapointDescription struct {
 
 // getDatapointDescriptionReq is a request to read datapoint descriptions.
 type getDatapointDescriptionReq struct {
-	StartDatapoint     DatapointID
-	NumberOfDatapoints uint16
+	startDatapoint     DatapointID
+	numberOfDatapoints uint16
 }
 
 // getDatapointDescriptionRes is a response containing datapoint descriptions or an error.
 type getDatapointDescriptionRes struct {
-	StartDatapoint DatapointID
-	Descriptions   []DatapointDescription
-	ErrorCode      ErrorCode
+	startDatapoint DatapointID
+	descriptions   []DatapointDescription
+	errorCode      ErrorCode
 }
 
 const (
@@ -34,46 +33,25 @@ const (
 	getDescriptionResHeaderSize = 6
 )
 
-// Equal reports whether d and other represent the same datapoint description.
-func (d *DatapointDescription) Equal(other *DatapointDescription) bool {
-	return d.ID == other.ID && d.ValueType == other.ValueType &&
-		d.ConfigFlags == other.ConfigFlags && d.Code == other.Code
-}
-
 // String returns a human-readable representation of the datapoint description.
 func (d *DatapointDescription) String() string {
 	return fmt.Sprintf("datapointDescription[id=%d,valueType=%d,configFlags=%d,dpt=%d]",
 		d.ID, d.ValueType, d.ConfigFlags, d.Code)
 }
 
-// Service returns the main service identifier.
-func (r *getDatapointDescriptionReq) Service() byte {
-	return MainService
-}
-
-// SubService returns the sub-service identifier.
-func (r *getDatapointDescriptionReq) SubService() byte {
-	return SubServiceGetDatapointDescriptionReq
-}
-
-// Equal reports whether r and other represent the same request.
-func (r *getDatapointDescriptionReq) Equal(other *getDatapointDescriptionReq) bool {
-	return r.StartDatapoint == other.StartDatapoint && r.NumberOfDatapoints == other.NumberOfDatapoints
-}
-
-// String returns a human-readable representation of the request.
-func (r *getDatapointDescriptionReq) String() string {
-	return fmt.Sprintf("getDatapointDescriptionReq[startDatapoint=%d,numberOfDatapoints=%d]",
-		r.StartDatapoint, r.NumberOfDatapoints)
+// Equal reports whether d and other represent the same datapoint description.
+func (d *DatapointDescription) Equal(other *DatapointDescription) bool {
+	return d.ID == other.ID && d.ValueType == other.ValueType &&
+		d.ConfigFlags == other.ConfigFlags && d.Code == other.Code
 }
 
 // MarshalBinary encodes the request into its BAOS wire format.
 func (r *getDatapointDescriptionReq) MarshalBinary() ([]byte, error) {
 	b := make([]byte, 6)
-	b[0] = MainService
-	b[1] = SubServiceGetDatapointDescriptionReq
-	binary.BigEndian.PutUint16(b[2:4], uint16(r.StartDatapoint))
-	binary.BigEndian.PutUint16(b[4:6], r.NumberOfDatapoints)
+	b[0] = mainService
+	b[1] = subServiceGetDatapointDescriptionReq
+	binary.BigEndian.PutUint16(b[2:4], uint16(r.startDatapoint))
+	binary.BigEndian.PutUint16(b[4:6], r.numberOfDatapoints)
 	return b, nil
 }
 
@@ -82,54 +60,39 @@ func (r *getDatapointDescriptionReq) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) != 6:
 		return fmt.Errorf("%w data length %d, expected %d", ErrInvalid, len(data), 6)
-	case data[0] != MainService:
-		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], MainService)
-	case data[1] != SubServiceGetDatapointDescriptionReq:
+	case data[0] != mainService:
+		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], mainService)
+	case data[1] != subServiceGetDatapointDescriptionReq:
 		return fmt.Errorf("%w data subservice %d, expected %d", ErrInvalid, data[1],
-			SubServiceGetDatapointDescriptionReq)
+			subServiceGetDatapointDescriptionReq)
 	}
-	r.StartDatapoint = DatapointID(binary.BigEndian.Uint16(data[2:4]))
-	r.NumberOfDatapoints = binary.BigEndian.Uint16(data[4:6])
+	r.startDatapoint = DatapointID(binary.BigEndian.Uint16(data[2:4]))
+	r.numberOfDatapoints = binary.BigEndian.Uint16(data[4:6])
 	return nil
 }
 
-// Service returns the main service identifier.
-func (r *getDatapointDescriptionRes) Service() byte {
-	return MainService
-}
-
-// SubService returns the sub-service identifier.
-func (r *getDatapointDescriptionRes) SubService() byte {
-	return SubServiceGetDatapointDescriptionRes
-}
-
-// Equal reports whether r and other represent the same response.
-func (r *getDatapointDescriptionRes) Equal(other *getDatapointDescriptionRes) bool {
-	if r.StartDatapoint != other.StartDatapoint || byte(r.ErrorCode) != byte(other.ErrorCode) {
-		return false
-	}
-	return slices.EqualFunc(r.Descriptions, other.Descriptions, func(v1, v2 DatapointDescription) bool {
-		return v1.Equal(&v2)
-	})
+// equal reports whether r and other represent the same request.
+func (r *getDatapointDescriptionReq) equal(other *getDatapointDescriptionReq) bool {
+	return r.startDatapoint == other.startDatapoint && r.numberOfDatapoints == other.numberOfDatapoints
 }
 
 // MarshalBinary encodes the response into its BAOS wire format.
 func (r *getDatapointDescriptionRes) MarshalBinary() ([]byte, error) {
-	if r.ErrorCode != 0 {
+	if r.errorCode != 0 {
 		result := make([]byte, getDescriptionResHeaderSize+1)
-		result[0] = MainService
-		result[1] = SubServiceGetDatapointDescriptionRes
-		binary.BigEndian.PutUint16(result[2:4], uint16(r.StartDatapoint))
+		result[0] = mainService
+		result[1] = subServiceGetDatapointDescriptionRes
+		binary.BigEndian.PutUint16(result[2:4], uint16(r.startDatapoint))
 		binary.BigEndian.PutUint16(result[4:6], uint16(0))
-		result[6] = byte(r.ErrorCode)
+		result[6] = byte(r.errorCode)
 		return result, nil
 	}
-	result := make([]byte, getDescriptionResHeaderSize+len(r.Descriptions)*datapointDescriptionSize)
-	result[0] = MainService
-	result[1] = SubServiceGetDatapointDescriptionRes
-	binary.BigEndian.PutUint16(result[2:4], uint16(r.StartDatapoint))
-	binary.BigEndian.PutUint16(result[4:6], uint16(len(r.Descriptions)))
-	if err := marshalDescriptionsTo(result[6:], r.Descriptions); err != nil {
+	result := make([]byte, getDescriptionResHeaderSize+len(r.descriptions)*datapointDescriptionSize)
+	result[0] = mainService
+	result[1] = subServiceGetDatapointDescriptionRes
+	binary.BigEndian.PutUint16(result[2:4], uint16(r.startDatapoint))
+	binary.BigEndian.PutUint16(result[4:6], uint16(len(r.descriptions)))
+	if err := marshalDescriptionsTo(result[6:], r.descriptions); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -140,14 +103,14 @@ func (r *getDatapointDescriptionRes) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) < getDescriptionResHeaderSize:
 		return fmt.Errorf("%w data length %d, expected at least %d", ErrInvalid, len(data), 6)
-	case data[0] != MainService:
-		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], MainService)
-	case data[1] != SubServiceGetDatapointDescriptionRes:
-		return fmt.Errorf("%w data subservice %d, expected %d", ErrInvalid, data[1], SubServiceGetDatapointDescriptionRes)
+	case data[0] != mainService:
+		return fmt.Errorf("%w data service %d, expected %d", ErrInvalid, data[0], mainService)
+	case data[1] != subServiceGetDatapointDescriptionRes:
+		return fmt.Errorf("%w data subservice %d, expected %d", ErrInvalid, data[1], subServiceGetDatapointDescriptionRes)
 	}
 	startDatapoint := DatapointID(binary.BigEndian.Uint16(data[2:4]))
 	if len(data) == 7 {
-		*r = getDatapointDescriptionRes{StartDatapoint: startDatapoint, ErrorCode: ErrorCode(data[6])}
+		*r = getDatapointDescriptionRes{startDatapoint: startDatapoint, errorCode: ErrorCode(data[6])}
 		return nil
 	}
 	num := int(binary.BigEndian.Uint16(data[4:6]))
@@ -155,8 +118,18 @@ func (r *getDatapointDescriptionRes) UnmarshalBinary(data []byte) error {
 	if err != nil {
 		return err
 	}
-	*r = getDatapointDescriptionRes{StartDatapoint: startDatapoint, Descriptions: descriptions}
+	*r = getDatapointDescriptionRes{startDatapoint: startDatapoint, descriptions: descriptions}
 	return nil
+}
+
+// equal reports whether r and other represent the same response.
+func (r *getDatapointDescriptionRes) equal(other *getDatapointDescriptionRes) bool {
+	if r.startDatapoint != other.startDatapoint || byte(r.errorCode) != byte(other.errorCode) {
+		return false
+	}
+	return slices.EqualFunc(r.descriptions, other.descriptions, func(v1, v2 DatapointDescription) bool {
+		return v1.Equal(&v2)
+	})
 }
 
 func marshalDescriptionsTo(data []byte, descriptions []DatapointDescription) error {

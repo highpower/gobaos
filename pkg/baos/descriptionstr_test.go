@@ -26,7 +26,7 @@ func TestGetDescriptionStringReqEqual(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, tc.resultExpected, tc.value.Equal(&tc.other))
+			assert.Equal(t, tc.resultExpected, tc.value.equal(&tc.other))
 		})
 	}
 }
@@ -49,7 +49,7 @@ func TestGetDescriptionStringReqMarshal(t *testing.T) {
 
 			other := getDescriptionStringReq{}
 			require.NoError(t, other.UnmarshalBinary(data))
-			assert.True(t, tc.value.Equal(&other))
+			assert.True(t, tc.value.equal(&other))
 		})
 	}
 }
@@ -89,17 +89,17 @@ func TestGetDescriptionStringResEqual(t *testing.T) {
 		resultExpected bool
 	}
 	testCases := []testCase{
-		{name: "Equal", value: getDescriptionStringRes{StartDatapoint: 1, Strings: []string{"a", "b"}}, other: getDescriptionStringRes{StartDatapoint: 1, Strings: []string{"a", "b"}}, resultExpected: true},
-		{name: "StartUnequal", value: getDescriptionStringRes{StartDatapoint: 1}, other: getDescriptionStringRes{StartDatapoint: 2}, resultExpected: false},
-		{name: "ErrorCodeUnequal", value: getDescriptionStringRes{ErrorCode: 1}, other: getDescriptionStringRes{ErrorCode: 2}, resultExpected: false},
-		{name: "StringsLenUnequal", value: getDescriptionStringRes{Strings: []string{"a"}}, other: getDescriptionStringRes{Strings: []string{}}, resultExpected: false},
-		{name: "StringContentUnequal", value: getDescriptionStringRes{Strings: []string{"a"}}, other: getDescriptionStringRes{Strings: []string{"b"}}, resultExpected: false},
+		{name: "Equal", value: getDescriptionStringRes{startDatapoint: 1, values: []string{"a", "b"}}, other: getDescriptionStringRes{startDatapoint: 1, values: []string{"a", "b"}}, resultExpected: true},
+		{name: "StartUnequal", value: getDescriptionStringRes{startDatapoint: 1}, other: getDescriptionStringRes{startDatapoint: 2}, resultExpected: false},
+		{name: "ErrorCodeUnequal", value: getDescriptionStringRes{errorCode: 1}, other: getDescriptionStringRes{errorCode: 2}, resultExpected: false},
+		{name: "StringsLenUnequal", value: getDescriptionStringRes{values: []string{"a"}}, other: getDescriptionStringRes{values: []string{}}, resultExpected: false},
+		{name: "StringContentUnequal", value: getDescriptionStringRes{values: []string{"a"}}, other: getDescriptionStringRes{values: []string{"b"}}, resultExpected: false},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, tc.resultExpected, tc.value.Equal(&tc.other))
+			assert.Equal(t, tc.resultExpected, tc.value.equal(&tc.other))
 		})
 	}
 }
@@ -111,9 +111,9 @@ func TestGetDescriptionStringResMarshal(t *testing.T) {
 	}
 	testCases := []testCase{
 		{name: "Empty", value: getDescriptionStringRes{}},
-		{name: "WithStrings", value: getDescriptionStringRes{StartDatapoint: 2, Strings: []string{"hello", "world"}}},
-		{name: "WithEmptyString", value: getDescriptionStringRes{StartDatapoint: 3, Strings: []string{""}}},
-		{name: "Error", value: getDescriptionStringRes{StartDatapoint: 3, ErrorCode: 5}},
+		{name: "WithStrings", value: getDescriptionStringRes{startDatapoint: 2, values: []string{"hello", "world"}}},
+		{name: "WithEmptyString", value: getDescriptionStringRes{startDatapoint: 3, values: []string{""}}},
+		{name: "Error", value: getDescriptionStringRes{startDatapoint: 3, errorCode: 5}},
 	}
 
 	for _, tc := range testCases {
@@ -124,7 +124,7 @@ func TestGetDescriptionStringResMarshal(t *testing.T) {
 
 			other := getDescriptionStringRes{}
 			require.NoError(t, other.UnmarshalBinary(data))
-			assert.True(t, tc.value.Equal(&other))
+			assert.True(t, tc.value.equal(&other))
 		})
 	}
 }
@@ -159,7 +159,7 @@ func TestGetDescriptionStringResUnmarshalErrors(t *testing.T) {
 }
 
 func FuzzGetDescriptionStringReq(f *testing.F) {
-	req := getDescriptionStringReq{StartDatapoint: 1, NumberOfStrings: 2}
+	req := getDescriptionStringReq{startDatapoint: 1, numberOfStrings: 2}
 	data, _ := req.MarshalBinary()
 	f.Add(data)
 	f.Fuzz(func(t *testing.T, data []byte) {
@@ -169,7 +169,7 @@ func FuzzGetDescriptionStringReq(f *testing.F) {
 }
 
 func FuzzGetDescriptionStringRes(f *testing.F) {
-	res := getDescriptionStringRes{StartDatapoint: 1, Strings: []string{"test", "data"}}
+	res := getDescriptionStringRes{startDatapoint: 1, values: []string{"test", "data"}}
 	data, _ := res.MarshalBinary()
 	f.Add(data)
 	f.Fuzz(func(t *testing.T, data []byte) {

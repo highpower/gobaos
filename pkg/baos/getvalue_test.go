@@ -33,7 +33,7 @@ func TestGetDatapointValueReqEqual(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, tc.resultExpected, tc.value.Equal(&tc.other))
+			assert.Equal(t, tc.resultExpected, tc.value.equal(&tc.other))
 		})
 	}
 }
@@ -57,7 +57,7 @@ func TestGetDatapointValueReqMarshal(t *testing.T) {
 
 			other := getDatapointValueReq{}
 			require.NoError(t, other.UnmarshalBinary(data))
-			assert.True(t, tc.value.Equal(&other))
+			assert.True(t, tc.value.equal(&other))
 		})
 	}
 }
@@ -99,26 +99,26 @@ func TestGetDatapointValueResEqual(t *testing.T) {
 
 	testCases := []testCase{
 		{name: "Equal",
-			value: getDatapointValueRes{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}},
-			other: getDatapointValueRes{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}, resultExpected: true},
+			value: getDatapointValueRes{startDatapoint: 1, values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}},
+			other: getDatapointValueRes{startDatapoint: 1, values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}, resultExpected: true},
 		{name: "StartUnequal",
-			value: getDatapointValueRes{StartDatapoint: 1},
-			other: getDatapointValueRes{StartDatapoint: 2}, resultExpected: false},
+			value: getDatapointValueRes{startDatapoint: 1},
+			other: getDatapointValueRes{startDatapoint: 2}, resultExpected: false},
 		{name: "ErrorCodeUnequal",
-			value: getDatapointValueRes{ErrorCode: 1},
-			other: getDatapointValueRes{ErrorCode: 2}, resultExpected: false},
+			value: getDatapointValueRes{errorCode: 1},
+			other: getDatapointValueRes{errorCode: 2}, resultExpected: false},
 		{name: "ValuesLenUnequal",
-			value: getDatapointValueRes{Values: []Datapoint{{ID: 1}}},
-			other: getDatapointValueRes{Values: []Datapoint{}}, resultExpected: false},
+			value: getDatapointValueRes{values: []Datapoint{{ID: 1}}},
+			other: getDatapointValueRes{values: []Datapoint{}}, resultExpected: false},
 		{name: "ValueDataUnequal",
-			value: getDatapointValueRes{Values: []Datapoint{{ID: 1, Data: []byte{0x01}}}},
-			other: getDatapointValueRes{Values: []Datapoint{{ID: 1, Data: []byte{0x02}}}}, resultExpected: false},
+			value: getDatapointValueRes{values: []Datapoint{{ID: 1, Data: []byte{0x01}}}},
+			other: getDatapointValueRes{values: []Datapoint{{ID: 1, Data: []byte{0x02}}}}, resultExpected: false},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, tc.resultExpected, tc.value.Equal(&tc.other))
+			assert.Equal(t, tc.resultExpected, tc.value.equal(&tc.other))
 		})
 	}
 }
@@ -131,11 +131,11 @@ func TestGetDatapointValueResMarshal(t *testing.T) {
 
 	testCases := []testCase{
 		{name: "Empty", value: getDatapointValueRes{}},
-		{name: "WithValues", value: getDatapointValueRes{StartDatapoint: 2, Values: []Datapoint{
+		{name: "WithValues", value: getDatapointValueRes{startDatapoint: 2, values: []Datapoint{
 			{ID: 10, State: 0x10, Data: []byte{0x01}}, {ID: 11, State: 0x20, Data: []byte{0x03, 0x04}}}}},
-		{name: "WithSubByteValue", value: getDatapointValueRes{StartDatapoint: 1, Values: []Datapoint{
+		{name: "WithSubByteValue", value: getDatapointValueRes{startDatapoint: 1, values: []Datapoint{
 			{ID: 1, State: 0x10, Data: []byte{0x0A}}}}},
-		{name: "Error", value: getDatapointValueRes{StartDatapoint: 3, ErrorCode: 5}},
+		{name: "Error", value: getDatapointValueRes{startDatapoint: 3, errorCode: 5}},
 	}
 
 	for _, tc := range testCases {
@@ -146,7 +146,7 @@ func TestGetDatapointValueResMarshal(t *testing.T) {
 
 			other := getDatapointValueRes{}
 			require.NoError(t, other.UnmarshalBinary(data))
-			assert.True(t, tc.value.Equal(&other))
+			assert.True(t, tc.value.equal(&other))
 		})
 	}
 }
@@ -181,7 +181,7 @@ func TestGetDatapointValueResUnmarshalErrors(t *testing.T) {
 }
 
 func FuzzGetDatapointValueReq(f *testing.F) {
-	req := getDatapointValueReq{StartDatapoint: 1, NumberOfDatapoints: 2, Filter: AllDatapoints}
+	req := getDatapointValueReq{startDatapoint: 1, numberOfDatapoints: 2, filter: AllDatapoints}
 	data, _ := req.MarshalBinary()
 	f.Add(data)
 	f.Fuzz(func(t *testing.T, data []byte) {
@@ -191,7 +191,7 @@ func FuzzGetDatapointValueReq(f *testing.F) {
 }
 
 func FuzzGetDatapointValueRes(f *testing.F) {
-	res := getDatapointValueRes{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}
+	res := getDatapointValueRes{startDatapoint: 1, values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}
 	data, _ := res.MarshalBinary()
 	f.Add(data)
 	f.Fuzz(func(t *testing.T, data []byte) {

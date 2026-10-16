@@ -91,7 +91,11 @@ func (w *Worker) Stop() {
 
 // Get reads the current value of the given datapoint into dpt.
 func (w *Worker) Get(ctx context.Context, id DatapointID, dpt knxtypes.DPT) error {
-	req := getDatapointValueReq{StartDatapoint: id, NumberOfDatapoints: 1}
+	return w.GetWithFilter(ctx, id, AllDatapoints, dpt)
+}
+
+func (w *Worker) GetWithFilter(ctx context.Context, id DatapointID, f Filter, dpt knxtypes.DPT) error {
+	req := getDatapointValueReq{startDatapoint: id, numberOfDatapoints: 1, filter: f}
 	res := getDatapointValueRes{}
 
 	current := w.makeCall(ctx, &req, &res)
@@ -104,12 +108,12 @@ func (w *Worker) Get(ctx context.Context, id DatapointID, dpt knxtypes.DPT) erro
 		return fmt.Errorf("worker.get: %w", ctx.Err())
 	case current.err != nil:
 		return fmt.Errorf("worker.get: %w", current.err)
-	case res.ErrorCode != 0:
-		return fmt.Errorf("worker.get: %w", Error{res.ErrorCode})
-	case len(res.Values) == 0:
+	case res.errorCode != 0:
+		return fmt.Errorf("worker.get: %w", Error{res.errorCode})
+	case len(res.values) == 0:
 		return fmt.Errorf("worker.get: %w response [0 values for datapoint %d]", ErrInvalid, id)
 	}
-	if err := dpt.UnmarshalBinary(res.Values[0].Data); err != nil {
+	if err := dpt.UnmarshalBinary(res.values[0].Data); err != nil {
 		return err
 	}
 	return nil
@@ -124,8 +128,8 @@ func (w *Worker) Set(ctx context.Context, id DatapointID, dpt knxtypes.DPT) erro
 	if err != nil {
 		return err
 	}
-	req := setDatapointValueReq{Commands: []DatapointCommand{{ID: id, Command: SetAndSendOnBus, Data: data}}}
-	res := setDatapointValueRes{ErrorCode: ErrorCode(0xff)}
+	req := setDatapointValueReq{commands: []DatapointCommand{{ID: id, Command: SetAndSendOnBus, Data: data}}}
+	res := setDatapointValueRes{errorCode: ErrorCode(0xff)}
 
 	current := w.makeCall(ctx, &req, &res)
 	w.calls <- current
@@ -137,8 +141,8 @@ func (w *Worker) Set(ctx context.Context, id DatapointID, dpt knxtypes.DPT) erro
 		return fmt.Errorf("worker.set: %w", ctx.Err())
 	case current.err != nil:
 		return fmt.Errorf("worker.set: %w", current.err)
-	case res.ErrorCode != 0:
-		return fmt.Errorf("worker.set: %w", Error{res.ErrorCode})
+	case res.errorCode != 0:
+		return fmt.Errorf("worker.set: %w", Error{res.errorCode})
 	}
 	return nil
 }
@@ -169,7 +173,7 @@ func (w *Worker) AllDescriptions(ctx context.Context) ([]DatapointDescription, e
 
 // DescriptionString reads the description string of the given datapoint.
 func (w *Worker) DescriptionString(ctx context.Context, id DatapointID) (string, error) {
-	req := getDescriptionStringReq{StartDatapoint: id, NumberOfStrings: 1}
+	req := getDescriptionStringReq{startDatapoint: id, numberOfStrings: 1}
 	res := getDescriptionStringRes{}
 
 	current := w.makeCall(ctx, &req, &res)
@@ -180,17 +184,17 @@ func (w *Worker) DescriptionString(ctx context.Context, id DatapointID) (string,
 	switch {
 	case current.err != nil:
 		return "", fmt.Errorf("error in descriptionString request: %w", current.err)
-	case res.ErrorCode != 0:
-		return "", Error{res.ErrorCode}
-	case len(res.Strings) == 0:
+	case res.errorCode != 0:
+		return "", Error{res.errorCode}
+	case len(res.values) == 0:
 		return "", fmt.Errorf("%w response: 0 values for datapoint %d", ErrInvalid, id)
 	}
-	return res.Strings[0], nil
+	return res.values[0], nil
 }
 
 // ServerItem reads a single server item by its ID.
 func (w *Worker) ServerItem(ctx context.Context, id ItemID) (ServerItem, error) {
-	req := getServerItemReq{StartItem: id, NumberOfItems: 1}
+	req := getServerItemReq{startItem: id, numberOfItems: 1}
 	res := getServerItemRes{}
 
 	current := w.makeCall(ctx, &req, &res)
@@ -201,17 +205,17 @@ func (w *Worker) ServerItem(ctx context.Context, id ItemID) (ServerItem, error) 
 	switch {
 	case current.err != nil:
 		return ServerItem{}, fmt.Errorf("error in getServerItem request: %w", current.err)
-	case res.ErrorCode != 0:
-		return ServerItem{}, Error{res.ErrorCode}
-	case len(res.Items) == 0:
+	case res.errorCode != 0:
+		return ServerItem{}, Error{res.errorCode}
+	case len(res.items) == 0:
 		return ServerItem{}, fmt.Errorf("%w response: 0 values for item %d", ErrInvalid, id)
 	}
-	return res.Items[0], nil
+	return res.items[0], nil
 }
 
 // SetServerItem writes data to a single server item by its ID.
 func (w *Worker) SetServerItem(ctx context.Context, id ItemID, data []byte) error {
-	req := setServerItemReq{Items: []ServerItem{{ID: id, Data: data}}}
+	req := setServerItemReq{items: []ServerItem{{ID: id, Data: data}}}
 	res := setServerItemRes{}
 
 	current := w.makeCall(ctx, &req, &res)
@@ -222,8 +226,8 @@ func (w *Worker) SetServerItem(ctx context.Context, id ItemID, data []byte) erro
 	switch {
 	case current.err != nil:
 		return fmt.Errorf("error in setServerItem request: %w", current.err)
-	case res.ErrorCode != 0:
-		return Error{res.ErrorCode}
+	case res.errorCode != 0:
+		return Error{res.errorCode}
 	}
 	return nil
 }
@@ -233,7 +237,7 @@ func (w *Worker) descriptions(ctx context.Context, start DatapointID, number uin
 	descInResponse := (ft12.MaxMessageLength - getDescriptionResHeaderSize) / datapointDescriptionSize
 	i := int(number)
 	for i > 0 {
-		req := getDatapointDescriptionReq{StartDatapoint: start, NumberOfDatapoints: uint16(min(descInResponse, i))}
+		req := getDatapointDescriptionReq{startDatapoint: start, numberOfDatapoints: uint16(min(descInResponse, i))}
 		res := getDatapointDescriptionRes{}
 
 		current := w.makeCall(ctx, &req, &res)
@@ -244,14 +248,14 @@ func (w *Worker) descriptions(ctx context.Context, start DatapointID, number uin
 		switch {
 		case current.err != nil:
 			return nil, fmt.Errorf("error in getDatapointDescription request: %w", current.err)
-		case res.ErrorCode == NoElementFound:
+		case res.errorCode == NoElementFound:
 			return result, nil
-		case res.ErrorCode != 0:
-			return nil, Error{Code: res.ErrorCode}
+		case res.errorCode != 0:
+			return nil, Error{Code: res.errorCode}
 		}
-		result = append(result, res.Descriptions...)
-		i -= len(res.Descriptions)
-		start = nextDatapointID(res.Descriptions)
+		result = append(result, res.descriptions...)
+		i -= len(res.descriptions)
+		start = nextDatapointID(res.descriptions)
 	}
 	return result, nil
 }
@@ -307,7 +311,7 @@ func (w *Worker) handleIndication() error {
 
 func (w *Worker) runIndication(indications <-chan datapointValueInd) {
 	for indication := range indications {
-		for _, value := range indication.Values {
+		for _, value := range indication.values {
 			if err := w.handler.OnIndication(value.ID, value.Data); err != nil {
 				w.errorOrStop <- errorOrStop{err: err}
 			}

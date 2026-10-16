@@ -17,19 +17,19 @@ func TestDatapointValueIndEqual(t *testing.T) {
 
 	testCases := []testCase{
 		{name: "Equal",
-			value: datapointValueInd{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}},
-			other: datapointValueInd{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}, resultExpected: true},
+			value: datapointValueInd{startDatapoint: 1, values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}},
+			other: datapointValueInd{startDatapoint: 1, values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}, resultExpected: true},
 		{name: "StartUnequal",
-			value: datapointValueInd{StartDatapoint: 1}, other: datapointValueInd{StartDatapoint: 2}, resultExpected: false},
+			value: datapointValueInd{startDatapoint: 1}, other: datapointValueInd{startDatapoint: 2}, resultExpected: false},
 		{name: "ValuesLenUnequal",
-			value: datapointValueInd{Values: []Datapoint{{ID: 1}}},
-			other: datapointValueInd{Values: []Datapoint{{ID: 2}}}, resultExpected: false},
+			value: datapointValueInd{values: []Datapoint{{ID: 1}}},
+			other: datapointValueInd{values: []Datapoint{{ID: 2}}}, resultExpected: false},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, tc.resultExpected, tc.value.Equal(&tc.other))
+			assert.Equal(t, tc.resultExpected, tc.value.equal(&tc.other))
 		})
 	}
 }
@@ -42,7 +42,7 @@ func TestDatapointValueIndMarshal(t *testing.T) {
 
 	testCases := []testCase{
 		{name: "Empty", value: datapointValueInd{}},
-		{name: "WithValues", value: datapointValueInd{StartDatapoint: 2, Values: []Datapoint{
+		{name: "WithValues", value: datapointValueInd{startDatapoint: 2, values: []Datapoint{
 			{ID: 10, State: 0x10, Data: []byte{0x01}}, {ID: 11, State: 0x20, Data: []byte{0x03, 0x04}}}}},
 	}
 
@@ -54,7 +54,7 @@ func TestDatapointValueIndMarshal(t *testing.T) {
 
 			other := datapointValueInd{}
 			require.NoError(t, other.UnmarshalBinary(data))
-			assert.True(t, tc.value.Equal(&other))
+			assert.True(t, tc.value.equal(&other))
 		})
 	}
 }
@@ -88,7 +88,7 @@ func TestDatapointValueIndUnmarshalErrors(t *testing.T) {
 }
 
 func FuzzDatapointValueInd(f *testing.F) {
-	ind := datapointValueInd{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}
+	ind := datapointValueInd{startDatapoint: 1, values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}
 	data, _ := ind.MarshalBinary()
 	f.Add(data)
 	f.Fuzz(func(t *testing.T, data []byte) {

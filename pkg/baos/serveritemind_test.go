@@ -10,22 +10,22 @@ import (
 func TestServerItemIndEqual(t *testing.T) {
 	type testCase struct {
 		name           string
-		value          ServerItemInd
-		other          ServerItemInd
+		value          serverItemInd
+		other          serverItemInd
 		resultExpected bool
 	}
 
 	testCases := []testCase{
-		{name: "Equal", value: ServerItemInd{StartItem: 1, Items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, other: ServerItemInd{StartItem: 1, Items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, resultExpected: true},
-		{name: "StartUnequal", value: ServerItemInd{StartItem: 1, Items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, other: ServerItemInd{StartItem: 2, Items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, resultExpected: false},
-		{name: "ItemsLenUnequal", value: ServerItemInd{StartItem: 1, Items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, other: ServerItemInd{StartItem: 1, Items: []ServerItem{}}, resultExpected: false},
-		{name: "ItemDataUnequal", value: ServerItemInd{StartItem: 1, Items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, other: ServerItemInd{StartItem: 1, Items: []ServerItem{{ID: 1, Data: []byte{0x02}}}}, resultExpected: false},
+		{name: "Equal", value: serverItemInd{startItem: 1, items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, other: serverItemInd{startItem: 1, items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, resultExpected: true},
+		{name: "StartUnequal", value: serverItemInd{startItem: 1, items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, other: serverItemInd{startItem: 2, items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, resultExpected: false},
+		{name: "ItemsLenUnequal", value: serverItemInd{startItem: 1, items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, other: serverItemInd{startItem: 1, items: []ServerItem{}}, resultExpected: false},
+		{name: "ItemDataUnequal", value: serverItemInd{startItem: 1, items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, other: serverItemInd{startItem: 1, items: []ServerItem{{ID: 1, Data: []byte{0x02}}}}, resultExpected: false},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, tc.resultExpected, tc.value.Equal(&tc.other))
+			assert.Equal(t, tc.resultExpected, tc.value.equal(&tc.other))
 		})
 	}
 }
@@ -33,10 +33,10 @@ func TestServerItemIndEqual(t *testing.T) {
 func TestServerItemIndMarshal(t *testing.T) {
 	type testCase struct {
 		name  string
-		value ServerItemInd
+		value serverItemInd
 	}
 	testCases := []testCase{
-		{name: "WithItems", value: ServerItemInd{StartItem: 2, Items: []ServerItem{{ID: 10, Data: []byte{0x01, 0x02}}, {ID: 11, Data: []byte{0x03}}}}},
+		{name: "WithItems", value: serverItemInd{startItem: 2, items: []ServerItem{{ID: 10, Data: []byte{0x01, 0x02}}, {ID: 11, Data: []byte{0x03}}}}},
 	}
 
 	for _, tc := range testCases {
@@ -45,9 +45,9 @@ func TestServerItemIndMarshal(t *testing.T) {
 			data, err := tc.value.MarshalBinary()
 			require.NoError(t, err)
 
-			other := ServerItemInd{}
+			other := serverItemInd{}
 			require.NoError(t, other.UnmarshalBinary(data))
-			assert.True(t, tc.value.Equal(&other))
+			assert.True(t, tc.value.equal(&other))
 		})
 	}
 }
@@ -69,7 +69,7 @@ func TestServerItemIndUnmarshalErrors(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			r := ServerItemInd{}
+			r := serverItemInd{}
 			err := r.UnmarshalBinary(tc.data)
 			if tc.errorExpected {
 				assert.Error(t, err)
@@ -81,11 +81,11 @@ func TestServerItemIndUnmarshalErrors(t *testing.T) {
 }
 
 func FuzzServerItemInd(f *testing.F) {
-	ind := ServerItemInd{StartItem: 1, Items: []ServerItem{{ID: 1, Data: []byte{0x01, 0x02}}}}
+	ind := serverItemInd{startItem: 1, items: []ServerItem{{ID: 1, Data: []byte{0x01, 0x02}}}}
 	data, _ := ind.MarshalBinary()
 	f.Add(data)
 	f.Fuzz(func(t *testing.T, data []byte) {
-		other := ServerItemInd{}
+		other := serverItemInd{}
 		_ = other.UnmarshalBinary(data)
 	})
 }
