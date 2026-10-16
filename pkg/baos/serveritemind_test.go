@@ -7,31 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestServerItemIndValid(t *testing.T) {
-	type testCase struct {
-		name          string
-		value         ServerItemInd
-		errorExpected bool
-	}
-
-	testCases := []testCase{
-		{name: "Empty", value: ServerItemInd{}, errorExpected: true},
-		{name: "WithItems", value: ServerItemInd{StartItem: 1, Items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, errorExpected: false},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			err := tc.value.Valid()
-			if tc.errorExpected {
-				assert.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-		})
-	}
-}
-
 func TestServerItemIndEqual(t *testing.T) {
 	type testCase struct {
 		name           string

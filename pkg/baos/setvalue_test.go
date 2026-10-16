@@ -7,54 +7,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSetDatapointValueReqValid(t *testing.T) {
-	type testCase struct {
-		name          string
-		value         SetDatapointValueReq
-		errorExpected bool
-	}
-
-	testCases := []testCase{
-		{name: "Empty",
-			value: SetDatapointValueReq{}, errorExpected: true},
-		{name: "WithValues",
-			value: SetDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Command: 1, Data: []byte{0x01}}}}, errorExpected: false},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			err := tc.value.Valid()
-			if tc.errorExpected {
-				assert.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-		})
-	}
-}
-
 func TestSetDatapointValueReqEqual(t *testing.T) {
 	type testCase struct {
 		name           string
-		value          SetDatapointValueReq
-		other          SetDatapointValueReq
+		value          setDatapointValueReq
+		other          setDatapointValueReq
 		resultExpected bool
 	}
 
 	testCases := []testCase{
 		{name: "Equal",
-			value: SetDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Command: 1, Data: []byte{0x01}}}},
-			other: SetDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Command: 1, Data: []byte{0x01}}}}, resultExpected: true},
+			value: setDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Command: 1, Data: []byte{0x01}}}},
+			other: setDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Command: 1, Data: []byte{0x01}}}}, resultExpected: true},
 		{name: "IDUnequal",
-			value: SetDatapointValueReq{Commands: []DatapointCommand{{ID: 1}}},
-			other: SetDatapointValueReq{Commands: []DatapointCommand{{ID: 2}}}, resultExpected: false},
+			value: setDatapointValueReq{Commands: []DatapointCommand{{ID: 1}}},
+			other: setDatapointValueReq{Commands: []DatapointCommand{{ID: 2}}}, resultExpected: false},
 		{name: "CommandUnequal",
-			value: SetDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Command: 1}}},
-			other: SetDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Command: 2}}}, resultExpected: false},
+			value: setDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Command: 1}}},
+			other: setDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Command: 2}}}, resultExpected: false},
 		{name: "DataUnequal",
-			value: SetDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Data: []byte{0x01}}}},
-			other: SetDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Data: []byte{0x02}}}}, resultExpected: false},
+			value: setDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Data: []byte{0x01}}}},
+			other: setDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Data: []byte{0x02}}}}, resultExpected: false},
 	}
 
 	for _, tc := range testCases {
@@ -68,18 +41,18 @@ func TestSetDatapointValueReqEqual(t *testing.T) {
 func TestSetDatapointValueReqMarshal(t *testing.T) {
 	type testCase struct {
 		name  string
-		value SetDatapointValueReq
+		value setDatapointValueReq
 	}
 	testCases := []testCase{
 		{name: "SingleValue",
-			value: SetDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Command: 1, Data: []byte{0x01}}}}},
+			value: setDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Command: 1, Data: []byte{0x01}}}}},
 		{name: "MultipleValues",
-			value: SetDatapointValueReq{Commands: []DatapointCommand{
+			value: setDatapointValueReq{Commands: []DatapointCommand{
 				{ID: 10, Command: 2, Data: []byte{0x01, 0x02}},
 				{ID: 11, Command: 3, Data: []byte{0x03}},
 			}}},
 		{name: "EmptyData",
-			value: SetDatapointValueReq{Commands: []DatapointCommand{{ID: 5, Command: 5, Data: []byte{}}}}},
+			value: setDatapointValueReq{Commands: []DatapointCommand{{ID: 5, Command: 5, Data: []byte{}}}}},
 	}
 
 	for _, tc := range testCases {
@@ -88,7 +61,7 @@ func TestSetDatapointValueReqMarshal(t *testing.T) {
 			data, err := tc.value.MarshalBinary()
 			require.NoError(t, err)
 
-			other := SetDatapointValueReq{}
+			other := setDatapointValueReq{}
 			require.NoError(t, other.UnmarshalBinary(data))
 			assert.True(t, tc.value.Equal(&other))
 		})
@@ -112,33 +85,8 @@ func TestSetDatapointValueReqUnmarshalErrors(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			r := SetDatapointValueReq{}
+			r := setDatapointValueReq{}
 			err := r.UnmarshalBinary(tc.data)
-			if tc.errorExpected {
-				assert.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-		})
-	}
-}
-
-func TestSetDatapointValueResValid(t *testing.T) {
-	type testCase struct {
-		name          string
-		value         SetDatapointValueRes
-		errorExpected bool
-	}
-
-	testCases := []testCase{
-		{name: "Empty", value: SetDatapointValueRes{}, errorExpected: false},
-		{name: "WithErrorCode", value: SetDatapointValueRes{StartDatapoint: 1, ErrorCode: 5}, errorExpected: false},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			err := tc.value.Valid()
 			if tc.errorExpected {
 				assert.Error(t, err)
 				return
@@ -151,18 +99,18 @@ func TestSetDatapointValueResValid(t *testing.T) {
 func TestSetDatapointValueResEqual(t *testing.T) {
 	type testCase struct {
 		name           string
-		value          SetDatapointValueRes
-		other          SetDatapointValueRes
+		value          setDatapointValueRes
+		other          setDatapointValueRes
 		resultExpected bool
 	}
 
 	testCases := []testCase{
-		{name: "Equal", value: SetDatapointValueRes{StartDatapoint: 1, NumberOfDatapoints: 0, ErrorCode: 2},
-			other: SetDatapointValueRes{StartDatapoint: 1, NumberOfDatapoints: 0, ErrorCode: 2}, resultExpected: true},
-		{name: "StartUnequal", value: SetDatapointValueRes{StartDatapoint: 1},
-			other: SetDatapointValueRes{StartDatapoint: 2}, resultExpected: false},
-		{name: "ErrorCodeUnequal", value: SetDatapointValueRes{ErrorCode: 1},
-			other: SetDatapointValueRes{ErrorCode: 2}, resultExpected: false},
+		{name: "Equal", value: setDatapointValueRes{StartDatapoint: 1, NumberOfDatapoints: 0, ErrorCode: 2},
+			other: setDatapointValueRes{StartDatapoint: 1, NumberOfDatapoints: 0, ErrorCode: 2}, resultExpected: true},
+		{name: "StartUnequal", value: setDatapointValueRes{StartDatapoint: 1},
+			other: setDatapointValueRes{StartDatapoint: 2}, resultExpected: false},
+		{name: "ErrorCodeUnequal", value: setDatapointValueRes{ErrorCode: 1},
+			other: setDatapointValueRes{ErrorCode: 2}, resultExpected: false},
 	}
 
 	for _, tc := range testCases {
@@ -176,11 +124,11 @@ func TestSetDatapointValueResEqual(t *testing.T) {
 func TestSetDatapointValueResMarshal(t *testing.T) {
 	type testCase struct {
 		name  string
-		value SetDatapointValueRes
+		value setDatapointValueRes
 	}
 	testCases := []testCase{
-		{name: "Empty", value: SetDatapointValueRes{}},
-		{name: "WithError", value: SetDatapointValueRes{StartDatapoint: 3, ErrorCode: 5}},
+		{name: "Empty", value: setDatapointValueRes{}},
+		{name: "WithError", value: setDatapointValueRes{StartDatapoint: 3, ErrorCode: 5}},
 	}
 
 	for _, tc := range testCases {
@@ -189,7 +137,7 @@ func TestSetDatapointValueResMarshal(t *testing.T) {
 			data, err := tc.value.MarshalBinary()
 			require.NoError(t, err)
 
-			other := SetDatapointValueRes{}
+			other := setDatapointValueRes{}
 			require.NoError(t, other.UnmarshalBinary(data))
 			assert.True(t, tc.value.Equal(&other))
 		})
@@ -211,7 +159,7 @@ func TestSetDatapointValueResUnmarshalErrors(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			r := SetDatapointValueRes{}
+			r := setDatapointValueRes{}
 			err := r.UnmarshalBinary(tc.data)
 			if tc.errorExpected {
 				assert.Error(t, err)
@@ -223,21 +171,21 @@ func TestSetDatapointValueResUnmarshalErrors(t *testing.T) {
 }
 
 func FuzzSetDatapointValueReq(f *testing.F) {
-	req := SetDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Command: SetNewValue, Data: []byte{0x01}}}}
+	req := setDatapointValueReq{Commands: []DatapointCommand{{ID: 1, Command: SetNewValue, Data: []byte{0x01}}}}
 	data, _ := req.MarshalBinary()
 	f.Add(data)
 	f.Fuzz(func(t *testing.T, data []byte) {
-		other := SetDatapointValueReq{}
+		other := setDatapointValueReq{}
 		_ = other.UnmarshalBinary(data)
 	})
 }
 
 func FuzzSetDatapointValueRes(f *testing.F) {
-	res := SetDatapointValueRes{StartDatapoint: 1, NumberOfDatapoints: 0, ErrorCode: 0}
+	res := setDatapointValueRes{StartDatapoint: 1, NumberOfDatapoints: 0, ErrorCode: 0}
 	data, _ := res.MarshalBinary()
 	f.Add(data)
 	f.Fuzz(func(t *testing.T, data []byte) {
-		other := SetDatapointValueRes{}
+		other := setDatapointValueRes{}
 		_ = other.UnmarshalBinary(data)
 	})
 }

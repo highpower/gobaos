@@ -7,45 +7,37 @@ import (
 	"slices"
 )
 
-// SetServerItemReq is a request to write server items.
-type SetServerItemReq struct {
+// setServerItemReq is a request to write server items.
+type setServerItemReq struct {
 	Items []ServerItem
 }
 
-// SetServerItemRes is a response confirming the set operation or reporting an error.
-type SetServerItemRes struct {
+// setServerItemRes is a response confirming the set operation or reporting an error.
+type setServerItemRes struct {
 	StartItem     ItemID
 	NumberOfItems uint16
 	ErrorCode     ErrorCode
 }
 
 // Service returns the main service identifier.
-func (r *SetServerItemReq) Service() byte {
+func (r *setServerItemReq) Service() byte {
 	return MainService
 }
 
 // SubService returns the sub-service identifier for the request.
-func (r *SetServerItemReq) SubService() byte {
+func (r *setServerItemReq) SubService() byte {
 	return SubServiceSetServerItemReq
 }
 
-// Valid validates the request fields.
-func (r *SetServerItemReq) Valid() error {
-	if len(r.Items) == 0 {
-		return fmt.Errorf("%w request must contain at least one item", ErrInvalid)
-	}
-	return nil
-}
-
 // Equal reports whether r and other are identical requests.
-func (r *SetServerItemReq) Equal(other *SetServerItemReq) bool {
+func (r *setServerItemReq) Equal(other *setServerItemReq) bool {
 	return slices.EqualFunc(r.Items, other.Items, func(i1, i2 ServerItem) bool {
 		return i1.Equal(&i2)
 	})
 }
 
 // String returns a human-readable representation of the request.
-func (r *SetServerItemReq) String() string {
+func (r *setServerItemReq) String() string {
 	buffer := bytes.Buffer{}
 	buffer.WriteString("setServerItemReq[items=[")
 	for i, it := range r.Items {
@@ -59,7 +51,7 @@ func (r *SetServerItemReq) String() string {
 }
 
 // MarshalBinary encodes the request into its BAOS wire format.
-func (r *SetServerItemReq) MarshalBinary() ([]byte, error) {
+func (r *setServerItemReq) MarshalBinary() ([]byte, error) {
 	result := make([]byte, 6+sizeInBytes(r.Items))
 	result[0] = MainService
 	result[1] = SubServiceSetServerItemReq
@@ -76,7 +68,7 @@ func (r *SetServerItemReq) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary decodes the BAOS wire format into the request.
-func (r *SetServerItemReq) UnmarshalBinary(data []byte) error {
+func (r *setServerItemReq) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) < 6:
 		return fmt.Errorf("%w data length %d, expected at least %d", ErrInvalid, len(data), 6)
@@ -95,42 +87,29 @@ func (r *SetServerItemReq) UnmarshalBinary(data []byte) error {
 }
 
 // Service returns the main service identifier.
-func (r *SetServerItemRes) Service() byte {
+func (r *setServerItemRes) Service() byte {
 	return MainService
 }
 
 // SubService returns the sub-service identifier for the response.
-func (r *SetServerItemRes) SubService() byte {
+func (r *setServerItemRes) SubService() byte {
 	return SubServiceSetServerItemRes
 }
 
-// Valid validates the response fields.
-func (r *SetServerItemRes) Valid() error {
-	switch {
-	case r.NumberOfItems == 0 && r.ErrorCode == 0:
-		return fmt.Errorf("%w response must contain at least one item", ErrInvalid)
-	case r.NumberOfItems != 0 && r.ErrorCode != 0:
-
-		return fmt.Errorf("%w response contains %d items and error code is %d", ErrInvalid, r.NumberOfItems,
-			r.ErrorCode)
-	}
-	return nil
-}
-
 // Equal reports whether r and other are identical responses.
-func (r *SetServerItemRes) Equal(other *SetServerItemRes) bool {
+func (r *setServerItemRes) Equal(other *setServerItemRes) bool {
 	return r.StartItem == other.StartItem && r.NumberOfItems == other.NumberOfItems &&
 		byte(r.ErrorCode) == byte(other.ErrorCode)
 }
 
 // String returns a human-readable representation of the response.
-func (r *SetServerItemRes) String() string {
+func (r *setServerItemRes) String() string {
 	return fmt.Sprintf("setServerItemRes[startItem=%d,numberOfItems=%d,errorCode=%d]", r.StartItem,
 		r.NumberOfItems, r.ErrorCode)
 }
 
 // MarshalBinary encodes the response into its BAOS wire format.
-func (r *SetServerItemRes) MarshalBinary() ([]byte, error) {
+func (r *setServerItemRes) MarshalBinary() ([]byte, error) {
 	result := make([]byte, 7)
 	result[0] = MainService
 	result[1] = SubServiceSetServerItemRes
@@ -141,7 +120,7 @@ func (r *SetServerItemRes) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary decodes the BAOS wire format into the response.
-func (r *SetServerItemRes) UnmarshalBinary(data []byte) error {
+func (r *setServerItemRes) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) != 7:
 		return fmt.Errorf("%w data length %d, expected to be %d", ErrInvalid, len(data), 7)

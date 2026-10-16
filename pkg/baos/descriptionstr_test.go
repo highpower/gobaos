@@ -7,44 +7,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetDescriptionStringReqValid(t *testing.T) {
-	type testCase struct {
-		name          string
-		value         GetDescriptionStringReq
-		errorExpected bool
-	}
-
-	testCases := []testCase{
-		{name: "Empty", value: GetDescriptionStringReq{0, 0}, errorExpected: false},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			err := tc.value.Valid()
-			if tc.errorExpected {
-				assert.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-		})
-	}
-}
-
 func TestGetDescriptionStringReqEqual(t *testing.T) {
 	type testCase struct {
 		name           string
-		value          GetDescriptionStringReq
-		other          GetDescriptionStringReq
+		value          getDescriptionStringReq
+		other          getDescriptionStringReq
 		resultExpected bool
 	}
 
 	testCases := []testCase{
-		{name: "Equal", value: GetDescriptionStringReq{0, 5},
-			other: GetDescriptionStringReq{0, 5}, resultExpected: true},
-		{name: "StartUnequal", value: GetDescriptionStringReq{1, 5},
-			other: GetDescriptionStringReq{2, 5}, resultExpected: false},
-		{name: "NumberUnequal", value: GetDescriptionStringReq{1, 5},
-			other: GetDescriptionStringReq{1, 6}, resultExpected: false},
+		{name: "Equal", value: getDescriptionStringReq{0, 5},
+			other: getDescriptionStringReq{0, 5}, resultExpected: true},
+		{name: "StartUnequal", value: getDescriptionStringReq{1, 5},
+			other: getDescriptionStringReq{2, 5}, resultExpected: false},
+		{name: "NumberUnequal", value: getDescriptionStringReq{1, 5},
+			other: getDescriptionStringReq{1, 6}, resultExpected: false},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -57,11 +34,11 @@ func TestGetDescriptionStringReqEqual(t *testing.T) {
 func TestGetDescriptionStringReqMarshal(t *testing.T) {
 	type testCase struct {
 		name  string
-		value GetDescriptionStringReq
+		value getDescriptionStringReq
 	}
 	testCases := []testCase{
-		{name: "Empty", value: GetDescriptionStringReq{0, 0}},
-		{name: "Nonempty", value: GetDescriptionStringReq{2, 4}},
+		{name: "Empty", value: getDescriptionStringReq{0, 0}},
+		{name: "Nonempty", value: getDescriptionStringReq{2, 4}},
 	}
 
 	for _, tc := range testCases {
@@ -70,7 +47,7 @@ func TestGetDescriptionStringReqMarshal(t *testing.T) {
 			data, err := tc.value.MarshalBinary()
 			require.NoError(t, err)
 
-			other := GetDescriptionStringReq{}
+			other := getDescriptionStringReq{}
 			require.NoError(t, other.UnmarshalBinary(data))
 			assert.True(t, tc.value.Equal(&other))
 		})
@@ -93,36 +70,8 @@ func TestGetDescriptionStringReqUnmarshalErrors(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			r := GetDescriptionStringReq{}
+			r := getDescriptionStringReq{}
 			err := r.UnmarshalBinary(tc.data)
-			if tc.errorExpected {
-				assert.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-		})
-	}
-}
-
-func TestGetDescriptionStringResValid(t *testing.T) {
-	type testCase struct {
-		name          string
-		value         GetDescriptionStringRes
-		errorExpected bool
-	}
-
-	testCases := []testCase{
-		{name: "Empty", value: GetDescriptionStringRes{}, errorExpected: true},
-		{name: "WithStrings", value: GetDescriptionStringRes{StartDatapoint: 1, Strings: []string{"test"}}, errorExpected: false},
-		{name: "WithErrorCode", value: GetDescriptionStringRes{StartDatapoint: 1, ErrorCode: 5}, errorExpected: false},
-		{name: "StringsAndErrorCode",
-			value: GetDescriptionStringRes{StartDatapoint: 1, Strings: []string{"test"}, ErrorCode: 5}, errorExpected: true},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			err := tc.value.Valid()
 			if tc.errorExpected {
 				assert.Error(t, err)
 				return
@@ -135,16 +84,16 @@ func TestGetDescriptionStringResValid(t *testing.T) {
 func TestGetDescriptionStringResEqual(t *testing.T) {
 	type testCase struct {
 		name           string
-		value          GetDescriptionStringRes
-		other          GetDescriptionStringRes
+		value          getDescriptionStringRes
+		other          getDescriptionStringRes
 		resultExpected bool
 	}
 	testCases := []testCase{
-		{name: "Equal", value: GetDescriptionStringRes{StartDatapoint: 1, Strings: []string{"a", "b"}}, other: GetDescriptionStringRes{StartDatapoint: 1, Strings: []string{"a", "b"}}, resultExpected: true},
-		{name: "StartUnequal", value: GetDescriptionStringRes{StartDatapoint: 1}, other: GetDescriptionStringRes{StartDatapoint: 2}, resultExpected: false},
-		{name: "ErrorCodeUnequal", value: GetDescriptionStringRes{ErrorCode: 1}, other: GetDescriptionStringRes{ErrorCode: 2}, resultExpected: false},
-		{name: "StringsLenUnequal", value: GetDescriptionStringRes{Strings: []string{"a"}}, other: GetDescriptionStringRes{Strings: []string{}}, resultExpected: false},
-		{name: "StringContentUnequal", value: GetDescriptionStringRes{Strings: []string{"a"}}, other: GetDescriptionStringRes{Strings: []string{"b"}}, resultExpected: false},
+		{name: "Equal", value: getDescriptionStringRes{StartDatapoint: 1, Strings: []string{"a", "b"}}, other: getDescriptionStringRes{StartDatapoint: 1, Strings: []string{"a", "b"}}, resultExpected: true},
+		{name: "StartUnequal", value: getDescriptionStringRes{StartDatapoint: 1}, other: getDescriptionStringRes{StartDatapoint: 2}, resultExpected: false},
+		{name: "ErrorCodeUnequal", value: getDescriptionStringRes{ErrorCode: 1}, other: getDescriptionStringRes{ErrorCode: 2}, resultExpected: false},
+		{name: "StringsLenUnequal", value: getDescriptionStringRes{Strings: []string{"a"}}, other: getDescriptionStringRes{Strings: []string{}}, resultExpected: false},
+		{name: "StringContentUnequal", value: getDescriptionStringRes{Strings: []string{"a"}}, other: getDescriptionStringRes{Strings: []string{"b"}}, resultExpected: false},
 	}
 
 	for _, tc := range testCases {
@@ -158,13 +107,13 @@ func TestGetDescriptionStringResEqual(t *testing.T) {
 func TestGetDescriptionStringResMarshal(t *testing.T) {
 	type testCase struct {
 		name  string
-		value GetDescriptionStringRes
+		value getDescriptionStringRes
 	}
 	testCases := []testCase{
-		{name: "Empty", value: GetDescriptionStringRes{}},
-		{name: "WithStrings", value: GetDescriptionStringRes{StartDatapoint: 2, Strings: []string{"hello", "world"}}},
-		{name: "WithEmptyString", value: GetDescriptionStringRes{StartDatapoint: 3, Strings: []string{""}}},
-		{name: "Error", value: GetDescriptionStringRes{StartDatapoint: 3, ErrorCode: 5}},
+		{name: "Empty", value: getDescriptionStringRes{}},
+		{name: "WithStrings", value: getDescriptionStringRes{StartDatapoint: 2, Strings: []string{"hello", "world"}}},
+		{name: "WithEmptyString", value: getDescriptionStringRes{StartDatapoint: 3, Strings: []string{""}}},
+		{name: "Error", value: getDescriptionStringRes{StartDatapoint: 3, ErrorCode: 5}},
 	}
 
 	for _, tc := range testCases {
@@ -173,7 +122,7 @@ func TestGetDescriptionStringResMarshal(t *testing.T) {
 			data, err := tc.value.MarshalBinary()
 			require.NoError(t, err)
 
-			other := GetDescriptionStringRes{}
+			other := getDescriptionStringRes{}
 			require.NoError(t, other.UnmarshalBinary(data))
 			assert.True(t, tc.value.Equal(&other))
 		})
@@ -198,7 +147,7 @@ func TestGetDescriptionStringResUnmarshalErrors(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			r := GetDescriptionStringRes{}
+			r := getDescriptionStringRes{}
 			err := r.UnmarshalBinary(tc.data)
 			if tc.errorExpected {
 				assert.Error(t, err)
@@ -210,21 +159,21 @@ func TestGetDescriptionStringResUnmarshalErrors(t *testing.T) {
 }
 
 func FuzzGetDescriptionStringReq(f *testing.F) {
-	req := GetDescriptionStringReq{StartDatapoint: 1, NumberOfStrings: 2}
+	req := getDescriptionStringReq{StartDatapoint: 1, NumberOfStrings: 2}
 	data, _ := req.MarshalBinary()
 	f.Add(data)
 	f.Fuzz(func(t *testing.T, data []byte) {
-		other := GetDescriptionStringReq{}
+		other := getDescriptionStringReq{}
 		_ = other.UnmarshalBinary(data)
 	})
 }
 
 func FuzzGetDescriptionStringRes(f *testing.F) {
-	res := GetDescriptionStringRes{StartDatapoint: 1, Strings: []string{"test", "data"}}
+	res := getDescriptionStringRes{StartDatapoint: 1, Strings: []string{"test", "data"}}
 	data, _ := res.MarshalBinary()
 	f.Add(data)
 	f.Fuzz(func(t *testing.T, data []byte) {
-		other := GetDescriptionStringRes{}
+		other := getDescriptionStringRes{}
 		_ = other.UnmarshalBinary(data)
 	})
 }

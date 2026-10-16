@@ -7,56 +7,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetDatapointValueReqValid(t *testing.T) {
-	type testCase struct {
-		name          string
-		value         GetDatapointValueReq
-		errorExpected bool
-	}
-
-	testCases := []testCase{
-		{name: "Empty",
-			value: GetDatapointValueReq{0, 0, 0}, errorExpected: false},
-		{name: "Nonempty",
-			value: GetDatapointValueReq{1, 5, AllDatapoints}, errorExpected: false},
-		{name: "BadFilter",
-			value: GetDatapointValueReq{1, 5, 6}, errorExpected: true},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			err := tc.value.Valid()
-			if tc.errorExpected {
-				assert.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-		})
-	}
-}
-
 func TestGetDatapointValueReqEqual(t *testing.T) {
 	type testCase struct {
 		name           string
-		value          GetDatapointValueReq
-		other          GetDatapointValueReq
+		value          getDatapointValueReq
+		other          getDatapointValueReq
 		resultExpected bool
 	}
 
 	testCases := []testCase{
 		{name: "Equal",
-			value: GetDatapointValueReq{1, 5, 0},
-			other: GetDatapointValueReq{1, 5, 0}, resultExpected: true},
+			value: getDatapointValueReq{1, 5, 0},
+			other: getDatapointValueReq{1, 5, 0}, resultExpected: true},
 		{name: "StartUnequal",
-			value: GetDatapointValueReq{1, 5, 0},
-			other: GetDatapointValueReq{2, 5, 0}, resultExpected: false},
+			value: getDatapointValueReq{1, 5, 0},
+			other: getDatapointValueReq{2, 5, 0}, resultExpected: false},
 		{name: "NumberUnequal",
-			value: GetDatapointValueReq{1, 5, 0},
-			other: GetDatapointValueReq{1, 6, 0}, resultExpected: false},
+			value: getDatapointValueReq{1, 5, 0},
+			other: getDatapointValueReq{1, 6, 0}, resultExpected: false},
 		{name: "FilterUnequal",
-			value: GetDatapointValueReq{1, 5, 0},
-			other: GetDatapointValueReq{1, 5, 1}, resultExpected: false},
+			value: getDatapointValueReq{1, 5, 0},
+			other: getDatapointValueReq{1, 5, 1}, resultExpected: false},
 	}
 
 	for _, tc := range testCases {
@@ -70,12 +41,12 @@ func TestGetDatapointValueReqEqual(t *testing.T) {
 func TestGetDatapointValueReqMarshal(t *testing.T) {
 	type testCase struct {
 		name  string
-		value GetDatapointValueReq
+		value getDatapointValueReq
 	}
 
 	testCases := []testCase{
-		{name: "Empty", value: GetDatapointValueReq{0, 0, 0}},
-		{name: "Nonempty", value: GetDatapointValueReq{2, 4, ValidDatapoints}},
+		{name: "Empty", value: getDatapointValueReq{0, 0, 0}},
+		{name: "Nonempty", value: getDatapointValueReq{2, 4, ValidDatapoints}},
 	}
 
 	for _, tc := range testCases {
@@ -84,7 +55,7 @@ func TestGetDatapointValueReqMarshal(t *testing.T) {
 			data, err := tc.value.MarshalBinary()
 			require.NoError(t, err)
 
-			other := GetDatapointValueReq{}
+			other := getDatapointValueReq{}
 			require.NoError(t, other.UnmarshalBinary(data))
 			assert.True(t, tc.value.Equal(&other))
 		})
@@ -107,38 +78,8 @@ func TestGetDatapointValueReqUnmarshalErrors(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			r := GetDatapointValueReq{}
+			r := getDatapointValueReq{}
 			err := r.UnmarshalBinary(tc.data)
-			if tc.errorExpected {
-				assert.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-		})
-	}
-}
-
-func TestGetDatapointValueResValid(t *testing.T) {
-	type testCase struct {
-		name          string
-		value         GetDatapointValueRes
-		errorExpected bool
-	}
-
-	testCases := []testCase{
-		{name: "Empty", value: GetDatapointValueRes{}, errorExpected: true},
-		{name: "WithValues", value: GetDatapointValueRes{
-			StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}, errorExpected: false},
-		{name: "WithErrorCode", value: GetDatapointValueRes{
-			StartDatapoint: 1, ErrorCode: 5}, errorExpected: false},
-		{name: "ValuesAndErrorCode", value: GetDatapointValueRes{
-			StartDatapoint: 1, Values: []Datapoint{{ID: 1, Data: []byte{0x01}}}, ErrorCode: 5}, errorExpected: true},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			err := tc.value.Valid()
 			if tc.errorExpected {
 				assert.Error(t, err)
 				return
@@ -151,27 +92,27 @@ func TestGetDatapointValueResValid(t *testing.T) {
 func TestGetDatapointValueResEqual(t *testing.T) {
 	type testCase struct {
 		name           string
-		value          GetDatapointValueRes
-		other          GetDatapointValueRes
+		value          getDatapointValueRes
+		other          getDatapointValueRes
 		resultExpected bool
 	}
 
 	testCases := []testCase{
 		{name: "Equal",
-			value: GetDatapointValueRes{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}},
-			other: GetDatapointValueRes{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}, resultExpected: true},
+			value: getDatapointValueRes{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}},
+			other: getDatapointValueRes{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}, resultExpected: true},
 		{name: "StartUnequal",
-			value: GetDatapointValueRes{StartDatapoint: 1},
-			other: GetDatapointValueRes{StartDatapoint: 2}, resultExpected: false},
+			value: getDatapointValueRes{StartDatapoint: 1},
+			other: getDatapointValueRes{StartDatapoint: 2}, resultExpected: false},
 		{name: "ErrorCodeUnequal",
-			value: GetDatapointValueRes{ErrorCode: 1},
-			other: GetDatapointValueRes{ErrorCode: 2}, resultExpected: false},
+			value: getDatapointValueRes{ErrorCode: 1},
+			other: getDatapointValueRes{ErrorCode: 2}, resultExpected: false},
 		{name: "ValuesLenUnequal",
-			value: GetDatapointValueRes{Values: []Datapoint{{ID: 1}}},
-			other: GetDatapointValueRes{Values: []Datapoint{}}, resultExpected: false},
+			value: getDatapointValueRes{Values: []Datapoint{{ID: 1}}},
+			other: getDatapointValueRes{Values: []Datapoint{}}, resultExpected: false},
 		{name: "ValueDataUnequal",
-			value: GetDatapointValueRes{Values: []Datapoint{{ID: 1, Data: []byte{0x01}}}},
-			other: GetDatapointValueRes{Values: []Datapoint{{ID: 1, Data: []byte{0x02}}}}, resultExpected: false},
+			value: getDatapointValueRes{Values: []Datapoint{{ID: 1, Data: []byte{0x01}}}},
+			other: getDatapointValueRes{Values: []Datapoint{{ID: 1, Data: []byte{0x02}}}}, resultExpected: false},
 	}
 
 	for _, tc := range testCases {
@@ -185,16 +126,16 @@ func TestGetDatapointValueResEqual(t *testing.T) {
 func TestGetDatapointValueResMarshal(t *testing.T) {
 	type testCase struct {
 		name  string
-		value GetDatapointValueRes
+		value getDatapointValueRes
 	}
 
 	testCases := []testCase{
-		{name: "Empty", value: GetDatapointValueRes{}},
-		{name: "WithValues", value: GetDatapointValueRes{StartDatapoint: 2, Values: []Datapoint{
+		{name: "Empty", value: getDatapointValueRes{}},
+		{name: "WithValues", value: getDatapointValueRes{StartDatapoint: 2, Values: []Datapoint{
 			{ID: 10, State: 0x10, Data: []byte{0x01}}, {ID: 11, State: 0x20, Data: []byte{0x03, 0x04}}}}},
-		{name: "WithSubByteValue", value: GetDatapointValueRes{StartDatapoint: 1, Values: []Datapoint{
+		{name: "WithSubByteValue", value: getDatapointValueRes{StartDatapoint: 1, Values: []Datapoint{
 			{ID: 1, State: 0x10, Data: []byte{0x0A}}}}},
-		{name: "Error", value: GetDatapointValueRes{StartDatapoint: 3, ErrorCode: 5}},
+		{name: "Error", value: getDatapointValueRes{StartDatapoint: 3, ErrorCode: 5}},
 	}
 
 	for _, tc := range testCases {
@@ -203,7 +144,7 @@ func TestGetDatapointValueResMarshal(t *testing.T) {
 			data, err := tc.value.MarshalBinary()
 			require.NoError(t, err)
 
-			other := GetDatapointValueRes{}
+			other := getDatapointValueRes{}
 			require.NoError(t, other.UnmarshalBinary(data))
 			assert.True(t, tc.value.Equal(&other))
 		})
@@ -228,7 +169,7 @@ func TestGetDatapointValueResUnmarshalErrors(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			r := GetDatapointValueRes{}
+			r := getDatapointValueRes{}
 			err := r.UnmarshalBinary(tc.data)
 			if tc.errorExpected {
 				assert.Error(t, err)
@@ -240,21 +181,21 @@ func TestGetDatapointValueResUnmarshalErrors(t *testing.T) {
 }
 
 func FuzzGetDatapointValueReq(f *testing.F) {
-	req := GetDatapointValueReq{StartDatapoint: 1, NumberOfDatapoints: 2, Filter: AllDatapoints}
+	req := getDatapointValueReq{StartDatapoint: 1, NumberOfDatapoints: 2, Filter: AllDatapoints}
 	data, _ := req.MarshalBinary()
 	f.Add(data)
 	f.Fuzz(func(t *testing.T, data []byte) {
-		other := GetDatapointValueReq{}
+		other := getDatapointValueReq{}
 		_ = other.UnmarshalBinary(data)
 	})
 }
 
 func FuzzGetDatapointValueRes(f *testing.F) {
-	res := GetDatapointValueRes{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}
+	res := getDatapointValueRes{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}
 	data, _ := res.MarshalBinary()
 	f.Add(data)
 	f.Fuzz(func(t *testing.T, data []byte) {
-		other := GetDatapointValueRes{}
+		other := getDatapointValueRes{}
 		_ = other.UnmarshalBinary(data)
 	})
 }

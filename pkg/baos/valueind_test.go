@@ -7,49 +7,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDatapointValueIndValid(t *testing.T) {
-	type testCase struct {
-		name          string
-		value         DatapointValueInd
-		errorExpected bool
-	}
-
-	testCases := []testCase{
-		{name: "Empty", value: DatapointValueInd{}, errorExpected: true},
-		{name: "Valid", value: DatapointValueInd{StartDatapoint: 1,
-			Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}, errorExpected: false},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			err := tc.value.Valid()
-			if tc.errorExpected {
-				assert.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-		})
-	}
-}
-
 func TestDatapointValueIndEqual(t *testing.T) {
 	type testCase struct {
 		name           string
-		value          DatapointValueInd
-		other          DatapointValueInd
+		value          datapointValueInd
+		other          datapointValueInd
 		resultExpected bool
 	}
 
 	testCases := []testCase{
 		{name: "Equal",
-			value: DatapointValueInd{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}},
-			other: DatapointValueInd{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}, resultExpected: true},
+			value: datapointValueInd{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}},
+			other: datapointValueInd{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}, resultExpected: true},
 		{name: "StartUnequal",
-			value: DatapointValueInd{StartDatapoint: 1}, other: DatapointValueInd{StartDatapoint: 2}, resultExpected: false},
+			value: datapointValueInd{StartDatapoint: 1}, other: datapointValueInd{StartDatapoint: 2}, resultExpected: false},
 		{name: "ValuesLenUnequal",
-			value: DatapointValueInd{Values: []Datapoint{{ID: 1}}},
-			other: DatapointValueInd{Values: []Datapoint{{ID: 2}}}, resultExpected: false},
+			value: datapointValueInd{Values: []Datapoint{{ID: 1}}},
+			other: datapointValueInd{Values: []Datapoint{{ID: 2}}}, resultExpected: false},
 	}
 
 	for _, tc := range testCases {
@@ -63,12 +37,12 @@ func TestDatapointValueIndEqual(t *testing.T) {
 func TestDatapointValueIndMarshal(t *testing.T) {
 	type testCase struct {
 		name  string
-		value DatapointValueInd
+		value datapointValueInd
 	}
 
 	testCases := []testCase{
-		{name: "Empty", value: DatapointValueInd{}},
-		{name: "WithValues", value: DatapointValueInd{StartDatapoint: 2, Values: []Datapoint{
+		{name: "Empty", value: datapointValueInd{}},
+		{name: "WithValues", value: datapointValueInd{StartDatapoint: 2, Values: []Datapoint{
 			{ID: 10, State: 0x10, Data: []byte{0x01}}, {ID: 11, State: 0x20, Data: []byte{0x03, 0x04}}}}},
 	}
 
@@ -78,7 +52,7 @@ func TestDatapointValueIndMarshal(t *testing.T) {
 			data, err := tc.value.MarshalBinary()
 			require.NoError(t, err)
 
-			other := DatapointValueInd{}
+			other := datapointValueInd{}
 			require.NoError(t, other.UnmarshalBinary(data))
 			assert.True(t, tc.value.Equal(&other))
 		})
@@ -102,7 +76,7 @@ func TestDatapointValueIndUnmarshalErrors(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			r := DatapointValueInd{}
+			r := datapointValueInd{}
 			err := r.UnmarshalBinary(tc.data)
 			if tc.errorExpected {
 				assert.Error(t, err)
@@ -114,11 +88,11 @@ func TestDatapointValueIndUnmarshalErrors(t *testing.T) {
 }
 
 func FuzzDatapointValueInd(f *testing.F) {
-	ind := DatapointValueInd{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}
+	ind := datapointValueInd{StartDatapoint: 1, Values: []Datapoint{{ID: 1, State: 0x10, Data: []byte{0x01}}}}
 	data, _ := ind.MarshalBinary()
 	f.Add(data)
 	f.Fuzz(func(t *testing.T, data []byte) {
-		other := DatapointValueInd{}
+		other := datapointValueInd{}
 		_ = other.UnmarshalBinary(data)
 	})
 }

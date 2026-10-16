@@ -7,45 +7,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetServerItemReqValid(t *testing.T) {
-	type testCase struct {
-		name          string
-		value         GetServerItemReq
-		errorExpected bool
-	}
-
-	testCases := []testCase{
-		{name: "Empty", value: GetServerItemReq{0, 0}, errorExpected: false},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			err := tc.value.Valid()
-			if tc.errorExpected {
-				assert.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-		})
-	}
-}
-
 func TestGetServerItemReqEqual(t *testing.T) {
 
 	type testCase struct {
 		name           string
-		value          GetServerItemReq
-		other          GetServerItemReq
+		value          getServerItemReq
+		other          getServerItemReq
 		resultExpected bool
 	}
 
 	testCases := []testCase{
-		{name: "Equal", value: GetServerItemReq{0, 5},
-			other: GetServerItemReq{0, 5}, resultExpected: true},
-		{name: "StartUnequal", value: GetServerItemReq{1, 5},
-			other: GetServerItemReq{2, 5}, resultExpected: false},
-		{name: "NumberUnequal", value: GetServerItemReq{1, 5},
-			other: GetServerItemReq{1, 6}, resultExpected: false},
+		{name: "Equal", value: getServerItemReq{0, 5},
+			other: getServerItemReq{0, 5}, resultExpected: true},
+		{name: "StartUnequal", value: getServerItemReq{1, 5},
+			other: getServerItemReq{2, 5}, resultExpected: false},
+		{name: "NumberUnequal", value: getServerItemReq{1, 5},
+			other: getServerItemReq{1, 6}, resultExpected: false},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -59,11 +36,11 @@ func TestGetServerItemReqEqual(t *testing.T) {
 func TestGetServerItemReqMarshal(t *testing.T) {
 	type testCase struct {
 		name  string
-		value GetServerItemReq
+		value getServerItemReq
 	}
 	testCases := []testCase{
-		{name: "Empty", value: GetServerItemReq{0, 0}},
-		{name: "Nonempty", value: GetServerItemReq{2, 4}},
+		{name: "Empty", value: getServerItemReq{0, 0}},
+		{name: "Nonempty", value: getServerItemReq{2, 4}},
 	}
 
 	for _, tc := range testCases {
@@ -72,37 +49,9 @@ func TestGetServerItemReqMarshal(t *testing.T) {
 			data, err := tc.value.MarshalBinary()
 			require.NoError(t, err)
 
-			other := GetServerItemReq{}
+			other := getServerItemReq{}
 			require.NoError(t, other.UnmarshalBinary(data))
 			assert.True(t, tc.value.Equal(&other))
-		})
-	}
-}
-
-func TestGetServerItemResValid(t *testing.T) {
-	type testCase struct {
-		name          string
-		value         GetServerItemRes
-		errorExpected bool
-	}
-
-	testCases := []testCase{
-		{name: "Empty", value: GetServerItemRes{}, errorExpected: true},
-		{name: "WithItems", value: GetServerItemRes{StartItem: 1, Items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, errorExpected: false},
-		{name: "WithErrorCode", value: GetServerItemRes{StartItem: 1, ErrorCode: 5}, errorExpected: false},
-		{name: "ItemsAndErrorCode",
-			value: GetServerItemRes{StartItem: 1, Items: []ServerItem{{ID: 1, Data: []byte{0x01}}}, ErrorCode: 5}, errorExpected: true},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			err := tc.value.Valid()
-			if tc.errorExpected {
-				assert.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
 		})
 	}
 }
@@ -110,16 +59,16 @@ func TestGetServerItemResValid(t *testing.T) {
 func TestGetServerItemResEqual(t *testing.T) {
 	type testCase struct {
 		name           string
-		value          GetServerItemRes
-		other          GetServerItemRes
+		value          getServerItemRes
+		other          getServerItemRes
 		resultExpected bool
 	}
 	testCases := []testCase{
-		{name: "Equal", value: GetServerItemRes{StartItem: 1, Items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, other: GetServerItemRes{StartItem: 1, Items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, resultExpected: true},
-		{name: "StartUnequal", value: GetServerItemRes{StartItem: 1}, other: GetServerItemRes{StartItem: 2}, resultExpected: false},
-		{name: "ErrorCodeUnequal", value: GetServerItemRes{ErrorCode: 1}, other: GetServerItemRes{ErrorCode: 2}, resultExpected: false},
-		{name: "ItemsLenUnequal", value: GetServerItemRes{Items: []ServerItem{{ID: 1}}}, other: GetServerItemRes{Items: []ServerItem{}}, resultExpected: false},
-		{name: "ItemDataUnequal", value: GetServerItemRes{Items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, other: GetServerItemRes{Items: []ServerItem{{ID: 1, Data: []byte{0x02}}}}, resultExpected: false},
+		{name: "Equal", value: getServerItemRes{StartItem: 1, Items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, other: getServerItemRes{StartItem: 1, Items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, resultExpected: true},
+		{name: "StartUnequal", value: getServerItemRes{StartItem: 1}, other: getServerItemRes{StartItem: 2}, resultExpected: false},
+		{name: "ErrorCodeUnequal", value: getServerItemRes{ErrorCode: 1}, other: getServerItemRes{ErrorCode: 2}, resultExpected: false},
+		{name: "ItemsLenUnequal", value: getServerItemRes{Items: []ServerItem{{ID: 1}}}, other: getServerItemRes{Items: []ServerItem{}}, resultExpected: false},
+		{name: "ItemDataUnequal", value: getServerItemRes{Items: []ServerItem{{ID: 1, Data: []byte{0x01}}}}, other: getServerItemRes{Items: []ServerItem{{ID: 1, Data: []byte{0x02}}}}, resultExpected: false},
 	}
 
 	for _, tc := range testCases {
@@ -133,12 +82,12 @@ func TestGetServerItemResEqual(t *testing.T) {
 func TestGetServerItemResMarshal(t *testing.T) {
 	type testCase struct {
 		name  string
-		value GetServerItemRes
+		value getServerItemRes
 	}
 	testCases := []testCase{
-		{name: "Empty", value: GetServerItemRes{}},
-		{name: "WithItems", value: GetServerItemRes{StartItem: 2, Items: []ServerItem{{ID: 10, Data: []byte{0x01, 0x02}}, {ID: 11, Data: []byte{0x03}}}}},
-		{name: "Error", value: GetServerItemRes{StartItem: 3, ErrorCode: 5}},
+		{name: "Empty", value: getServerItemRes{}},
+		{name: "WithItems", value: getServerItemRes{StartItem: 2, Items: []ServerItem{{ID: 10, Data: []byte{0x01, 0x02}}, {ID: 11, Data: []byte{0x03}}}}},
+		{name: "Error", value: getServerItemRes{StartItem: 3, ErrorCode: 5}},
 	}
 
 	for _, tc := range testCases {
@@ -147,7 +96,7 @@ func TestGetServerItemResMarshal(t *testing.T) {
 			data, err := tc.value.MarshalBinary()
 			require.NoError(t, err)
 
-			other := GetServerItemRes{}
+			other := getServerItemRes{}
 			require.NoError(t, other.UnmarshalBinary(data))
 			assert.True(t, tc.value.Equal(&other))
 		})
@@ -171,7 +120,7 @@ func TestGetServerItemResUnmarshalErrors(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			r := GetServerItemRes{}
+			r := getServerItemRes{}
 			err := r.UnmarshalBinary(tc.data)
 			if tc.errorExpected {
 				assert.Error(t, err)
@@ -183,21 +132,21 @@ func TestGetServerItemResUnmarshalErrors(t *testing.T) {
 }
 
 func FuzzGetServerItemReq(f *testing.F) {
-	req := GetServerItemReq{StartItem: 1, NumberOfItems: 2}
+	req := getServerItemReq{StartItem: 1, NumberOfItems: 2}
 	data, _ := req.MarshalBinary()
 	f.Add(data)
 	f.Fuzz(func(t *testing.T, data []byte) {
-		other := GetServerItemReq{}
+		other := getServerItemReq{}
 		_ = other.UnmarshalBinary(data)
 	})
 }
 
 func FuzzGetServerItemRes(f *testing.F) {
-	res := GetServerItemRes{StartItem: 1, Items: []ServerItem{{ID: 1, Data: []byte{0x01, 0x02}}}}
+	res := getServerItemRes{StartItem: 1, Items: []ServerItem{{ID: 1, Data: []byte{0x01, 0x02}}}}
 	data, _ := res.MarshalBinary()
 	f.Add(data)
 	f.Fuzz(func(t *testing.T, data []byte) {
-		other := GetServerItemRes{}
+		other := getServerItemRes{}
 		_ = other.UnmarshalBinary(data)
 	})
 }

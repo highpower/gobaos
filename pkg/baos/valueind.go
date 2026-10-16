@@ -7,39 +7,31 @@ import (
 	"slices"
 )
 
-// DatapointValueInd is an unsolicited indication carrying datapoint values.
-type DatapointValueInd struct {
+// datapointValueInd is an unsolicited indication carrying datapoint values.
+type datapointValueInd struct {
 	StartDatapoint DatapointID
 	Values         []Datapoint
 }
 
 // Service returns the main service identifier.
-func (r *DatapointValueInd) Service() byte {
+func (r *datapointValueInd) Service() byte {
 	return MainService
 }
 
 // SubService returns the sub-service identifier for the indication.
-func (r *DatapointValueInd) SubService() byte {
+func (r *datapointValueInd) SubService() byte {
 	return SubServiceDatapointValueInd
 }
 
-// Valid validates the indication fields.
-func (r *DatapointValueInd) Valid() error {
-	if len(r.Values) == 0 {
-		return fmt.Errorf("%w indication: it should contain at least 1 datapoint", ErrInvalid)
-	}
-	return nil
-}
-
 // Equal reports whether r and other are identical indications.
-func (r *DatapointValueInd) Equal(other *DatapointValueInd) bool {
+func (r *datapointValueInd) Equal(other *datapointValueInd) bool {
 	return r.StartDatapoint == other.StartDatapoint && slices.EqualFunc(r.Values, other.Values, func(v1, v2 Datapoint) bool {
 		return v1.Equal(&v2)
 	})
 }
 
 // String returns a human-readable representation of the indication.
-func (r *DatapointValueInd) String() string {
+func (r *datapointValueInd) String() string {
 	buffer := bytes.Buffer{}
 	buffer.WriteString(fmt.Sprintf("datapointValueInd[startDatapoint=%d,values=[", r.StartDatapoint))
 	for i, val := range r.Values {
@@ -53,7 +45,7 @@ func (r *DatapointValueInd) String() string {
 }
 
 // MarshalBinary encodes the indication into its BAOS wire format.
-func (r *DatapointValueInd) MarshalBinary() ([]byte, error) {
+func (r *datapointValueInd) MarshalBinary() ([]byte, error) {
 	result := make([]byte, 6+datapointsSizeInBytes(r.Values))
 	result[0] = MainService
 	result[1] = SubServiceDatapointValueInd
@@ -66,7 +58,7 @@ func (r *DatapointValueInd) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary decodes the BAOS wire format into the indication.
-func (r *DatapointValueInd) UnmarshalBinary(data []byte) error {
+func (r *datapointValueInd) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) < 6:
 		return fmt.Errorf("%w data length %d, expected at least %d", ErrInvalid, len(data), 6)
@@ -81,11 +73,11 @@ func (r *DatapointValueInd) UnmarshalBinary(data []byte) error {
 	if err != nil {
 		return err
 	}
-	*r = DatapointValueInd{startDatapoint, values}
+	*r = datapointValueInd{startDatapoint, values}
 	return nil
 }
 
-// IsDatapointValueInd reports whether data looks like a DatapointValueInd message.
-func IsDatapointValueInd(data []byte) bool {
+// isDatapointValueInd reports whether data looks like a datapointValueInd message.
+func isDatapointValueInd(data []byte) bool {
 	return len(data) > 6 && data[0] == MainService && data[1] == SubServiceDatapointValueInd
 }

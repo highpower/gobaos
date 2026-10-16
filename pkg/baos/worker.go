@@ -16,7 +16,7 @@ type Worker struct {
 	conn        *ft12.Conn
 	buffer      []byte
 	errorOrStop chan errorOrStop
-	indications chan DatapointValueInd
+	indications chan datapointValueInd
 	calls       chan *call
 	handler     ValueIndicationHandler
 	stopper     atomic.Value
@@ -91,8 +91,8 @@ func (w *Worker) Stop() {
 
 // Get reads the current value of the given datapoint into dpt.
 func (w *Worker) Get(ctx context.Context, id DatapointID, dpt knxtypes.DPT) error {
-	req := GetDatapointValueReq{StartDatapoint: id, NumberOfDatapoints: 1}
-	res := GetDatapointValueRes{}
+	req := getDatapointValueReq{StartDatapoint: id, NumberOfDatapoints: 1}
+	res := getDatapointValueRes{}
 
 	current := w.makeCall(ctx, &req, &res)
 	w.calls <- current
@@ -117,12 +117,15 @@ func (w *Worker) Get(ctx context.Context, id DatapointID, dpt knxtypes.DPT) erro
 
 // Set writes dpt to the given datapoint and sends it on the bus.
 func (w *Worker) Set(ctx context.Context, id DatapointID, dpt knxtypes.DPT) error {
+	if err := knxtypes.IsValidDPT(dpt); err != nil {
+		return fmt.Errorf("can not set dpt: %w", err)
+	}
 	data, err := dpt.MarshalBinary()
 	if err != nil {
 		return err
 	}
-	req := SetDatapointValueReq{Commands: []DatapointCommand{{ID: id, Command: SetAndSendOnBus, Data: data}}}
-	res := SetDatapointValueRes{ErrorCode: ErrorCode(0xff)}
+	req := setDatapointValueReq{Commands: []DatapointCommand{{ID: id, Command: SetAndSendOnBus, Data: data}}}
+	res := setDatapointValueRes{ErrorCode: ErrorCode(0xff)}
 
 	current := w.makeCall(ctx, &req, &res)
 	w.calls <- current
@@ -166,8 +169,8 @@ func (w *Worker) AllDescriptions(ctx context.Context) ([]DatapointDescription, e
 
 // DescriptionString reads the description string of the given datapoint.
 func (w *Worker) DescriptionString(ctx context.Context, id DatapointID) (string, error) {
-	req := GetDescriptionStringReq{StartDatapoint: id, NumberOfStrings: 1}
-	res := GetDescriptionStringRes{}
+	req := getDescriptionStringReq{StartDatapoint: id, NumberOfStrings: 1}
+	res := getDescriptionStringRes{}
 
 	current := w.makeCall(ctx, &req, &res)
 	w.calls <- current
@@ -187,8 +190,8 @@ func (w *Worker) DescriptionString(ctx context.Context, id DatapointID) (string,
 
 // ServerItem reads a single server item by its ID.
 func (w *Worker) ServerItem(ctx context.Context, id ItemID) (ServerItem, error) {
-	req := GetServerItemReq{StartItem: id, NumberOfItems: 1}
-	res := GetServerItemRes{}
+	req := getServerItemReq{StartItem: id, NumberOfItems: 1}
+	res := getServerItemRes{}
 
 	current := w.makeCall(ctx, &req, &res)
 	w.calls <- current
@@ -208,8 +211,8 @@ func (w *Worker) ServerItem(ctx context.Context, id ItemID) (ServerItem, error) 
 
 // SetServerItem writes data to a single server item by its ID.
 func (w *Worker) SetServerItem(ctx context.Context, id ItemID, data []byte) error {
-	req := SetServerItemReq{Items: []ServerItem{{ID: id, Data: data}}}
-	res := SetServerItemRes{}
+	req := setServerItemReq{Items: []ServerItem{{ID: id, Data: data}}}
+	res := setServerItemRes{}
 
 	current := w.makeCall(ctx, &req, &res)
 	w.calls <- current
@@ -230,8 +233,8 @@ func (w *Worker) descriptions(ctx context.Context, start DatapointID, number uin
 	descInResponse := (ft12.MaxMessageLength - getDescriptionResHeaderSize) / datapointDescriptionSize
 	i := int(number)
 	for i > 0 {
-		req := GetDatapointDescriptionReq{StartDatapoint: start, NumberOfDatapoints: uint16(min(descInResponse, i))}
-		res := GetDatapointDescriptionRes{}
+		req := getDatapointDescriptionReq{StartDatapoint: start, NumberOfDatapoints: uint16(min(descInResponse, i))}
+		res := getDatapointDescriptionRes{}
 
 		current := w.makeCall(ctx, &req, &res)
 		w.calls <- current
@@ -291,10 +294,10 @@ func (w *Worker) handleIndication() error {
 	if _, err := w.conn.Read(w.buffer); err != nil {
 		return fmt.Errorf("read indication error: %w", err)
 	}
-	if !IsDatapointValueInd(w.buffer) {
+	if !isDatapointValueInd(w.buffer) {
 		return nil
 	}
-	indication := DatapointValueInd{}
+	indication := datapointValueInd{}
 	if err := indication.UnmarshalBinary(w.buffer); err != nil {
 		return fmt.Errorf("unmarshal indication error: %w", err)
 	}
@@ -302,7 +305,7 @@ func (w *Worker) handleIndication() error {
 	return nil
 }
 
-func (w *Worker) runIndication(indications <-chan DatapointValueInd) {
+func (w *Worker) runIndication(indications <-chan datapointValueInd) {
 	for indication := range indications {
 		for _, value := range indication.Values {
 			if err := w.handler.OnIndication(value.ID, value.Data); err != nil {
@@ -358,7 +361,7 @@ func NewWorker(conn *ft12.Conn, options ...WorkerOption) *Worker {
 		conn:        conn,
 		buffer:      nil,
 		errorOrStop: make(chan errorOrStop),
-		indications: make(chan DatapointValueInd),
+		indications: make(chan datapointValueInd),
 		calls:       make(chan *call),
 		handler:     defaultHandler{},
 		goroutines:  defaultIndicationHandlerCount,

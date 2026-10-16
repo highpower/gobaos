@@ -22,14 +22,6 @@ func (r *ServerItemInd) SubService() byte {
 	return SubServiceServerItemInd
 }
 
-// Valid validates the indication fields.
-func (r *ServerItemInd) Valid() error {
-	if len(r.Items) == 0 {
-		return fmt.Errorf("%w indication must contain at least one item", ErrInvalid)
-	}
-	return nil
-}
-
 // Equal reports whether r and other are identical indications.
 func (r *ServerItemInd) Equal(other *ServerItemInd) bool {
 	return r.StartItem == other.StartItem && slices.EqualFunc(r.Items, other.Items, func(i1, i2 ServerItem) bool {

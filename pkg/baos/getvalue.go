@@ -10,15 +10,15 @@ import (
 // Filter controls which datapoints are returned in a get-value request.
 type Filter byte
 
-// GetDatapointValueReq is a request to read datapoint values.
-type GetDatapointValueReq struct {
+// getDatapointValueReq is a request to read datapoint values.
+type getDatapointValueReq struct {
 	StartDatapoint     DatapointID
 	NumberOfDatapoints uint16
 	Filter             Filter
 }
 
-// GetDatapointValueRes is a response containing datapoint values or an error.
-type GetDatapointValueRes struct {
+// getDatapointValueRes is a response containing datapoint values or an error.
+type getDatapointValueRes struct {
 	StartDatapoint DatapointID
 	Values         []Datapoint
 	ErrorCode      ErrorCode
@@ -32,38 +32,29 @@ const (
 )
 
 // Service returns the main service identifier.
-func (r *GetDatapointValueReq) Service() byte {
+func (r *getDatapointValueReq) Service() byte {
 	return MainService
 }
 
 // SubService returns the sub-service identifier for the request.
-func (r *GetDatapointValueReq) SubService() byte {
+func (r *getDatapointValueReq) SubService() byte {
 	return SubServiceGetDatapointValueReq
 }
 
-// Valid validates the request fields.
-func (r *GetDatapointValueReq) Valid() error {
-	switch r.Filter {
-	case AllDatapoints, ValidDatapoints, UpdatedDatapoints:
-		return nil
-	}
-	return fmt.Errorf("%w filter: %d", ErrInvalid, r.Filter)
-}
-
 // Equal reports whether r and other are identical requests.
-func (r *GetDatapointValueReq) Equal(other *GetDatapointValueReq) bool {
+func (r *getDatapointValueReq) Equal(other *getDatapointValueReq) bool {
 	return r.StartDatapoint == other.StartDatapoint && r.NumberOfDatapoints == other.NumberOfDatapoints &&
 		r.Filter == other.Filter
 }
 
 // String returns a human-readable representation of the request.
-func (r *GetDatapointValueReq) String() string {
+func (r *getDatapointValueReq) String() string {
 	return fmt.Sprintf("getDatapointValueReq[startDatapoint=%d,numberOfDatapoints=%d,filter=%d]",
 		r.StartDatapoint, r.NumberOfDatapoints, r.Filter)
 }
 
 // MarshalBinary encodes the request into its BAOS wire format.
-func (r *GetDatapointValueReq) MarshalBinary() ([]byte, error) {
+func (r *getDatapointValueReq) MarshalBinary() ([]byte, error) {
 	b := make([]byte, 7)
 	b[0] = MainService
 	b[1] = SubServiceGetDatapointValueReq
@@ -74,7 +65,7 @@ func (r *GetDatapointValueReq) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary decodes the BAOS wire format into the request.
-func (r *GetDatapointValueReq) UnmarshalBinary(data []byte) error {
+func (r *getDatapointValueReq) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) != 7:
 		return fmt.Errorf("%w data length %d, expected %d", ErrInvalid, len(data), 7)
@@ -90,28 +81,17 @@ func (r *GetDatapointValueReq) UnmarshalBinary(data []byte) error {
 }
 
 // Service returns the main service identifier.
-func (r *GetDatapointValueRes) Service() byte {
+func (r *getDatapointValueRes) Service() byte {
 	return MainService
 }
 
 // SubService returns the sub-service identifier for the response.
-func (r *GetDatapointValueRes) SubService() byte {
+func (r *getDatapointValueRes) SubService() byte {
 	return SubServiceGetDatapointValueRes
 }
 
-// Valid validates the response fields.
-func (r *GetDatapointValueRes) Valid() error {
-	switch {
-	case len(r.Values) == 0 && r.ErrorCode == 0:
-		return fmt.Errorf("%w response contains 0 values but error code is 0", ErrInvalid)
-	case len(r.Values) != 0 && r.ErrorCode != 0:
-		return fmt.Errorf("%w response contains %d values but error code is %d", ErrInvalid, len(r.Values), r.ErrorCode)
-	}
-	return nil
-}
-
 // Equal reports whether r and other are identical responses.
-func (r *GetDatapointValueRes) Equal(other *GetDatapointValueRes) bool {
+func (r *getDatapointValueRes) Equal(other *getDatapointValueRes) bool {
 	if r.StartDatapoint != other.StartDatapoint || byte(r.ErrorCode) != byte(other.ErrorCode) {
 		return false
 	}
@@ -121,7 +101,7 @@ func (r *GetDatapointValueRes) Equal(other *GetDatapointValueRes) bool {
 }
 
 // String returns a human-readable representation of the response.
-func (r *GetDatapointValueRes) String() string {
+func (r *getDatapointValueRes) String() string {
 	buffer := bytes.Buffer{}
 	buffer.WriteString(fmt.Sprintf("getDatapointValueRes[startDatapoint=%d,datapoints=[", r.StartDatapoint))
 	for i, val := range r.Values {
@@ -135,7 +115,7 @@ func (r *GetDatapointValueRes) String() string {
 }
 
 // MarshalBinary encodes the response into its BAOS wire format.
-func (r *GetDatapointValueRes) MarshalBinary() ([]byte, error) {
+func (r *getDatapointValueRes) MarshalBinary() ([]byte, error) {
 	if r.ErrorCode != 0 {
 		result := make([]byte, 7)
 		result[0] = MainService
@@ -157,7 +137,7 @@ func (r *GetDatapointValueRes) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary decodes the BAOS wire format into the response.
-func (r *GetDatapointValueRes) UnmarshalBinary(data []byte) error {
+func (r *getDatapointValueRes) UnmarshalBinary(data []byte) error {
 	switch {
 	case len(data) < 6:
 		return fmt.Errorf("%w data length %d, expected at least %d", ErrInvalid, len(data), 6)
@@ -168,7 +148,7 @@ func (r *GetDatapointValueRes) UnmarshalBinary(data []byte) error {
 	}
 	startDatapoint := DatapointID(binary.BigEndian.Uint16(data[2:4]))
 	if len(data) == 7 {
-		*r = GetDatapointValueRes{StartDatapoint: startDatapoint, ErrorCode: ErrorCode(data[6])}
+		*r = getDatapointValueRes{StartDatapoint: startDatapoint, ErrorCode: ErrorCode(data[6])}
 		return nil
 	}
 	num := int(binary.BigEndian.Uint16(data[4:6]))
@@ -176,6 +156,6 @@ func (r *GetDatapointValueRes) UnmarshalBinary(data []byte) error {
 	if err != nil {
 		return err
 	}
-	*r = GetDatapointValueRes{StartDatapoint: startDatapoint, Values: values}
+	*r = getDatapointValueRes{StartDatapoint: startDatapoint, Values: values}
 	return nil
 }

@@ -1,12 +1,24 @@
 package mask
 
+import (
+	"bytes"
+)
+
+const defaultMaskLength = 4
+
 func Apply(s string) string {
+	runes := []rune(s)
+	buffer := bytes.Buffer{}
 	switch {
-	case s == "":
+	case len(runes) == 0:
 		return ""
-	case len(s) < 4:
-		return string(s[0]) + "..."
+	case len(runes) <= defaultMaskLength:
+		buffer.WriteRune(runes[0])
 	default:
-		return string(s[0:4]) + "..."
+		for i := range defaultMaskLength {
+			buffer.WriteRune(runes[i])
+		}
 	}
+	buffer.WriteString("...")
+	return buffer.String()
 }
